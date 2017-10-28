@@ -301,6 +301,7 @@ set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -entity D
 set_global_assignment -name PROJECT_IP_REGENERATION_POLICY ALWAYS_REGENERATE_IP
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+set_global_assignment -name VERILOG_FILE v/sdram_to_vga_fifo.v
 set_global_assignment -name QIP_FILE v/vga_pll.qip
 set_global_assignment -name VERILOG_FILE SLMCtrl.v
 set_global_assignment -name VERILOG_FILE v/VGA_Controller.v

@@ -148,8 +148,8 @@ always@(posedge iCLK or negedge iRST_N) begin
 end
 
 //	H_Sync Generator, Ref. 25.175 MHz Clock
-parameter SYNC_ACTIVE = 1;  // active high
-parameter SYNC_DEACT  = 0;
+parameter SYNC_ACTIVE = 1'b1;  // active high
+parameter SYNC_DEACT  = 1'b0;
 always@(posedge iCLK or negedge iRST_N)
 begin
 	if(!iRST_N) begin

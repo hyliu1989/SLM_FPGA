@@ -206,8 +206,11 @@ wire [7:0]	vga_data;
 wire		vga_fifo_rclk;
 wire		vga_fifo_rreq;
 wire		vga_fifo_aclear;
-wire		vga_fifo_loadreq;
+wire		vga_load_to_fifo_req;
 wire [12:0]	vga_fifo_loadline;
+wire		fifo_wclk;
+wire [7:0]	fifo_wdata;
+wire		fifo_wen;
 
 // for delayed reset signal
 reg  [26:0] local_counter;
@@ -264,7 +267,7 @@ VGA_Controller vga_ctrl_0(
 	.oFIFO_RCLK(vga_fifo_rclk),
 	.oFIFO_REQ(vga_fifo_rreq),
 	// FIFO load signal
-	.oFIFO_LOAD_REQ(vga_fifo_loadreq),
+	.oFIFO_LOAD_REQ(vga_load_to_fifo_req),
 	.oFIFO_LOAD_VLINE(vga_fifo_loadline),
 	.oFIFO_CLEAR(vga_fifo_aclear),
 	
@@ -283,63 +286,26 @@ VGA_Controller vga_ctrl_0(
 	.iRST_N(delayed_reset_n)
 );
 
-// Temporary testing module starts here for fifo writing (should be replaced by memory module) 
-reg [7:0]	temp_mem_data;
-reg [3:0]	temp_state;
-reg [10:0]	temp_load_counter;
-wire		temp_wclk;
-wire		temp_clk;
-wire		temp_reset_n;
-reg			temp_wen;
-assign temp_clk 		= vga_clock;
-assign temp_reset_n 	= delayed_reset_n;
-assign temp_wclk		= ~temp_clk;
-
-always @ (*) begin
-	if (vga_fifo_loadline[10:0] >= {1'b0,SW} && vga_fifo_loadline[10:0] < {1'b0,SW} + 11'd100)
-		temp_mem_data = 8'hff;
-	else
-		temp_mem_data = 8'h00;
+sdram_to_vga_fifo testing_0(
+	.iRST_N(delayed_reset_n),
+	.iCLK(vga_clock),
+	.iVGA_LINE_TO_LOAD(vga_fifo_loadline),
+	.iVGA_LOAD_TO_FIFO_REQ(vga_load_to_fifo_req),
 	
-	temp_wen = (temp_state == 4'd2);
-end
-
-always @ (posedge temp_clk or negedge temp_reset_n) begin
-	if (!temp_reset_n) begin
-		temp_state <= 4'd0;
-	end
-	else begin
-		case(temp_state)
-			4'd0: begin  // listening to the kicking
-				if (vga_fifo_loadreq)
-					temp_state <= 4'd1;
-			end
-			4'd1: begin  // waiting for the kicking signal to turn off
-				temp_load_counter <= 11'd0;
-				if (!vga_fifo_loadreq)
-					temp_state <= 4'd2;
-			end
-			4'd2: begin  // loading the memory into the FIFO
-				temp_load_counter <= temp_load_counter + 1'b1;
-				if (temp_load_counter == 11'd1280-11'd1)
-					temp_state <= 4'd0;
-				else
-					temp_state <= temp_state;
-			end
-			default:  // error state, go back to idle(4'd0)
-				temp_state <= 4'd0;
-		endcase
-	end
-end
-// end of temporary module
+	.oWCLK(fifo_wclk),
+	.oWDATA(fifo_wdata),
+	.oWEN(fifo_wen),
+	
+	.test_signal_0(SW)
+);
 
 vga_fifo vf0(
 	.aclr(vga_fifo_aclear),
-	.data(temp_mem_data),  // [7:0]
+	.data(fifo_wdata),  // [7:0]
 	.rdclk(vga_fifo_rclk),
 	.rdreq(vga_fifo_rreq),
-	.wrclk(temp_wclk),
-	.wrreq(temp_wen),
+	.wrclk(fifo_wclk),
+	.wrreq(fifo_wen),
 	.q(vga_data),  // output [7:0]
 	.rdempty(),  //output
 	.wrfull()  // output
