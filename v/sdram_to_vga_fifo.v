@@ -29,10 +29,15 @@ input wire [9:0]	test_signal_0;  // offsetting the testing strip
 
 
 always @ (*) begin
-	if (iVGA_LINE_TO_LOAD[10:0] >= {1'b0,test_signal_0} && iVGA_LINE_TO_LOAD[10:0] < {1'b0,test_signal_0} + 11'd100)
-		oWDATA = 8'hff;
-	else
+	if (iVGA_LINE_TO_LOAD[10:0] >= {1'b0,test_signal_0} && iVGA_LINE_TO_LOAD[10:0] < {1'b0,test_signal_0} + 11'd100) begin
+		if (horizontal_counter < (iVGA_LINE_TO_LOAD[10:0] - {1'b0,test_signal_0}))
+			oWDATA = 8'h00;
+		else
+			oWDATA = 8'hff;
+	end
+	else begin
 		oWDATA = 8'h00;
+	end
 	
 	oWEN = (state == 4'd2);
 end
