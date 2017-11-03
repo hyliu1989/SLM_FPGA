@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<system name="$${FILENAME}">
+ <component
+   name="$${FILENAME}"
+   displayName="$${FILENAME}"
+   version="1.0"
+   description=""
+   tags=""
+   categories="System" />
+ <parameter name="bonusData"><![CDATA[bonusData 
+{
+   element Altera_UP_SD_Card_Avalon_Interface_0
+   {
+      datum _sortIndex
+      {
+         value = "1";
+         type = "int";
+      }
+   }
+   element clk_sdcard
+   {
+      datum _sortIndex
+      {
+         value = "0";
+         type = "int";
+      }
+   }
+   element clock_bridge_0
+   {
+      datum _sortIndex
+      {
+         value = "5";
+         type = "int";
+      }
+   }
+   element sdram_controller_0
+   {
+      datum _sortIndex
+      {
+         value = "4";
+         type = "int";
+      }
+   }
+   element sdram_tri_controller_0
+   {
+      datum _sortIndex
+      {
+         value = "2";
+         type = "int";
+      }
+   }
+   element sys_sdram_pll_0
+   {
+      datum _sortIndex
+      {
+         value = "3";
+         type = "int";
+      }
+   }
+}
+]]></parameter>
+ <parameter name="clockCrossingAdapter" value="HANDSHAKE" />
+ <parameter name="device" value="5CSEMA5F31C6" />
+ <parameter name="deviceFamily" value="Cyclone V" />
+ <parameter name="deviceSpeedGrade" value="6" />
+ <parameter name="fabricMode" value="QSYS" />
+ <parameter name="generateLegacySim" value="false" />
+ <parameter name="generationId" value="0" />
+ <parameter name="globalResetBus" value="false" />
+ <parameter name="hdlLanguage" value="VERILOG" />
+ <parameter name="hideFromIPCatalog" value="false" />
+ <parameter name="lockedInterfaceDefinition" value="" />
+ <parameter name="maxAdditionalLatency" value="1" />
+ <parameter name="projectName" value="SLMCtrl.qpf" />
+ <parameter name="sopcBorderPoints" value="false" />
+ <parameter name="systemHash" value="0" />
+ <parameter name="testBenchDutName" value="" />
+ <parameter name="timeStamp" value="0" />
+ <parameter name="useTestBenchNamingPattern" value="false" />
+ <instanceScript></instanceScript>
+ <interface
+   name="altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave"
+   internal="Altera_UP_SD_Card_Avalon_Interface_0.avalon_sdcard_slave"
+   type="avalon"
+   dir="end" />
+ <interface
+   name="altera_up_sd_card_avalon_interface_0_conduit_end"
+   internal="Altera_UP_SD_Card_Avalon_Interface_0.conduit_end"
+   type="conduit"
+   dir="end" />
+ <interface name="clk" internal="clk_sdcard.clk_in" type="clock" dir="end" />
+ <interface
+   name="reset"
+   internal="clk_sdcard.clk_in_reset"
+   type="reset"
+   dir="end" />
+ <interface
+   name="sdram_clock_0"
+   internal="clock_bridge_0.out_clk_1"
+   type="clock"
+   dir="start" />
+ <interface
+   name="sdram_controller_0_s1"
+   internal="sdram_controller_0.s1"
+   type="avalon"
+   dir="end" />
+ <interface
+   name="sdram_controller_0_wire"
+   internal="sdram_controller_0.wire"
+   type="conduit"
+   dir="end" />
+ <module
+   name="Altera_UP_SD_Card_Avalon_Interface_0"
+   kind="Altera_UP_SD_Card_Avalon_Interface"
+   version="15.1"
+   enabled="1">
+  <parameter name="AUTO_CLK_CLOCK_RATE" value="50000000" />
+  <parameter name="AUTO_DEVICE_FAMILY" value="Cyclone V" />
+ </module>
+ <module name="clk_sdcard" kind="clock_source" version="16.0" enabled="1">
+  <parameter name="clockFrequency" value="50000000" />
+  <parameter name="clockFrequencyKnown" value="true" />
+  <parameter name="inputClockFrequency" value="0" />
+  <parameter name="resetSynchronousEdges" value="NONE" />
+ </module>
+ <module
+   name="clock_bridge_0"
+   kind="altera_clock_bridge"
+   version="16.0"
+   enabled="1">
+  <parameter name="DERIVED_CLOCK_RATE" value="133333333" />
+  <parameter name="EXPLICIT_CLOCK_RATE" value="0" />
+  <parameter name="NUM_CLOCK_OUTPUTS" value="2" />
+ </module>
+ <module
+   name="sdram_controller_0"
+   kind="altera_avalon_new_sdram_controller"
+   version="16.0"
+   enabled="1">
+  <parameter name="TAC" value="5.4" />
+  <parameter name="TMRD" value="3" />
+  <parameter name="TRCD" value="20.0" />
+  <parameter name="TRFC" value="70.0" />
+  <parameter name="TRP" value="20.0" />
+  <parameter name="TWR" value="14.0" />
+  <parameter name="casLatency" value="2" />
+  <parameter name="clockRate" value="133333333" />
+  <parameter name="columnWidth" value="10" />
+  <parameter name="componentName">$${FILENAME}_sdram_controller_0</parameter>
+  <parameter name="dataWidth" value="16" />
+  <parameter name="generateSimulationModel" value="false" />
+  <parameter name="initNOPDelay" value="0.0" />
+  <parameter name="initRefreshCommands" value="2" />
+  <parameter name="masteredTristateBridgeSlave" value="0" />
+  <parameter name="model">single_Micron_MT48LC4M32B2_7_chip</parameter>
+  <parameter name="numberOfBanks" value="4" />
+  <parameter name="numberOfChipSelects" value="1" />
+  <parameter name="pinsSharedViaTriState" value="false" />
+  <parameter name="powerUpDelay" value="100.0" />
+  <parameter name="refreshPeriod" value="15.625" />
+  <parameter name="registerDataIn" value="true" />
+  <parameter name="rowWidth" value="13" />
+ </module>
+ <module
+   name="sdram_tri_controller_0"
+   kind="altera_sdram_tri_controller"
+   version="16.0"
+   enabled="0">
+  <parameter name="CAS_LATENCY" value="2" />
+  <parameter name="INIT_REFRESH" value="2" />
+  <parameter name="NUM_CHIPSELECTS" value="1" />
+  <parameter name="SDRAM_COL_WIDTH" value="10" />
+  <parameter name="SDRAM_DATA_WIDTH" value="16" />
+  <parameter name="SDRAM_ROW_WIDTH" value="13" />
+  <parameter name="TAC" value="5.4" />
+  <parameter name="TRCD" value="20.0" />
+  <parameter name="TRFC" value="70.0" />
+  <parameter name="TRISTATE_EN" value="true" />
+  <parameter name="TRP" value="20.0" />
+  <parameter name="TWR" value="14.0" />
+  <parameter name="clockRate" value="133333333" />
+  <parameter name="componentName">reader_system_sdram_tri_controller_0</parameter>
+  <parameter name="generateSimulationModel" value="false" />
+  <parameter name="model">single_Micron_MT48LC4M32B2_7_chip</parameter>
+  <parameter name="numberOfBanks" value="4" />
+  <parameter name="powerUpDelay" value="100.0" />
+  <parameter name="refreshPeriod" value="15.625" />
+ </module>
+ <module
+   name="sys_sdram_pll_0"
+   kind="altera_up_avalon_sys_sdram_pll"
+   version="15.1"
+   enabled="1">
+  <parameter name="AUTO_DEVICE" value="5CSEMA5F31C6" />
+  <parameter name="AUTO_DEVICE_SPEEDGRADE" value="6" />
+  <parameter name="CIII_boards" value="DE0" />
+  <parameter name="CIV_boards" value="DE2-115" />
+  <parameter name="CV_boards" value="DE1-SoC" />
+  <parameter name="device_family" value="Cyclone V" />
+  <parameter name="gui_outclk" value="133.33" />
+  <parameter name="gui_refclk" value="50.0" />
+  <parameter name="other_boards" value="None" />
+ </module>
+ <connection
+   kind="clock"
+   version="16.0"
+   start="clk_sdcard.clk"
+   end="Altera_UP_SD_Card_Avalon_Interface_0.clk" />
+ <connection
+   kind="clock"
+   version="16.0"
+   start="clk_sdcard.clk"
+   end="sys_sdram_pll_0.ref_clk" />
+ <connection
+   kind="clock"
+   version="16.0"
+   start="clock_bridge_0.out_clk"
+   end="sdram_controller_0.clk" />
+ <connection
+   kind="clock"
+   version="16.0"
+   start="sys_sdram_pll_0.sdram_clk"
+   end="sdram_tri_controller_0.clock_sink" />
+ <connection
+   kind="clock"
+   version="16.0"
+   start="sys_sdram_pll_0.sdram_clk"
+   end="clock_bridge_0.in_clk" />
+ <connection
+   kind="reset"
+   version="16.0"
+   start="clk_sdcard.clk_reset"
+   end="sys_sdram_pll_0.ref_reset" />
+ <connection
+   kind="reset"
+   version="16.0"
+   start="clk_sdcard.clk_reset"
+   end="Altera_UP_SD_Card_Avalon_Interface_0.reset" />
+ <connection
+   kind="reset"
+   version="16.0"
+   start="clk_sdcard.clk_reset"
+   end="sdram_controller_0.reset" />
+ <connection
+   kind="reset"
+   version="16.0"
+   start="clk_sdcard.clk_reset"
+   end="sdram_tri_controller_0.reset_sink" />
+ <connection
+   kind="reset"
+   version="16.0"
+   start="sys_sdram_pll_0.reset_source"
+   end="sys_sdram_pll_0.ref_reset" />
+ <connection
+   kind="reset"
+   version="16.0"
+   start="sys_sdram_pll_0.reset_source"
+   end="sdram_controller_0.reset" />
+ <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
+ <interconnectRequirement for="$system" name="qsys_mm.enableEccProtection" value="FALSE" />
+ <interconnectRequirement for="$system" name="qsys_mm.insertDefaultSlave" value="FALSE" />
+ <interconnectRequirement for="$system" name="qsys_mm.maxAdditionalLatency" value="1" />
+</system>

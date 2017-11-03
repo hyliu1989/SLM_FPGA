@@ -181,10 +181,10 @@ module SLMCtrl(
 
       ///////// TD /////////
       input              TD_CLK27,
-      input      [7:0]  TD_DATA,
-      input             TD_HS,
+      input       [7:0]  TD_DATA,
+      input              TD_HS,
       output             TD_RESET_N,
-      input             TD_VS,
+      input              TD_VS,
 
       ///////// VGA /////////
       output      [7:0]  VGA_B,
