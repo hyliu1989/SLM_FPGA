@@ -13,6 +13,17 @@ module reader_system (
 	altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat3,
 	altera_up_sd_card_avalon_interface_0_conduit_end_o_SD_clock,
 	clk_clk,
+	reset_reset_n,
+	sdram_controller_clock_0_clk,
+	sdram_controller_0_s1_address,
+	sdram_controller_0_s1_byteenable_n,
+	sdram_controller_0_s1_chipselect,
+	sdram_controller_0_s1_writedata,
+	sdram_controller_0_s1_read_n,
+	sdram_controller_0_s1_write_n,
+	sdram_controller_0_s1_readdata,
+	sdram_controller_0_s1_readdatavalid,
+	sdram_controller_0_s1_waitrequest,
 	sdram_controller_0_wire_addr,
 	sdram_controller_0_wire_ba,
 	sdram_controller_0_wire_cas_n,
@@ -22,17 +33,7 @@ module reader_system (
 	sdram_controller_0_wire_dqm,
 	sdram_controller_0_wire_ras_n,
 	sdram_controller_0_wire_we_n,
-	reset_reset_n,
-	sdram_clock_0_clk,
-	sdram_controller_0_s1_address,
-	sdram_controller_0_s1_byteenable_n,
-	sdram_controller_0_s1_chipselect,
-	sdram_controller_0_s1_writedata,
-	sdram_controller_0_s1_read_n,
-	sdram_controller_0_s1_write_n,
-	sdram_controller_0_s1_readdata,
-	sdram_controller_0_s1_readdatavalid,
-	sdram_controller_0_s1_waitrequest);	
+	sys_sdram_pll_0_sdram_clk_clk);	
 
 	input		altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_chipselect;
 	input	[7:0]	altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_address;
@@ -47,17 +48,8 @@ module reader_system (
 	inout		altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat3;
 	output		altera_up_sd_card_avalon_interface_0_conduit_end_o_SD_clock;
 	input		clk_clk;
-	output	[12:0]	sdram_controller_0_wire_addr;
-	output	[1:0]	sdram_controller_0_wire_ba;
-	output		sdram_controller_0_wire_cas_n;
-	output		sdram_controller_0_wire_cke;
-	output		sdram_controller_0_wire_cs_n;
-	inout	[15:0]	sdram_controller_0_wire_dq;
-	output	[1:0]	sdram_controller_0_wire_dqm;
-	output		sdram_controller_0_wire_ras_n;
-	output		sdram_controller_0_wire_we_n;
 	input		reset_reset_n;
-	output		sdram_clock_0_clk;
+	output		sdram_controller_clock_0_clk;
 	input	[24:0]	sdram_controller_0_s1_address;
 	input	[1:0]	sdram_controller_0_s1_byteenable_n;
 	input		sdram_controller_0_s1_chipselect;
@@ -67,4 +59,14 @@ module reader_system (
 	output	[15:0]	sdram_controller_0_s1_readdata;
 	output		sdram_controller_0_s1_readdatavalid;
 	output		sdram_controller_0_s1_waitrequest;
+	output	[12:0]	sdram_controller_0_wire_addr;
+	output	[1:0]	sdram_controller_0_wire_ba;
+	output		sdram_controller_0_wire_cas_n;
+	output		sdram_controller_0_wire_cke;
+	output		sdram_controller_0_wire_cs_n;
+	inout	[15:0]	sdram_controller_0_wire_dq;
+	output	[1:0]	sdram_controller_0_wire_dqm;
+	output		sdram_controller_0_wire_ras_n;
+	output		sdram_controller_0_wire_we_n;
+	output		sys_sdram_pll_0_sdram_clk_clk;
 endmodule

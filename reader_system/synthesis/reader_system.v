@@ -18,7 +18,6 @@ module reader_system (
 		output wire        altera_up_sd_card_avalon_interface_0_conduit_end_o_SD_clock,          //                                                         .o_SD_clock
 		input  wire        clk_clk,                                                              //                                                      clk.clk
 		input  wire        reset_reset_n,                                                        //                                                    reset.reset_n
-		output wire        sdram_clock_0_clk,                                                    //                                            sdram_clock_0.clk
 		input  wire [24:0] sdram_controller_0_s1_address,                                        //                                    sdram_controller_0_s1.address
 		input  wire [1:0]  sdram_controller_0_s1_byteenable_n,                                   //                                                         .byteenable_n
 		input  wire        sdram_controller_0_s1_chipselect,                                     //                                                         .chipselect
@@ -36,13 +35,14 @@ module reader_system (
 		inout  wire [15:0] sdram_controller_0_wire_dq,                                           //                                                         .dq
 		output wire [1:0]  sdram_controller_0_wire_dqm,                                          //                                                         .dqm
 		output wire        sdram_controller_0_wire_ras_n,                                        //                                                         .ras_n
-		output wire        sdram_controller_0_wire_we_n                                          //                                                         .we_n
+		output wire        sdram_controller_0_wire_we_n,                                         //                                                         .we_n
+		output wire        sdram_controller_clock_0_clk,                                         //                                 sdram_controller_clock_0.clk
+		output wire        sys_sdram_pll_0_sdram_clk_clk                                         //                                sys_sdram_pll_0_sdram_clk.clk
 	);
 
 	wire    rst_controller_reset_out_reset;     // rst_controller:reset_out -> Altera_UP_SD_Card_Avalon_Interface_0:i_reset_n
 	wire    rst_controller_001_reset_out_reset; // rst_controller_001:reset_out -> sdram_controller_0:reset_n
-	wire    sys_sdram_pll_0_reset_source_reset; // sys_sdram_pll_0:reset_source_reset -> [rst_controller_001:reset_in1, rst_controller_002:reset_in1]
-	wire    rst_controller_002_reset_out_reset; // rst_controller_002:reset_out -> sys_sdram_pll_0:ref_reset_reset
+	wire    sys_sdram_pll_0_reset_source_reset; // sys_sdram_pll_0:reset_source_reset -> rst_controller_001:reset_in0
 
 	Altera_UP_SD_Card_Avalon_Interface altera_up_sd_card_avalon_interface_0 (
 		.i_avalon_chip_select (altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_chipselect),  // avalon_sdcard_slave.chipselect
@@ -62,7 +62,7 @@ module reader_system (
 	);
 
 	reader_system_sdram_controller_0 sdram_controller_0 (
-		.clk            (sdram_clock_0_clk),                   //   clk.clk
+		.clk            (sdram_controller_clock_0_clk),        //   clk.clk
 		.reset_n        (~rst_controller_001_reset_out_reset), // reset.reset_n
 		.az_addr        (sdram_controller_0_s1_address),       //    s1.address
 		.az_be_n        (sdram_controller_0_s1_byteenable_n),  //      .byteenable_n
@@ -86,9 +86,9 @@ module reader_system (
 
 	reader_system_sys_sdram_pll_0 sys_sdram_pll_0 (
 		.ref_clk_clk        (clk_clk),                            //      ref_clk.clk
-		.ref_reset_reset    (rst_controller_002_reset_out_reset), //    ref_reset.reset
-		.sys_clk_clk        (),                                   //      sys_clk.clk
-		.sdram_clk_clk      (sdram_clock_0_clk),                  //    sdram_clk.clk
+		.ref_reset_reset    (~reset_reset_n),                     //    ref_reset.reset
+		.sys_clk_clk        (sdram_controller_clock_0_clk),       //      sys_clk.clk
+		.sdram_clk_clk      (sys_sdram_pll_0_sdram_clk_clk),      //    sdram_clk.clk
 		.reset_source_reset (sys_sdram_pll_0_reset_source_reset)  // reset_source.reset
 	);
 
@@ -156,7 +156,7 @@ module reader_system (
 	);
 
 	altera_reset_controller #(
-		.NUM_RESET_INPUTS          (2),
+		.NUM_RESET_INPUTS          (1),
 		.OUTPUT_RESET_SYNC_EDGES   ("deassert"),
 		.SYNC_DEPTH                (2),
 		.RESET_REQUEST_PRESENT     (0),
@@ -181,75 +181,12 @@ module reader_system (
 		.USE_RESET_REQUEST_IN15    (0),
 		.ADAPT_RESET_REQUEST       (0)
 	) rst_controller_001 (
-		.reset_in0      (~reset_reset_n),                     // reset_in0.reset
-		.reset_in1      (sys_sdram_pll_0_reset_source_reset), // reset_in1.reset
-		.clk            (sdram_clock_0_clk),                  //       clk.clk
+		.reset_in0      (sys_sdram_pll_0_reset_source_reset), // reset_in0.reset
+		.clk            (sdram_controller_clock_0_clk),       //       clk.clk
 		.reset_out      (rst_controller_001_reset_out_reset), // reset_out.reset
 		.reset_req      (),                                   // (terminated)
 		.reset_req_in0  (1'b0),                               // (terminated)
-		.reset_req_in1  (1'b0),                               // (terminated)
-		.reset_in2      (1'b0),                               // (terminated)
-		.reset_req_in2  (1'b0),                               // (terminated)
-		.reset_in3      (1'b0),                               // (terminated)
-		.reset_req_in3  (1'b0),                               // (terminated)
-		.reset_in4      (1'b0),                               // (terminated)
-		.reset_req_in4  (1'b0),                               // (terminated)
-		.reset_in5      (1'b0),                               // (terminated)
-		.reset_req_in5  (1'b0),                               // (terminated)
-		.reset_in6      (1'b0),                               // (terminated)
-		.reset_req_in6  (1'b0),                               // (terminated)
-		.reset_in7      (1'b0),                               // (terminated)
-		.reset_req_in7  (1'b0),                               // (terminated)
-		.reset_in8      (1'b0),                               // (terminated)
-		.reset_req_in8  (1'b0),                               // (terminated)
-		.reset_in9      (1'b0),                               // (terminated)
-		.reset_req_in9  (1'b0),                               // (terminated)
-		.reset_in10     (1'b0),                               // (terminated)
-		.reset_req_in10 (1'b0),                               // (terminated)
-		.reset_in11     (1'b0),                               // (terminated)
-		.reset_req_in11 (1'b0),                               // (terminated)
-		.reset_in12     (1'b0),                               // (terminated)
-		.reset_req_in12 (1'b0),                               // (terminated)
-		.reset_in13     (1'b0),                               // (terminated)
-		.reset_req_in13 (1'b0),                               // (terminated)
-		.reset_in14     (1'b0),                               // (terminated)
-		.reset_req_in14 (1'b0),                               // (terminated)
-		.reset_in15     (1'b0),                               // (terminated)
-		.reset_req_in15 (1'b0)                                // (terminated)
-	);
-
-	altera_reset_controller #(
-		.NUM_RESET_INPUTS          (2),
-		.OUTPUT_RESET_SYNC_EDGES   ("none"),
-		.SYNC_DEPTH                (2),
-		.RESET_REQUEST_PRESENT     (0),
-		.RESET_REQ_WAIT_TIME       (1),
-		.MIN_RST_ASSERTION_TIME    (3),
-		.RESET_REQ_EARLY_DSRT_TIME (1),
-		.USE_RESET_REQUEST_IN0     (0),
-		.USE_RESET_REQUEST_IN1     (0),
-		.USE_RESET_REQUEST_IN2     (0),
-		.USE_RESET_REQUEST_IN3     (0),
-		.USE_RESET_REQUEST_IN4     (0),
-		.USE_RESET_REQUEST_IN5     (0),
-		.USE_RESET_REQUEST_IN6     (0),
-		.USE_RESET_REQUEST_IN7     (0),
-		.USE_RESET_REQUEST_IN8     (0),
-		.USE_RESET_REQUEST_IN9     (0),
-		.USE_RESET_REQUEST_IN10    (0),
-		.USE_RESET_REQUEST_IN11    (0),
-		.USE_RESET_REQUEST_IN12    (0),
-		.USE_RESET_REQUEST_IN13    (0),
-		.USE_RESET_REQUEST_IN14    (0),
-		.USE_RESET_REQUEST_IN15    (0),
-		.ADAPT_RESET_REQUEST       (0)
-	) rst_controller_002 (
-		.reset_in0      (~reset_reset_n),                     // reset_in0.reset
-		.reset_in1      (sys_sdram_pll_0_reset_source_reset), // reset_in1.reset
-		.clk            (),                                   //       clk.clk
-		.reset_out      (rst_controller_002_reset_out_reset), // reset_out.reset
-		.reset_req      (),                                   // (terminated)
-		.reset_req_in0  (1'b0),                               // (terminated)
+		.reset_in1      (1'b0),                               // (terminated)
 		.reset_req_in1  (1'b0),                               // (terminated)
 		.reset_in2      (1'b0),                               // (terminated)
 		.reset_req_in2  (1'b0),                               // (terminated)

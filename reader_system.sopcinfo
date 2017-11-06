@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <EnsembleReport name="reader_system" kind="reader_system" version="1.0" fabric="QSYS">
  <!-- Format version 16.0 211 (Future versions may contain additional information.) -->
- <!-- 2017.11.03.15:58:44 -->
+ <!-- 2017.11.06.14:32:44 -->
  <!-- A collection of modules and connections -->
  <parameter name="AUTO_GENERATION_ID">
   <type>java.lang.Integer</type>
-  <value>1509749924</value>
+  <value>1510007564</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>false</visible>
@@ -1179,12 +1179,6 @@ parameters are a RESULT of the module parameters. -->
     <width>1</width>
     <role>clk</role>
    </port>
-   <clockDomainMember>
-    <isBridge>false</isBridge>
-    <moduleName>sdram_controller_0</moduleName>
-    <slaveName>clk</slaveName>
-    <name>sdram_controller_0.clk</name>
-   </clockDomainMember>
   </interface>
   <interface name="out_clk_1" kind="clock_source" version="16.0">
    <!-- The connection points exposed by a module instance for the
@@ -2471,6 +2465,18 @@ parameters are a RESULT of the module parameters. -->
     <width>1</width>
     <role>clk</role>
    </port>
+   <clockDomainMember>
+    <isBridge>false</isBridge>
+    <moduleName>sdram_controller_0</moduleName>
+    <slaveName>clk</slaveName>
+    <name>sdram_controller_0.clk</name>
+   </clockDomainMember>
+   <clockDomainMember>
+    <isBridge>false</isBridge>
+    <moduleName>clock_bridge_0</moduleName>
+    <slaveName>in_clk</slaveName>
+    <name>clock_bridge_0.in_clk</name>
+   </clockDomainMember>
   </interface>
   <interface name="sdram_clk" kind="clock_source" version="16.0">
    <!-- The connection points exposed by a module instance for the
@@ -2540,12 +2546,6 @@ parameters are a RESULT of the module parameters. -->
     <width>1</width>
     <role>clk</role>
    </port>
-   <clockDomainMember>
-    <isBridge>false</isBridge>
-    <moduleName>clock_bridge_0</moduleName>
-    <slaveName>in_clk</slaveName>
-    <name>clock_bridge_0.in_clk</name>
-   </clockDomainMember>
   </interface>
   <interface name="reset_source" kind="reset_source" version="16.0">
    <!-- The connection points exposed by a module instance for the
@@ -2664,10 +2664,10 @@ parameters are a RESULT of the module parameters. -->
   <endConnectionPoint>ref_clk</endConnectionPoint>
  </connection>
  <connection
-   name="clock_bridge_0.out_clk/sdram_controller_0.clk"
+   name="sys_sdram_pll_0.sys_clk/sdram_controller_0.clk"
    kind="clock"
    version="16.0"
-   start="clock_bridge_0.out_clk"
+   start="sys_sdram_pll_0.sys_clk"
    end="sdram_controller_0.clk">
   <parameter name="deviceFamily">
    <type>java.lang.String</type>
@@ -2685,16 +2685,16 @@ parameters are a RESULT of the module parameters. -->
    <visible>true</visible>
    <valid>true</valid>
   </parameter>
-  <startModule>clock_bridge_0</startModule>
-  <startConnectionPoint>out_clk</startConnectionPoint>
+  <startModule>sys_sdram_pll_0</startModule>
+  <startConnectionPoint>sys_clk</startConnectionPoint>
   <endModule>sdram_controller_0</endModule>
   <endConnectionPoint>clk</endConnectionPoint>
  </connection>
  <connection
-   name="sys_sdram_pll_0.sdram_clk/clock_bridge_0.in_clk"
+   name="sys_sdram_pll_0.sys_clk/clock_bridge_0.in_clk"
    kind="clock"
    version="16.0"
-   start="sys_sdram_pll_0.sdram_clk"
+   start="sys_sdram_pll_0.sys_clk"
    end="clock_bridge_0.in_clk">
   <parameter name="deviceFamily">
    <type>java.lang.String</type>
@@ -2713,7 +2713,7 @@ parameters are a RESULT of the module parameters. -->
    <valid>true</valid>
   </parameter>
   <startModule>sys_sdram_pll_0</startModule>
-  <startConnectionPoint>sdram_clk</startConnectionPoint>
+  <startConnectionPoint>sys_clk</startConnectionPoint>
   <endModule>clock_bridge_0</endModule>
   <endConnectionPoint>in_clk</endConnectionPoint>
  </connection>
@@ -2770,60 +2770,6 @@ parameters are a RESULT of the module parameters. -->
   <startConnectionPoint>clk_reset</startConnectionPoint>
   <endModule>Altera_UP_SD_Card_Avalon_Interface_0</endModule>
   <endConnectionPoint>reset</endConnectionPoint>
- </connection>
- <connection
-   name="clk_sdcard.clk_reset/sdram_controller_0.reset"
-   kind="reset"
-   version="16.0"
-   start="clk_sdcard.clk_reset"
-   end="sdram_controller_0.reset">
-  <parameter name="deviceFamily">
-   <type>java.lang.String</type>
-   <value>UNKNOWN</value>
-   <derived>false</derived>
-   <enabled>true</enabled>
-   <visible>true</visible>
-   <valid>true</valid>
-  </parameter>
-  <parameter name="generateLegacySim">
-   <type>boolean</type>
-   <value>false</value>
-   <derived>false</derived>
-   <enabled>true</enabled>
-   <visible>true</visible>
-   <valid>true</valid>
-  </parameter>
-  <startModule>clk_sdcard</startModule>
-  <startConnectionPoint>clk_reset</startConnectionPoint>
-  <endModule>sdram_controller_0</endModule>
-  <endConnectionPoint>reset</endConnectionPoint>
- </connection>
- <connection
-   name="sys_sdram_pll_0.reset_source/sys_sdram_pll_0.ref_reset"
-   kind="reset"
-   version="16.0"
-   start="sys_sdram_pll_0.reset_source"
-   end="sys_sdram_pll_0.ref_reset">
-  <parameter name="deviceFamily">
-   <type>java.lang.String</type>
-   <value>UNKNOWN</value>
-   <derived>false</derived>
-   <enabled>true</enabled>
-   <visible>true</visible>
-   <valid>true</valid>
-  </parameter>
-  <parameter name="generateLegacySim">
-   <type>boolean</type>
-   <value>false</value>
-   <derived>false</derived>
-   <enabled>true</enabled>
-   <visible>true</visible>
-   <valid>true</valid>
-  </parameter>
-  <startModule>sys_sdram_pll_0</startModule>
-  <startConnectionPoint>reset_source</startConnectionPoint>
-  <endModule>sys_sdram_pll_0</endModule>
-  <endConnectionPoint>ref_reset</endConnectionPoint>
  </connection>
  <connection
    name="sys_sdram_pll_0.reset_source/sdram_controller_0.reset"
@@ -2981,7 +2927,7 @@ parameters are a RESULT of the module parameters. -->
   <version>16.0</version>
  </plugin>
  <plugin>
-  <instanceCount>5</instanceCount>
+  <instanceCount>3</instanceCount>
   <name>reset</name>
   <type>com.altera.entityinterfaces.IElementClass</type>
   <subtype>com.altera.entityinterfaces.IConnection</subtype>

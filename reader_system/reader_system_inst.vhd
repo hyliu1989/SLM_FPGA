@@ -13,6 +13,17 @@
 			altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat3           : inout std_logic                     := 'X';             -- b_SD_dat3
 			altera_up_sd_card_avalon_interface_0_conduit_end_o_SD_clock          : out   std_logic;                                        -- o_SD_clock
 			clk_clk                                                              : in    std_logic                     := 'X';             -- clk
+			reset_reset_n                                                        : in    std_logic                     := 'X';             -- reset_n
+			sdram_controller_clock_0_clk                                         : out   std_logic;                                        -- clk
+			sdram_controller_0_s1_address                                        : in    std_logic_vector(24 downto 0) := (others => 'X'); -- address
+			sdram_controller_0_s1_byteenable_n                                   : in    std_logic_vector(1 downto 0)  := (others => 'X'); -- byteenable_n
+			sdram_controller_0_s1_chipselect                                     : in    std_logic                     := 'X';             -- chipselect
+			sdram_controller_0_s1_writedata                                      : in    std_logic_vector(15 downto 0) := (others => 'X'); -- writedata
+			sdram_controller_0_s1_read_n                                         : in    std_logic                     := 'X';             -- read_n
+			sdram_controller_0_s1_write_n                                        : in    std_logic                     := 'X';             -- write_n
+			sdram_controller_0_s1_readdata                                       : out   std_logic_vector(15 downto 0);                    -- readdata
+			sdram_controller_0_s1_readdatavalid                                  : out   std_logic;                                        -- readdatavalid
+			sdram_controller_0_s1_waitrequest                                    : out   std_logic;                                        -- waitrequest
 			sdram_controller_0_wire_addr                                         : out   std_logic_vector(12 downto 0);                    -- addr
 			sdram_controller_0_wire_ba                                           : out   std_logic_vector(1 downto 0);                     -- ba
 			sdram_controller_0_wire_cas_n                                        : out   std_logic;                                        -- cas_n
@@ -22,17 +33,7 @@
 			sdram_controller_0_wire_dqm                                          : out   std_logic_vector(1 downto 0);                     -- dqm
 			sdram_controller_0_wire_ras_n                                        : out   std_logic;                                        -- ras_n
 			sdram_controller_0_wire_we_n                                         : out   std_logic;                                        -- we_n
-			reset_reset_n                                                        : in    std_logic                     := 'X';             -- reset_n
-			sdram_clock_0_clk                                                    : out   std_logic;                                        -- clk
-			sdram_controller_0_s1_address                                        : in    std_logic_vector(24 downto 0) := (others => 'X'); -- address
-			sdram_controller_0_s1_byteenable_n                                   : in    std_logic_vector(1 downto 0)  := (others => 'X'); -- byteenable_n
-			sdram_controller_0_s1_chipselect                                     : in    std_logic                     := 'X';             -- chipselect
-			sdram_controller_0_s1_writedata                                      : in    std_logic_vector(15 downto 0) := (others => 'X'); -- writedata
-			sdram_controller_0_s1_read_n                                         : in    std_logic                     := 'X';             -- read_n
-			sdram_controller_0_s1_write_n                                        : in    std_logic                     := 'X';             -- write_n
-			sdram_controller_0_s1_readdata                                       : out   std_logic_vector(15 downto 0);                    -- readdata
-			sdram_controller_0_s1_readdatavalid                                  : out   std_logic;                                        -- readdatavalid
-			sdram_controller_0_s1_waitrequest                                    : out   std_logic                                         -- waitrequest
+			sys_sdram_pll_0_sdram_clk_clk                                        : out   std_logic                                         -- clk
 		);
 	end component reader_system;
 
@@ -51,6 +52,17 @@
 			altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat3           => CONNECTED_TO_altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat3,           --                                                         .b_SD_dat3
 			altera_up_sd_card_avalon_interface_0_conduit_end_o_SD_clock          => CONNECTED_TO_altera_up_sd_card_avalon_interface_0_conduit_end_o_SD_clock,          --                                                         .o_SD_clock
 			clk_clk                                                              => CONNECTED_TO_clk_clk,                                                              --                                                      clk.clk
+			reset_reset_n                                                        => CONNECTED_TO_reset_reset_n,                                                        --                                                    reset.reset_n
+			sdram_controller_clock_0_clk                                         => CONNECTED_TO_sdram_controller_clock_0_clk,                                         --                                 sdram_controller_clock_0.clk
+			sdram_controller_0_s1_address                                        => CONNECTED_TO_sdram_controller_0_s1_address,                                        --                                    sdram_controller_0_s1.address
+			sdram_controller_0_s1_byteenable_n                                   => CONNECTED_TO_sdram_controller_0_s1_byteenable_n,                                   --                                                         .byteenable_n
+			sdram_controller_0_s1_chipselect                                     => CONNECTED_TO_sdram_controller_0_s1_chipselect,                                     --                                                         .chipselect
+			sdram_controller_0_s1_writedata                                      => CONNECTED_TO_sdram_controller_0_s1_writedata,                                      --                                                         .writedata
+			sdram_controller_0_s1_read_n                                         => CONNECTED_TO_sdram_controller_0_s1_read_n,                                         --                                                         .read_n
+			sdram_controller_0_s1_write_n                                        => CONNECTED_TO_sdram_controller_0_s1_write_n,                                        --                                                         .write_n
+			sdram_controller_0_s1_readdata                                       => CONNECTED_TO_sdram_controller_0_s1_readdata,                                       --                                                         .readdata
+			sdram_controller_0_s1_readdatavalid                                  => CONNECTED_TO_sdram_controller_0_s1_readdatavalid,                                  --                                                         .readdatavalid
+			sdram_controller_0_s1_waitrequest                                    => CONNECTED_TO_sdram_controller_0_s1_waitrequest,                                    --                                                         .waitrequest
 			sdram_controller_0_wire_addr                                         => CONNECTED_TO_sdram_controller_0_wire_addr,                                         --                                  sdram_controller_0_wire.addr
 			sdram_controller_0_wire_ba                                           => CONNECTED_TO_sdram_controller_0_wire_ba,                                           --                                                         .ba
 			sdram_controller_0_wire_cas_n                                        => CONNECTED_TO_sdram_controller_0_wire_cas_n,                                        --                                                         .cas_n
@@ -60,16 +72,6 @@
 			sdram_controller_0_wire_dqm                                          => CONNECTED_TO_sdram_controller_0_wire_dqm,                                          --                                                         .dqm
 			sdram_controller_0_wire_ras_n                                        => CONNECTED_TO_sdram_controller_0_wire_ras_n,                                        --                                                         .ras_n
 			sdram_controller_0_wire_we_n                                         => CONNECTED_TO_sdram_controller_0_wire_we_n,                                         --                                                         .we_n
-			reset_reset_n                                                        => CONNECTED_TO_reset_reset_n,                                                        --                                                    reset.reset_n
-			sdram_clock_0_clk                                                    => CONNECTED_TO_sdram_clock_0_clk,                                                    --                                            sdram_clock_0.clk
-			sdram_controller_0_s1_address                                        => CONNECTED_TO_sdram_controller_0_s1_address,                                        --                                    sdram_controller_0_s1.address
-			sdram_controller_0_s1_byteenable_n                                   => CONNECTED_TO_sdram_controller_0_s1_byteenable_n,                                   --                                                         .byteenable_n
-			sdram_controller_0_s1_chipselect                                     => CONNECTED_TO_sdram_controller_0_s1_chipselect,                                     --                                                         .chipselect
-			sdram_controller_0_s1_writedata                                      => CONNECTED_TO_sdram_controller_0_s1_writedata,                                      --                                                         .writedata
-			sdram_controller_0_s1_read_n                                         => CONNECTED_TO_sdram_controller_0_s1_read_n,                                         --                                                         .read_n
-			sdram_controller_0_s1_write_n                                        => CONNECTED_TO_sdram_controller_0_s1_write_n,                                        --                                                         .write_n
-			sdram_controller_0_s1_readdata                                       => CONNECTED_TO_sdram_controller_0_s1_readdata,                                       --                                                         .readdata
-			sdram_controller_0_s1_readdatavalid                                  => CONNECTED_TO_sdram_controller_0_s1_readdatavalid,                                  --                                                         .readdatavalid
-			sdram_controller_0_s1_waitrequest                                    => CONNECTED_TO_sdram_controller_0_s1_waitrequest                                     --                                                         .waitrequest
+			sys_sdram_pll_0_sdram_clk_clk                                        => CONNECTED_TO_sys_sdram_pll_0_sdram_clk_clk                                         --                                sys_sdram_pll_0_sdram_clk.clk
 		);
 

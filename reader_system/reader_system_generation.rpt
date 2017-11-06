@@ -18,6 +18,7 @@ Progress: Building connections
 Progress: Parameterizing connections
 Progress: Validating
 Progress: Done reading input file
+Warning: reader_system.: You have exported the interface sdram_controller_0.s1 but not its associated reset interface.  Export the driver(s) of sdram_controller_0.reset
 Info: qsys-generate succeeded.
 Info: Finished: Create block symbol file (.bsf)
 Info: 
@@ -41,10 +42,11 @@ Progress: Building connections
 Progress: Parameterizing connections
 Progress: Validating
 Progress: Done reading input file
+Warning: reader_system.: You have exported the interface sdram_controller_0.s1 but not its associated reset interface.  Export the driver(s) of sdram_controller_0.reset
 Info: reader_system: Generating reader_system "reader_system" for QUARTUS_SYNTH
 Info: Altera_UP_SD_Card_Avalon_Interface_0: "reader_system" instantiated Altera_UP_SD_Card_Avalon_Interface "Altera_UP_SD_Card_Avalon_Interface_0"
 Info: sdram_controller_0: Starting RTL generation for module 'reader_system_sdram_controller_0'
-Info: sdram_controller_0:   Generation command is [exec C:/altera_lite/16.0/quartus/bin64/perl/bin/perl.exe -I C:/altera_lite/16.0/quartus/bin64/perl/lib -I C:/altera_lite/16.0/quartus/sopc_builder/bin/europa -I C:/altera_lite/16.0/quartus/sopc_builder/bin/perl_lib -I C:/altera_lite/16.0/quartus/sopc_builder/bin -I C:/altera_lite/16.0/quartus/../ip/altera/sopc_builder_ip/common -I C:/altera_lite/16.0/quartus/../ip/altera/sopc_builder_ip/altera_avalon_new_sdram_controller -- C:/altera_lite/16.0/quartus/../ip/altera/sopc_builder_ip/altera_avalon_new_sdram_controller/generate_rtl.pl --name=reader_system_sdram_controller_0 --dir=C:/Users/WALLER~1/AppData/Local/Temp/alt7473_3474098157319363290.dir/0005_sdram_controller_0_gen/ --quartus_dir=C:/altera_lite/16.0/quartus --verilog --config=C:/Users/WALLER~1/AppData/Local/Temp/alt7473_3474098157319363290.dir/0005_sdram_controller_0_gen//reader_system_sdram_controller_0_component_configuration.pl  --do_build_sim=0  ]
+Info: sdram_controller_0:   Generation command is [exec C:/altera_lite/16.0/quartus/bin64/perl/bin/perl.exe -I C:/altera_lite/16.0/quartus/bin64/perl/lib -I C:/altera_lite/16.0/quartus/sopc_builder/bin/europa -I C:/altera_lite/16.0/quartus/sopc_builder/bin/perl_lib -I C:/altera_lite/16.0/quartus/sopc_builder/bin -I C:/altera_lite/16.0/quartus/../ip/altera/sopc_builder_ip/common -I C:/altera_lite/16.0/quartus/../ip/altera/sopc_builder_ip/altera_avalon_new_sdram_controller -- C:/altera_lite/16.0/quartus/../ip/altera/sopc_builder_ip/altera_avalon_new_sdram_controller/generate_rtl.pl --name=reader_system_sdram_controller_0 --dir=C:/Users/WALLER~1/AppData/Local/Temp/alt7476_1265986348959392822.dir/0005_sdram_controller_0_gen/ --quartus_dir=C:/altera_lite/16.0/quartus --verilog --config=C:/Users/WALLER~1/AppData/Local/Temp/alt7476_1265986348959392822.dir/0005_sdram_controller_0_gen//reader_system_sdram_controller_0_component_configuration.pl  --do_build_sim=0  ]
 Info: sdram_controller_0: Done RTL generation for module 'reader_system_sdram_controller_0'
 Info: sdram_controller_0: "reader_system" instantiated altera_avalon_new_sdram_controller "sdram_controller_0"
 Info: sys_sdram_pll_0: "reader_system" instantiated altera_up_avalon_sys_sdram_pll "sys_sdram_pll_0"

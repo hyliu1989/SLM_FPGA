@@ -95,11 +95,6 @@
    type="reset"
    dir="end" />
  <interface
-   name="sdram_clock_0"
-   internal="clock_bridge_0.out_clk_1"
-   type="clock"
-   dir="start" />
- <interface
    name="sdram_controller_0_s1"
    internal="sdram_controller_0.s1"
    type="avalon"
@@ -109,6 +104,16 @@
    internal="sdram_controller_0.wire"
    type="conduit"
    dir="end" />
+ <interface
+   name="sdram_controller_clock_0"
+   internal="clock_bridge_0.out_clk_1"
+   type="clock"
+   dir="start" />
+ <interface
+   name="sys_sdram_pll_0_sdram_clk"
+   internal="sys_sdram_pll_0.sdram_clk"
+   type="clock"
+   dir="start" />
  <module
    name="Altera_UP_SD_Card_Avalon_Interface_0"
    kind="Altera_UP_SD_Card_Avalon_Interface"
@@ -214,17 +219,17 @@
  <connection
    kind="clock"
    version="16.0"
-   start="clock_bridge_0.out_clk"
-   end="sdram_controller_0.clk" />
- <connection
-   kind="clock"
-   version="16.0"
    start="sys_sdram_pll_0.sdram_clk"
    end="sdram_tri_controller_0.clock_sink" />
  <connection
    kind="clock"
    version="16.0"
-   start="sys_sdram_pll_0.sdram_clk"
+   start="sys_sdram_pll_0.sys_clk"
+   end="sdram_controller_0.clk" />
+ <connection
+   kind="clock"
+   version="16.0"
+   start="sys_sdram_pll_0.sys_clk"
    end="clock_bridge_0.in_clk" />
  <connection
    kind="reset"
@@ -240,17 +245,7 @@
    kind="reset"
    version="16.0"
    start="clk_sdcard.clk_reset"
-   end="sdram_controller_0.reset" />
- <connection
-   kind="reset"
-   version="16.0"
-   start="clk_sdcard.clk_reset"
    end="sdram_tri_controller_0.reset_sink" />
- <connection
-   kind="reset"
-   version="16.0"
-   start="sys_sdram_pll_0.reset_source"
-   end="sys_sdram_pll_0.ref_reset" />
  <connection
    kind="reset"
    version="16.0"
