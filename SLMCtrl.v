@@ -201,20 +201,34 @@ module SLMCtrl(
 //=======================================================
 //  REG/WIRE declarations
 //=======================================================
-wire 		vga_clock;
-wire [7:0]	vga_data;
-wire		vga_fifo_rclk;
-wire		vga_fifo_rreq;
-wire		vga_fifo_aclear;
-wire		vga_load_to_fifo_req;
-wire [12:0]	vga_fifo_loadline;
-wire		fifo_wclk;
-wire [7:0]	fifo_wdata;
-wire		fifo_wen;
+wire        vga_clock;
+wire [7:0]  vga_data;
+wire        vga_fifo_rclk;
+wire        vga_fifo_rreq;
+wire        vga_fifo_aclear;
+wire        vga_load_to_fifo_req;
+wire [12:0] vga_fifo_loadline_id;
+wire        fifo_wclk;
+wire [7:0]  fifo_wdata;
+wire        fifo_wen;
+
+wire        sdram_ctrl_clock;
+wire        sdram_ctrl_wait_req;
+wire [24:0] sdram_ctrl_write_addr;
+wire        sdram_ctrl_write_en;
+wire [15:0] sdram_ctrl_write_data;
+wire        sdram_ctrl_test_write_done;
+
+wire        sdram_ctrl_read_en;
+wire [24:0] sdram_ctrl_addr;
+wire [24:0] sdram_ctrl_read_addr;
+wire [15:0] sdram_ctrl_read_data;
+wire        sdram_ctrl_read_datavalid;
 
 // for delayed reset signal
 reg  [26:0] local_counter;
-reg			delayed_reset_n;
+reg         delayed_reset_n;
+reg         delayed_reset_n_1;
 
 //=======================================================
 //  Functional coding
@@ -228,26 +242,18 @@ always @ (posedge CLOCK_50) begin
 end
 always @ (*) begin
 	// 						   27'b000_0100_1100_0100_1011_0100_0000 // number of clocks for 0.1 second
-	if (local_counter[26:22] == 5'b011_10)
+	if (local_counter[26:22] == 5'b000_01)  // 5'b000_00 is not allowed since an idle counter has this pattern
 		delayed_reset_n = 1'b0;
 	else
 		delayed_reset_n = 1'b1;
+	
+	if (local_counter[26:22] == 5'b000_11)
+		delayed_reset_n_1 = 1'b0;
+	else
+		delayed_reset_n_1 = 1'b1;
 end
-assign LEDR[0] = delayed_reset_n;
+assign LEDR[9] = delayed_reset_n;
 
-/*
-reg [29:0] temp_cnt;
-always @ (posedge vga_clock) begin
-	temp_cnt <= temp_cnt + 1'b1;
-end
-assign LEDR[1] = temp_cnt[28];
-
-reg [29:0] temp_cnt2;
-always @ (posedge TD_CLK27) begin
-	temp_cnt2 <= temp_cnt2 + 1'b1;
-end
-assign LEDR[2] = temp_cnt2[25];
-*/
 
 //=======================================================
 //  Structural coding
@@ -268,7 +274,7 @@ VGA_Controller vga_ctrl_0(
 	.oFIFO_REQ(vga_fifo_rreq),
 	// FIFO load signal
 	.oFIFO_LOAD_REQ(vga_load_to_fifo_req),
-	.oFIFO_LOAD_VLINE(vga_fifo_loadline),
+	.oFIFO_LOAD_VLINE(vga_fifo_loadline_id),
 	.oFIFO_CLEAR(vga_fifo_aclear),
 	
 	//	VGA Side
@@ -289,7 +295,7 @@ VGA_Controller vga_ctrl_0(
 sdram_to_vga_fifo testing_0(
 	.iRST_N(delayed_reset_n),
 	.iCLK(vga_clock),
-	.iVGA_LINE_TO_LOAD(vga_fifo_loadline),
+	.iVGA_LINE_TO_LOAD(vga_fifo_loadline_id),
 	.iVGA_LOAD_TO_FIFO_REQ(vga_load_to_fifo_req),
 	
 	.oWCLK(fifo_wclk),
@@ -311,5 +317,85 @@ vga_fifo vf0(
 	.wrfull()  // output
 );
 
+wire              HPS_SD_CLK;
+wire              HPS_SD_CMD;
+wire       [3:0]  HPS_SD_DATA;
+reader_system reader_system_0(
+		// clock and reset
+		.clk_clk(CLOCK_50),
+		.reset_reset_n(delayed_reset_n),
+		
+		// SD card controller signals
+		.altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_chipselect(),  //  input  wire
+		.altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_address(),     //  input  wire [7:0]
+		.altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_read(),        //  input  wire
+		.altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_write(),       //  input  wire
+		.altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_byteenable(),  //  input  wire [3:0]
+		.altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_writedata(),   //  input  wire [31:0]
+		.altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_readdata(),    //  output wire [31:0]
+		.altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_waitrequest(), //  output wire
+		
+		// SD card device wires
+		.altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_cmd(HPS_SD_CMD),
+		.altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat(HPS_SD_DATA[0]),
+		.altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat3(HPS_SD_DATA[3]),
+		.altera_up_sd_card_avalon_interface_0_conduit_end_o_SD_clock(HPS_SD_CLK),
+		
+		// SDRAM controller signals
+		.sdram_controller_0_s1_address(sdram_ctrl_addr),                   //  input  wire [24:0]
+		.sdram_controller_0_s1_byteenable_n(2'b00),             //  input  wire [1:0]
+		.sdram_controller_0_s1_chipselect(1'b1),                                 //  input  wire
+		.sdram_controller_0_s1_writedata(sdram_ctrl_write_data),                 //  input  wire [15:0]
+		.sdram_controller_0_s1_read_n(~sdram_ctrl_read_en),                                         //  input  wire
+		.sdram_controller_0_s1_write_n(~sdram_ctrl_write_en),                    //  input  wire
+		.sdram_controller_0_s1_readdata(sdram_ctrl_read_data),                                       //  output wire [15:0]
+		.sdram_controller_0_s1_readdatavalid(sdram_ctrl_read_datavalid),                                  //  output wire
+		.sdram_controller_0_s1_waitrequest(sdram_ctrl_wait_req),                 //  output wire
+		.sdram_controller_clock_0_clk(sdram_ctrl_clock),                         //  output wire, the clock signal that drives the controller
+		
+		// SDRAM device wires
+		.sdram_controller_0_wire_addr(DRAM_ADDR),
+		.sdram_controller_0_wire_ba(DRAM_BA),
+		.sdram_controller_0_wire_cas_n(DRAM_CAS_N),
+		.sdram_controller_0_wire_cke(DRAM_CKE),
+		.sdram_controller_0_wire_cs_n(DRAM_CS_N),
+		.sdram_controller_0_wire_dq(DRAM_DQ),
+		.sdram_controller_0_wire_dqm({DRAM_UDQM,DRAM_LDQM}),
+		.sdram_controller_0_wire_ras_n(DRAM_RAS_N),
+		.sdram_controller_0_wire_we_n(DRAM_WE_N),
+		.sys_sdram_pll_0_sdram_clk_clk(DRAM_CLK)
+	);
+
+	
+	
+assign sdram_ctrl_addr = sdram_ctrl_test_write_done? sdram_ctrl_read_addr : sdram_ctrl_write_addr;
+// testing code for sdram writing
+test_sdram_write test_sdram_write_0(
+	.iCLK(sdram_ctrl_clock),
+	.iRST(~delayed_reset_n_1),
+	
+	.iWAIT_REQUEST(sdram_ctrl_wait_req),
+	.oWR_EN(sdram_ctrl_write_en),
+	.oWR_DATA(sdram_ctrl_write_data),
+	.oWR_ADDR(sdram_ctrl_write_addr),
+	.oDONE(sdram_ctrl_test_write_done)
+);
+
+// testing code for sdram reading
+test_sdram_read test_sdram_read_0(
+	.iCLK(sdram_ctrl_clock),
+	.iRST(~delayed_reset_n_1),
+	
+	.iTEST_WRITE_DONE(sdram_ctrl_test_write_done),
+	
+	.iWAIT_REQUEST(sdram_ctrl_wait_req),
+	.oRD_EN(sdram_ctrl_read_en),
+	.oRD_ADDR(sdram_ctrl_read_addr),
+	.iRD_DATA(sdram_ctrl_read_data),
+	.iRD_DATAVALID(sdram_ctrl_read_datavalid),
+	
+	.iSW(SW),
+	.oDATA(LEDR[7:0])
+);
 
 endmodule
