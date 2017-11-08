@@ -1,0 +1,23 @@
+# # File gsaved with Nlview version 6.3.8  2013-12-19 bk=1.2992 VDI=34 GEI=35
+# 
+preplace inst reader_system.sys_sdram_pll_0.sys_pll -pg 1
+preplace inst reader_system.sys_sdram_pll_0.reset_from_locked -pg 1
+preplace inst reader_system.sdram_controller_0 -pg 1 -lvl 2 -y 350
+preplace inst reader_system -pg 1 -lvl 1 -y 40 -regy -20
+preplace inst reader_system.clk_sdcard -pg 1 -lvl 1 -y 30
+preplace inst reader_system.sys_sdram_pll_0 -pg 1 -lvl 2 -y 220
+preplace inst reader_system.clock_bridge_0 -pg 1 -lvl 3 -y 350
+preplace inst reader_system.Altera_UP_SD_Card_Avalon_Interface_0 -pg 1 -lvl 2 -y 90
+preplace netloc POINT_TO_POINT<net_container>reader_system</net_container>(SLAVE)clock_bridge_0.in_clk,(MASTER)sys_sdram_pll_0.sdram_clk) 1 2 1 690
+preplace netloc POINT_TO_POINT<net_container>reader_system</net_container>(MASTER)clock_bridge_0.out_clk,(SLAVE)sdram_controller_0.clk) 1 1 3 430 340 NJ 340 850
+preplace netloc EXPORT<net_container>reader_system</net_container>(SLAVE)reader_system.altera_up_sd_card_avalon_interface_0_conduit_end,(SLAVE)Altera_UP_SD_Card_Avalon_Interface_0.conduit_end) 1 0 2 NJ 140 NJ
+preplace netloc EXPORT<net_container>reader_system</net_container>(SLAVE)reader_system.altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave,(SLAVE)Altera_UP_SD_Card_Avalon_Interface_0.avalon_sdcard_slave) 1 0 2 NJ 100 NJ
+preplace netloc EXPORT<net_container>reader_system</net_container>(SLAVE)sdram_controller_0.s1,(SLAVE)reader_system.sdram_controller_0_s1) 1 0 2 NJ 400 NJ
+preplace netloc FAN_OUT<net_container>reader_system</net_container>(SLAVE)sys_sdram_pll_0.ref_clk,(MASTER)clk_sdcard.clk,(SLAVE)Altera_UP_SD_Card_Avalon_Interface_0.clk) 1 1 1 430
+preplace netloc EXPORT<net_container>reader_system</net_container>(SLAVE)clk_sdcard.clk_in_reset,(SLAVE)reader_system.reset) 1 0 1 NJ
+preplace netloc EXPORT<net_container>reader_system</net_container>(SLAVE)reader_system.clk,(SLAVE)clk_sdcard.clk_in) 1 0 1 NJ
+preplace netloc INTERCONNECT<net_container>reader_system</net_container>(MASTER)sys_sdram_pll_0.reset_source,(SLAVE)sys_sdram_pll_0.ref_reset,(MASTER)clk_sdcard.clk_reset,(SLAVE)sdram_controller_0.reset,(SLAVE)Altera_UP_SD_Card_Avalon_Interface_0.reset) 1 1 2 410 320 670
+preplace netloc EXPORT<net_container>reader_system</net_container>(SLAVE)sdram_controller_0.wire,(SLAVE)reader_system.sdram_controller_0_wire) 1 0 2 NJ 420 NJ
+preplace netloc EXPORT<net_container>reader_system</net_container>(MASTER)clock_bridge_0.out_clk_1,(MASTER)reader_system.sdram_clock_0) 1 3 1 N
+levelinfo -pg 1 0 200 980
+levelinfo -hier reader_system 210 240 510 720 870
