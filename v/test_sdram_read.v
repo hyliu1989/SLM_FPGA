@@ -9,9 +9,11 @@ module test_sdram_read(
 	output [24:0] oRD_ADDR,
 	input  [15:0] iRD_DATA,
 	input         iRD_DATAVALID,
+	output [7:0]  oDATA,
 	
 	input  [9:0]  iSW,
-	output [7:0]  oDATA
+	input         iUPDATE_FRAME,
+	input         iUPDATE_Y
 );
 /*
 Reading the data in sdram
@@ -27,11 +29,33 @@ parameter ST_READ_DONE = 4'd15;
 reg  [3:0]  states, states_next;
 reg  [19:0] counter_idle, counter_idle_next;
 reg  [15:0] data_captured;
+reg  [9:0]  y_coord;
+reg  [5:0]  frame_id;
 
-assign oRD_ADDR[24:9] = 16'd0;
-assign oRD_ADDR[8:0] = iSW[9:1];
+
 assign oRD_EN = (states == ST_READ_REQ) || (states == ST_READ_STALLED);
 assign oDATA = (iSW[0] == 0)? data_captured[15:8] : data_captured[7:0];
+
+// =============================
+//  read addr managing
+// =============================
+assign oRD_ADDR[24:19] = frame_id;
+assign oRD_ADDR[18:9] = y_coord;
+assign oRD_ADDR[8:0] = iSW[9:1];
+always @ (posedge iRST or posedge iCLK) begin
+	if(iRST) begin
+		frame_id <= 0;
+		y_coord <= 0;
+	end
+	else begin
+		if(iUPDATE_FRAME)
+			frame_id <= iSW[5:0];
+		if(iUPDATE_Y)
+			y_coord <= iSW[9:0];
+
+	end
+end
+//  end of read addr managing
 
 
 // states_next
