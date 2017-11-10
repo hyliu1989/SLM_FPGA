@@ -60,10 +60,10 @@ end
 
 // states_next
 always @ (*) case(states)
-	ST_IDLE:  // falling edge of write_done triggers the reading
+	ST_IDLE:  // asserted write_done allows the reading when counter_idle hits 0
 		states_next = (counter_idle==0 && iTEST_WRITE_DONE)? ST_READ_REQ:ST_IDLE;
 	
-	ST_READ_REQ: begin  //  send write request
+	ST_READ_REQ: begin  //  send read request
 		if(iWAIT_REQUEST)
 			states_next = ST_READ_STALLED;
 		else begin
@@ -71,7 +71,7 @@ always @ (*) case(states)
 		end
 	end
 	
-	ST_READ_STALLED: begin  // holding the counter because the wait request
+	ST_READ_STALLED: begin
 		if(iWAIT_REQUEST)
 			states_next = ST_READ_STALLED;
 		else begin
