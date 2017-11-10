@@ -306,7 +306,7 @@ VGA_Controller vga_ctrl_0(
 );
 
 sdram_to_vga_fifo testing_0(
-	.iRST_N(~delayed_reset),
+	.iRST(delayed_reset),
 	.iCLK(vga_clock),
 	.iVGA_LINE_TO_LOAD(vga_fifo_loadline_id),
 	.iVGA_LOAD_TO_FIFO_REQ(vga_load_to_fifo_req),
@@ -379,8 +379,8 @@ reader_system reader_system_0(
 		.sys_sdram_pll_0_sdram_clk_clk(DRAM_CLK)
 	);
 
-	
-	
+
+
 assign sdram_ctrl_addr = sdram_ctrl_test_write_done? sdram_ctrl_read_addr : sdram_ctrl_write_addr;
 // testing code for sdram writing
 test_sdram_write test_sdram_write_0(

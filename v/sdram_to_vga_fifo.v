@@ -1,49 +1,58 @@
 module	sdram_to_vga_fifo(
-	iRST_N,
-	iCLK,
-	iVGA_LINE_TO_LOAD,
-	iVGA_LOAD_TO_FIFO_REQ,
+	input         iRST,
+	input         iCLK,
 	
-	oWCLK,
-	oWDATA,
-	oWEN,
+	// control signals for current frame
+	input [5:0]   iFRAME_ID,
+	input         iOFFSET_H_SIGN,
+	input [8:0]   iOFFSET_H,  // horizontal offset, + to the right
+	input         iOFFSET_V_SIGN,
+	input [8:0]   iOFFSET_V,  // vertial offset, + to the bottom
 	
-	test_signal_0
+	// VGA signals (as a trigger to load)
+	input [12:0]  iVGA_LINE_TO_LOAD,
+	input         iVGA_LOAD_TO_FIFO_REQ,
+	
+	// read from SDRAM
+	input         iWAIT_REQUEST,
+	output        oRD_EN,
+	output [24:0] oRD_ADDR,
+	input  [15:0] iRD_DATA,
+	input         iRD_DATAVALID,
+	output [7:0]  oDATA,
+	
+	// write to FIFO
+	output        oWCLK,
+	output [7:0]  oWDATA,
+	output        oWEN,
 );
 
-// Temporary testing module starts here for fifo writing (should be replaced by memory module) 
-input wire [12:0]	iVGA_LINE_TO_LOAD;
-input wire			iVGA_LOAD_TO_FIFO_REQ;
-input wire			iCLK;
-input wire			iRST_N;
-output reg			oWEN;
-output reg [7:0]	oWDATA;
-output wire			oWCLK;
-assign oWCLK	= ~iCLK;
 
+reg [7:0]	data;
 reg [3:0]	state;
 reg [12:0]	horizontal_counter;
 
-// test signals
-input wire [9:0]	test_signal_0;  // offsetting the testing strip
+assign oWCLK = ~iCLK;
+assign oWEN = (state == 4'd2);
+assign oWDATA = data;
+
+
 
 
 always @ (*) begin
 	if (iVGA_LINE_TO_LOAD[10:0] >= {1'b0,test_signal_0} && iVGA_LINE_TO_LOAD[10:0] < {1'b0,test_signal_0} + 11'd100) begin
 		if (horizontal_counter < (iVGA_LINE_TO_LOAD[10:0] - {1'b0,test_signal_0}))
-			oWDATA = 8'h00;
+			data = 8'h00;
 		else
-			oWDATA = 8'hff;
+			data = 8'hff;
 	end
 	else begin
-		oWDATA = 8'h00;
+		data = 8'h00;
 	end
-	
-	oWEN = (state == 4'd2);
 end
 
-always @ (posedge iCLK or negedge iRST_N) begin
-	if (!iRST_N) begin
+always @ (posedge iCLK or posedge iRST) begin
+	if (!iRST) begin
 		state <= 4'd0;
 	end
 	else begin
