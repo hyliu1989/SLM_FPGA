@@ -26,85 +26,137 @@ module	sdram_to_vga_fifo(
 	output        oFIFO_WEN
 );
 
-
-
-
 // =================================
 //  Clocks for submodules
 // =================================
-wire       clock_fifowriter;
-wire       clock;
-fifo_pll fifo_pll_0(
-	.refclk(iCLK),   //  refclk.clk
-	.rst(iRST),      //   reset.reset
-	.outclk_0(clock_fifowriter)  // outclk0.clk
-	);
+wire clock;
 assign clock = iCLK;
-// TODO: use pll. clock_fifowriter should be twice as fast as the sdram iCLK.
-//                clock should be the same as iCLK.
-//                use pll to generate two to make sure they are in phase
-
 
 
 // =================================
-//  FIFO writer submodule
+//  sdram_read FIFO writer
 // =================================
-/* A simple module to achieve writing 8-bit data into fifo from a 16-bit data
-                      __    __    __    __    __    __
-clock_fifowriter   __|  |__|  |__|  |__|  |__|  |__|  |__
+/* 
+A simple module that stores 16-bit data of SDRAM into a fifo and waits for another module
+to convert it into 8-bit data and to store them into VGA fifo.
                    _____       _____       _____       __
 clock                   |_____|     |_____|     |_____|
                          ___________ ___________
 r_data_valid       _____|           |           |________ (change at negedge of clock if all bytes are written in pair)
-                  ____________ _____ _____ _____ ________
-states_fifowriter      0      |  1  |  0  |  1  |  0      (change when r_data_valid is asserted and at negedge of clock_fifowriter)
 
-fifo write happen          o     o     o     o            (posedge of clock_fifowriter while r_data_valid == 1)
+fifo write happen             o           o               (posedge of clock while r_data_valid == 1)
 */
+reg         r_data_valid;   // changed in negedge of clock  (controlled by SDRAM read submodule)
+reg [15:0]  r_data;         // changed in negedge of clock  (controlled by SDRAM read submodule)
+reg         r_write_single; // changed in negedge of clock  (controlled by SDRAM read submodule)
+wire        sdram_fifo_empty;
+wire [16:0] sdram_fifo_data;
+reg         sdram_fifo_rdreq;
+sdram_read_fifo sdram_read_fifo_0(
+	.clock(clock),
+	// SDRAM read side
+	.data({r_write_single,r_data}),
+	.wrreq(r_data_valid),
+	// VGA fifo (another fifo) write side
+	.rdreq(sdram_fifo_rdreq),
+	.empty(sdram_fifo_empty),  // output
+	.q(sdram_fifo_data)  // output
+);
 
-reg        r_data_valid;   // changed in negedge of clock_fifowriter  (controlled by SDRAM read submodule)
-reg [15:0] r_data;         // changed in negedge of clock_fifowriter  (controlled by SDRAM read submodule)
-reg        r_write_single; // changed in negedge of clock_fifowriter  (controlled by SDRAM read submodule)
-reg        states_fifowriter, states_fifowriter_next;  // changed in negedge of clock_fifowriter
-reg [7:0]  fifo_data;
-reg        wen;
 
-assign oFIFO_WCLK = clock_fifowriter;  // push into fifo on the posedge to avoid hazard
-assign oFIFO_WEN = wen;
-assign oFIFO_WDATA = fifo_data;
+// =================================
+//  VGA FIFO writer
+// =================================
+/*
+                      _____       _____       _____       _____       _____       _____
+clock              __|     |_____|     |_____|     |_____|     |_____|     |_____|     |___
+                   __                                     _________________________________
+sdram_fifo_empty     |___________________________________|
+                   ______________ ___________ ___________ ___________ ___________ _________
+states_fifowriter  _____idle_____|__w upper__|__w lower__|__w upper__|__w lower__|__idle___
+                            ___________             ___________
+sdram_fifo_rdreq   ________|           |___________|           |___________________________ (when state is idle or w_lower and sdram fifo not empty)
+                                  _______________________ _________________________________
+sdram_fifo_data    ______________|_______________________|_________________________________
 
-always @ (*) begin
-	if(r_write_single)
-		wen = r_data_valid && (states_fifowriter==1'b0);
-	else
-		wen = r_data_valid;
-end
+vga fifo write                         o           o           o           o                (negedges when state is w_upper or w_lower)
 
+*/
+parameter VFIFO_ST_IDLE = 3'd0;
+parameter VFIFO_ST_WR_U = 3'd1;
+parameter VFIFO_ST_WR_L = 3'd2;
+reg [2:0]  states_fifowriter, states_fifowriter_next;  // changed in negedge of clock
+reg        sdram_fifo_rdreq_next;
+reg [7:0]  vga_fifo_data;
+reg        vga_fifo_wen;
+wire       vga_write_single;
+
+assign oFIFO_WCLK = ~clock;
+assign oFIFO_WEN = vga_fifo_wen;
+assign oFIFO_WDATA = vga_fifo_data;
+assign vga_write_single = sdram_fifo_data[16];
+
+// posedge changes
 always @ (*)
 case(states_fifowriter)
-	// waiting for data_valid. If data_valid is asserted, change state on the negedge 
-	// of fifo writer clock and write upper byte into fifo
-	1'b0: begin
-		states_fifowriter_next = (r_data_valid)? 1'b1: 1'b0;
-		fifo_data = r_data[15:8];
+	VFIFO_ST_IDLE: begin
+		states_fifowriter_next = (sdram_fifo_empty)? VFIFO_ST_IDLE : VFIFO_ST_WR_U;
+		vga_fifo_data = 8'bxxxxxxxx;
+		vga_fifo_wen = 1'b0;
 	end
-
-	// write lower byte into fifo and return
-	1'b1: begin
-		states_fifowriter_next = 1'b0;
-		fifo_data = r_data[7:0];
+	
+	VFIFO_ST_WR_U: begin
+		states_fifowriter_next = VFIFO_ST_WR_L;
+		vga_fifo_data = sdram_fifo_data[15:8];
+		vga_fifo_wen = 1'b1;
+	end
+	
+	VFIFO_ST_WR_L: begin
+		states_fifowriter_next = (sdram_fifo_empty)? VFIFO_ST_IDLE : VFIFO_ST_WR_U;
+		vga_fifo_data = sdram_fifo_data[7:0];
+		vga_fifo_wen = (vga_write_single)? 1'b0 : 1'b1;
+	end
+	
+	default: begin
+		states_fifowriter_next = VFIFO_ST_IDLE;
+		vga_fifo_data = 8'bxxxxxxxx;
+		vga_fifo_wen = 1'b0;
 	end
 endcase
 
-// operate the fifo writing at 2x the sdram clock rate
-always @ (posedge clock_fifowriter or posedge iRST) begin
+// negedge changes
+always @ (*)
+case(states_fifowriter)
+	VFIFO_ST_IDLE: begin
+		sdram_fifo_rdreq_next = (sdram_fifo_empty)? 1'b0 : 1'b1;
+	end
+	
+	VFIFO_ST_WR_U: begin
+		sdram_fifo_rdreq_next = 1'b0;
+	end
+	
+	VFIFO_ST_WR_L: begin
+		sdram_fifo_rdreq_next = (sdram_fifo_empty)? 1'b0 : 1'b1;
+	end
+	
+	default: begin
+		sdram_fifo_rdreq_next = 1'b0;
+	end
+endcase
+
+always @ (posedge clock or posedge iRST) begin
 	if(iRST)
-		states_fifowriter <= 1'b0;
+		states_fifowriter <= 3'd0;
 	else
 		states_fifowriter <= states_fifowriter_next;
 end
 
-
+always @ (negedge clock or posedge iRST) begin
+	if(iRST)
+		sdram_fifo_rdreq <= 1'b0;
+	else
+		sdram_fifo_rdreq <= sdram_fifo_rdreq_next;
+end
 
 
 
@@ -277,6 +329,7 @@ endcase
 
 
 // latch the data at the negedge
+// negedge required by the usage of r_data, r_data_valid and r_write_single.
 always @(negedge clock or posedge iRST) begin
 	if (iRST) begin
 		r_data <= 16'd0;
