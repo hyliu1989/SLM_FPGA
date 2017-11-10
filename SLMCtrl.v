@@ -225,43 +225,56 @@ wire [24:0] sdram_ctrl_read_addr;
 wire [15:0] sdram_ctrl_read_data;
 wire        sdram_ctrl_read_datavalid;
 
-// for delayed reset signal
-reg  [26:0] local_counter;
-reg         delayed_reset_n;
-reg         delayed_reset_n_1;
-
-//=======================================================
-//  Functional coding
-//=======================================================
-// for delayed reset signal
-always @ (posedge CLOCK_50) begin
-	if (local_counter != 28'd0)
-		local_counter <= local_counter + 1'b1;	
-	else
-		local_counter <= local_counter + !KEY[0];
-end
-always @ (*) begin
-	// 						   27'b000_0100_1100_0100_1011_0100_0000 // number of clocks for 0.1 second
-	if (local_counter[26:22] == 5'b000_01)  // 5'b000_00 is not allowed since an idle counter has this pattern
-		delayed_reset_n = 1'b0;
-	else
-		delayed_reset_n = 1'b1;
-	
-	if (local_counter[26:22] == 5'b000_11)
-		delayed_reset_n_1 = 1'b0;
-	else
-		delayed_reset_n_1 = 1'b1;
-end
-assign LEDR[9] = delayed_reset_n;
-
+wire        delayed_reset;
+wire        delayed_reset_1;
+wire        trigger;
+wire        update_frame_to_read;
+wire        update_y_to_read;
 
 //=======================================================
 //  Structural coding
 //=======================================================
+delay_x00_ms delay_module_0(
+	.iCLOCK50(CLOCK_50),
+	.iTRIGGER(!KEY[0]),
+	.oDELAY100(delayed_reset),
+	.oDELAY200(delayed_reset_1),
+	.oDELAY300(),
+	.oDELAY400()
+);
+assign LEDR[9] = delayed_reset;
+
+delay_x00_ms delay_module_1(
+	.iCLOCK50(CLOCK_50),
+	.iTRIGGER(!KEY[1]),
+	.oDELAY100(trigger),
+	.oDELAY200(),
+	.oDELAY300(),
+	.oDELAY400()
+);
+
+delay_x00_ms delay_module_2(
+	.iCLOCK50(CLOCK_50),
+	.iTRIGGER(!KEY[2]),
+	.oDELAY100(update_y_to_read),
+	.oDELAY200(),
+	.oDELAY300(),
+	.oDELAY400()
+);
+
+delay_x00_ms delay_module_3(
+	.iCLOCK50(CLOCK_50),
+	.iTRIGGER(!KEY[3]),
+	.oDELAY100(update_frame_to_read),
+	.oDELAY200(),
+	.oDELAY300(),
+	.oDELAY400()
+);
+
 assign TD_RESET_N = 1'b1;
 vga_pll vga_pll_0(
 	.refclk(TD_CLK27),
-	.rst(~delayed_reset_n),
+	.rst(delayed_reset),
 	.outclk_0(vga_clock)
 );
 
@@ -289,11 +302,11 @@ VGA_Controller vga_ctrl_0(
 
 	//	Control Signal
 	.iCLK(vga_clock),
-	.iRST_N(delayed_reset_n)
+	.iRST_N(~delayed_reset)
 );
 
 sdram_to_vga_fifo testing_0(
-	.iRST_N(delayed_reset_n),
+	.iRST_N(~delayed_reset),
 	.iCLK(vga_clock),
 	.iVGA_LINE_TO_LOAD(vga_fifo_loadline_id),
 	.iVGA_LOAD_TO_FIFO_REQ(vga_load_to_fifo_req),
@@ -323,7 +336,7 @@ wire       [3:0]  HPS_SD_DATA;
 reader_system reader_system_0(
 		// clock and reset
 		.clk_clk(CLOCK_50),
-		.reset_reset_n(delayed_reset_n),
+		.reset_reset_n(~delayed_reset),
 		
 		// SD card controller signals
 		.altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_chipselect(),  //  input  wire
@@ -372,8 +385,9 @@ assign sdram_ctrl_addr = sdram_ctrl_test_write_done? sdram_ctrl_read_addr : sdra
 // testing code for sdram writing
 test_sdram_write test_sdram_write_0(
 	.iCLK(sdram_ctrl_clock),
-	.iRST(~delayed_reset_n_1),
-	
+	.iRST(delayed_reset_1),
+
+	.iTRIGGER(trigger),
 	.iWAIT_REQUEST(sdram_ctrl_wait_req),
 	.oWR_EN(sdram_ctrl_write_en),
 	.oWR_DATA(sdram_ctrl_write_data),
@@ -384,7 +398,7 @@ test_sdram_write test_sdram_write_0(
 // testing code for sdram reading
 test_sdram_read test_sdram_read_0(
 	.iCLK(sdram_ctrl_clock),
-	.iRST(~delayed_reset_n_1),
+	.iRST(delayed_reset_1),
 	
 	.iTEST_WRITE_DONE(sdram_ctrl_test_write_done),
 	
@@ -393,9 +407,18 @@ test_sdram_read test_sdram_read_0(
 	.oRD_ADDR(sdram_ctrl_read_addr),
 	.iRD_DATA(sdram_ctrl_read_data),
 	.iRD_DATAVALID(sdram_ctrl_read_datavalid),
+	.oDATA(LEDR[7:0]),
 	
 	.iSW(SW),
-	.oDATA(LEDR[7:0])
+	.iUPDATE_FRAME(update_frame_to_read),  // KEY 3
+	.iUPDATE_Y(update_y_to_read)  // KEY 2
 );
+assign HEX5 = sdram_ctrl_test_write_done? 7'b1111111 : 7'b0000011;  // letter b
+assign HEX4 = sdram_ctrl_test_write_done? 7'b1111111 : 7'b1000001;  // letter u
+assign HEX3 = sdram_ctrl_test_write_done? 7'b1111111 : 7'b0010010;  // letter s
+assign HEX2 = sdram_ctrl_test_write_done? 7'b1111111 : 7'b0010001;  // letter y
+assign HEX1 = 7'h7f;
+assign HEX0 = 7'h7f;
 
 endmodule
+

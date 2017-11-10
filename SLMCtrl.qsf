@@ -306,6 +306,7 @@ set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -entity ghrd_top -sect
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -entity ghrd_top -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -entity ghrd_top -section_id Top
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -entity ghrd_top -section_id Top
+set_global_assignment -name VERILOG_FILE v/delay_x00_ms.v
 set_global_assignment -name VERILOG_FILE v/test_sdram_read.v
 set_global_assignment -name VERILOG_FILE v/test_sdram_write.v
 set_global_assignment -name QSYS_FILE reader_system.qsys
