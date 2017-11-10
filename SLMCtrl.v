@@ -234,6 +234,8 @@ wire        update_y_to_read;
 //=======================================================
 //  Structural coding
 //=======================================================
+assign sdram_ctrl_addr = sdram_ctrl_test_write_done? sdram_ctrl_read_addr : sdram_ctrl_write_addr;
+
 delay_x00_ms delay_module_0(
 	.iCLOCK50(CLOCK_50),
 	.iTRIGGER(!KEY[0]),
@@ -285,6 +287,7 @@ VGA_Controller vga_ctrl_0(
 	.iData_B(vga_data),
 	.oFIFO_RCLK(vga_fifo_rclk),
 	.oFIFO_REQ(vga_fifo_rreq),
+
 	// FIFO load signal
 	.oFIFO_LOAD_REQ(vga_load_to_fifo_req),
 	.oFIFO_LOAD_VLINE(vga_fifo_loadline_id),
@@ -305,17 +308,33 @@ VGA_Controller vga_ctrl_0(
 	.iRST_N(~delayed_reset)
 );
 
-sdram_to_vga_fifo testing_0(
+sdram_to_vga_fifo sdram_to_vga_fifo_0(
 	.iRST(delayed_reset),
-	.iCLK(vga_clock),
+	.iCLK(sdram_ctrl_clock),
+
+    // control signals for current frame
+    // FIXME: the 5 values here are for testing
+    .iFRAME_ID(45),  // input [5:0]
+    .iOFFSET_H_SIGN(0),  // input
+    .iOFFSET_H(3),  // input [7:0], horizontal offset, + to the right
+    .iOFFSET_V_SIGN(1),  // input
+    .iOFFSET_V(5),  // input [7:0], vertial offset, + to the bottom
+
+    // VGA signals (as a trigger to load)
 	.iVGA_LINE_TO_LOAD(vga_fifo_loadline_id),
 	.iVGA_LOAD_TO_FIFO_REQ(vga_load_to_fifo_req),
+
+    // read from SDRAM
+    .iWAIT_REQUEST(sdram_ctrl_wait_req),
+    .oRD_EN(sdram_ctrl_read_en),
+    .oRD_ADDR(sdram_ctrl_read_addr),
+    .iRD_DATA(sdram_ctrl_read_data),
+    .iRD_DATAVALID(sdram_ctrl_read_datavalid),
 	
-	.oWCLK(fifo_wclk),
-	.oWDATA(fifo_wdata),
-	.oWEN(fifo_wen),
-	
-	.test_signal_0(SW)
+    // write to FIFO
+	.oFIFO_WCLK(fifo_wclk),
+	.oFIFO_WDATA(fifo_wdata),
+	.oFIFO_WEN(fifo_wen)
 );
 
 vga_fifo vf0(
@@ -381,7 +400,6 @@ reader_system reader_system_0(
 
 
 
-assign sdram_ctrl_addr = sdram_ctrl_test_write_done? sdram_ctrl_read_addr : sdram_ctrl_write_addr;
 // testing code for sdram writing
 test_sdram_write test_sdram_write_0(
 	.iCLK(sdram_ctrl_clock),
@@ -395,30 +413,31 @@ test_sdram_write test_sdram_write_0(
 	.oDONE(sdram_ctrl_test_write_done)
 );
 
-// testing code for sdram reading
-test_sdram_read test_sdram_read_0(
-	.iCLK(sdram_ctrl_clock),
-	.iRST(delayed_reset_1),
-	
-	.iTEST_WRITE_DONE(sdram_ctrl_test_write_done),
-	
-	.iWAIT_REQUEST(sdram_ctrl_wait_req),
-	.oRD_EN(sdram_ctrl_read_en),
-	.oRD_ADDR(sdram_ctrl_read_addr),
-	.iRD_DATA(sdram_ctrl_read_data),
-	.iRD_DATAVALID(sdram_ctrl_read_datavalid),
-	.oDATA(LEDR[7:0]),
-	
-	.iSW(SW),
-	.iUPDATE_FRAME(update_frame_to_read),  // KEY 3
-	.iUPDATE_Y(update_y_to_read)  // KEY 2
-);
 assign HEX5 = sdram_ctrl_test_write_done? 7'b1111111 : 7'b0000011;  // letter b
 assign HEX4 = sdram_ctrl_test_write_done? 7'b1111111 : 7'b1000001;  // letter u
 assign HEX3 = sdram_ctrl_test_write_done? 7'b1111111 : 7'b0010010;  // letter s
 assign HEX2 = sdram_ctrl_test_write_done? 7'b1111111 : 7'b0010001;  // letter y
 assign HEX1 = 7'h7f;
 assign HEX0 = 7'h7f;
+
+// // testing code for sdram reading
+// test_sdram_read test_sdram_read_0(
+//  .iCLK(sdram_ctrl_clock),
+//  .iRST(delayed_reset_1),
+//  
+//  .iTEST_WRITE_DONE(sdram_ctrl_test_write_done),
+//  
+//  .iWAIT_REQUEST(sdram_ctrl_wait_req),
+//  .oRD_EN(sdram_ctrl_read_en),
+//  .oRD_ADDR(sdram_ctrl_read_addr),
+//  .iRD_DATA(sdram_ctrl_read_data),
+//  .iRD_DATAVALID(sdram_ctrl_read_datavalid),
+//  .oDATA(LEDR[7:0]),
+//  
+//  .iSW(SW),
+//  .iUPDATE_FRAME(update_frame_to_read),  // KEY 3
+//  .iUPDATE_Y(update_y_to_read)  // KEY 2
+// );
 
 endmodule
 
