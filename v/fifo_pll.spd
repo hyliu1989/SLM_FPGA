@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simPackage>
+ <file path="fifo_pll_sim/fifo_pll.vo" type="VERILOG" />
+ <topLevel name="fifo_pll" />
+ <deviceFamily name="cyclonev" />
+</simPackage>

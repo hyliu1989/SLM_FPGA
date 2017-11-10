@@ -23,7 +23,7 @@ module	sdram_to_vga_fifo(
 	// write to FIFO
 	output        oFIFO_WCLK,
 	output [7:0]  oFIFO_WDATA,
-	output        oFIFO_WEN,
+	output        oFIFO_WEN
 );
 
 
@@ -34,6 +34,12 @@ module	sdram_to_vga_fifo(
 // =================================
 wire       clock_fifowriter;
 wire       clock;
+fifo_pll fifo_pll_0(
+	.refclk(iCLK),   //  refclk.clk
+	.rst(iRST),      //   reset.reset
+	.outclk_0(clock_fifowriter)  // outclk0.clk
+	);
+assign clock = iCLK;
 // TODO: use pll. clock_fifowriter should be twice as fast as the sdram iCLK.
 //                clock should be the same as iCLK.
 //                use pll to generate two to make sure they are in phase
@@ -121,7 +127,7 @@ parameter ST_FILL_HORIZONTAL_BLANK_BACK       = 4'd7;
 
 parameter READ_ENDING_WAIT_CYCLES = 3'd5;
 
-reg [3:0]	state, states_next;
+reg [3:0]	states, states_next;
 reg [10:0]	horizontal_counter, horizontal_counter_next;
 reg [2:0]   read_ending_counter, read_ending_counter_next;
 reg [8:0]   blank_counter, blank_counter_next;
@@ -164,7 +170,7 @@ endcase
 // horizontal_counter_next
 always @ (*)
 case(states)
-	ST_LISTEN_VGA_REQ:          horizontal_counter_next = 13'd0;
+	ST_LISTEN_VGA_REQ:          horizontal_counter_next = 11'd0;
 	ST_FILL_EMPTY_LINES:        horizontal_counter_next = horizontal_counter + 2'b10;
 	//ST_FILL_HORIZONTAL_BLANK_FRONT_ODD
 	//ST_FILL_HORIZONTAL_BLANK_FRONT
@@ -173,7 +179,7 @@ case(states)
 	//ST_FILL_DATA_READ_ENDING
 	//ST_FILL_HORIZONTAL_BLANK_BACK_ODD
 	//ST_FILL_HORIZONTAL_BLANK_BACK
-	default:                    horizontal_counter_next = 13'd0;
+	default:                    horizontal_counter_next = 11'd0;
 endcase
 
 
@@ -234,7 +240,7 @@ case(states)
             states_next = ST_FILL_DATA_READ_STALLED;
         else begin
             if(horizontal_counter[10:1] == 1024/2-1)  // equivalent to (horizontal_counter_next==11'd1024) under horizontal_counter[0]==0
-                states_next = ST_FILL_DATA_READ_ENDING
+                states_next = ST_FILL_DATA_READ_ENDING;
             else
                 states_next = ST_FILL_DATA_READ;
         end
