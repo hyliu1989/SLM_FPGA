@@ -146,11 +146,11 @@ parameter ST_FILL_DATA_READ_ENDING            = 4'd8;  // for the delayed output
 parameter ST_FILL_HORIZONTAL_BLANK_BACK_ODD   = 4'd6;
 parameter ST_FILL_HORIZONTAL_BLANK_BACK       = 4'd7;
 
-parameter READ_ENDING_WAIT_CYCLES = 3'd5;
+parameter READ_ENDING_WAIT_CYCLES = 5'd30;
 
 reg [3:0]	states, states_next;
 reg [10:1]	horizontal_counter, horizontal_counter_next;
-reg [2:0]   read_ending_counter, read_ending_counter_next;
+reg [4:0]   read_ending_counter, read_ending_counter_next;
 reg [8:1]   blank_counter, blank_counter_next;
 reg [8:0]   front_blank_count, back_blank_count;
 reg         write_single;
@@ -229,7 +229,7 @@ always @ (*)
 if(states == ST_FILL_DATA_READ_ENDING)
 	read_ending_counter_next = read_ending_counter + 1'b1;
 else
-	read_ending_counter_next = 3'd0;
+	read_ending_counter_next = 0;
 
 
 // states_next
