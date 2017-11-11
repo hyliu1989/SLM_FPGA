@@ -20,12 +20,20 @@ module	sdram_to_vga_fifo(
 	input  [15:0] iRD_DATA,
 	input         iRD_DATAVALID,
 	
-	// write to FIFO
+	// write to VGA FIFO
 	output        oFIFO_WCLK,
 	output [7:0]  oFIFO_WDATA,
 	output        oFIFO_WEN
 	,output [7:0] o_tests
 );
+/*****************************************************************************************
+This module determines how to read from the SDRAM given the control signals of positioning
+and VGA line number.
+
+The SDRAM data is written into a fifo (in this module) first and a submodule will convert
+the data between the above fifo to the VGA fifo (outside of this module).
+*****************************************************************************************/
+
 
 // =================================
 //  Clocks for submodules
@@ -86,6 +94,7 @@ fifo16to8  sdramfifo_to_vgafifo_0(
 //  VGA data control and SDRAM read submodule
 // ============================================
 
+// States
 // idle
 parameter ST_LISTEN_VGA_REQ                   = 4'd0;
 // empty lines
@@ -301,6 +310,7 @@ always @(posedge clock or posedge iRST) begin
 end
 assign o_tests[7:4] = states;
 assign o_tests[3:0] = states_next;
+
 endmodule
 
 
@@ -319,9 +329,6 @@ module fifo16to8(
 	output [7:0]  oOUTFIFO_DATA,
 	output        oOUTFIFO_WEN
 );
-// =================================
-//  VGA FIFO writer
-// =================================
 /*
                       _____       _____       _____       _____       _____       _____
 iINFIFO_CLK        __|     |_____|     |_____|     |_____|     |_____|     |_____|     |___

@@ -35,166 +35,166 @@
 
 module SLMCtrl(
 
-      ///////// ADC /////////
-      output             ADC_CONVST,
-      output             ADC_DIN,
-      input              ADC_DOUT,
-      output             ADC_SCLK,
+    ///////// ADC /////////
+    output             ADC_CONVST,
+    output             ADC_DIN,
+    input              ADC_DOUT,
+    output             ADC_SCLK,
 
-      ///////// AUD /////////
-      input              AUD_ADCDAT,
-      inout              AUD_ADCLRCK,
-      inout              AUD_BCLK,
-      output             AUD_DACDAT,
-      inout              AUD_DACLRCK,
-      output             AUD_XCK,
+    ///////// AUD /////////
+    input              AUD_ADCDAT,
+    inout              AUD_ADCLRCK,
+    inout              AUD_BCLK,
+    output             AUD_DACDAT,
+    inout              AUD_DACLRCK,
+    output             AUD_XCK,
 
-      ///////// CLOCK2 /////////
-      input              CLOCK2_50,
+    ///////// CLOCK2 /////////
+    input              CLOCK2_50,
 
-      ///////// CLOCK3 /////////
-      input              CLOCK3_50,
+    ///////// CLOCK3 /////////
+    input              CLOCK3_50,
 
-      ///////// CLOCK4 /////////
-      input              CLOCK4_50,
+    ///////// CLOCK4 /////////
+    input              CLOCK4_50,
 
-      ///////// CLOCK /////////
-      input              CLOCK_50,
+    ///////// CLOCK /////////
+    input              CLOCK_50,
 
-      ///////// DRAM /////////
-      output      [12:0] DRAM_ADDR,
-      output      [1:0]  DRAM_BA,
-      output             DRAM_CAS_N,
-      output             DRAM_CKE,
-      output             DRAM_CLK,
-      output             DRAM_CS_N,
-      inout       [15:0] DRAM_DQ,
-      output             DRAM_LDQM,
-      output             DRAM_RAS_N,
-      output             DRAM_UDQM,
-      output             DRAM_WE_N,
+    ///////// DRAM /////////
+    output      [12:0] DRAM_ADDR,
+    output      [1:0]  DRAM_BA,
+    output             DRAM_CAS_N,
+    output             DRAM_CKE,
+    output             DRAM_CLK,
+    output             DRAM_CS_N,
+    inout       [15:0] DRAM_DQ,
+    output             DRAM_LDQM,
+    output             DRAM_RAS_N,
+    output             DRAM_UDQM,
+    output             DRAM_WE_N,
 
-      ///////// FAN /////////
-      output             FAN_CTRL,
+    ///////// FAN /////////
+    output             FAN_CTRL,
 
-      ///////// FPGA /////////
-      output             FPGA_I2C_SCLK,
-      inout              FPGA_I2C_SDAT,
+    ///////// FPGA /////////
+    output             FPGA_I2C_SCLK,
+    inout              FPGA_I2C_SDAT,
 
-      ///////// GPIO /////////
-      inout     [35:0]         GPIO_0,
-      inout     [35:0]         GPIO_1,
- 
+    ///////// GPIO /////////
+    inout     [35:0]         GPIO_0,
+    inout     [35:0]         GPIO_1,
 
-      ///////// HEX0 /////////
-      output      [6:0]  HEX0,
 
-      ///////// HEX1 /////////
-      output      [6:0]  HEX1,
+    ///////// HEX0 /////////
+    output      [6:0]  HEX0,
 
-      ///////// HEX2 /////////
-      output      [6:0]  HEX2,
+    ///////// HEX1 /////////
+    output      [6:0]  HEX1,
 
-      ///////// HEX3 /////////
-      output      [6:0]  HEX3,
+    ///////// HEX2 /////////
+    output      [6:0]  HEX2,
 
-      ///////// HEX4 /////////
-      output      [6:0]  HEX4,
+    ///////// HEX3 /////////
+    output      [6:0]  HEX3,
 
-      ///////// HEX5 /////////
-      output      [6:0]  HEX5,
+    ///////// HEX4 /////////
+    output      [6:0]  HEX4,
+
+    ///////// HEX5 /////////
+    output      [6:0]  HEX5,
 
 `ifdef ENABLE_HPS
-      ///////// HPS /////////
-      inout              HPS_CONV_USB_N,
-      output      [14:0] HPS_DDR3_ADDR,
-      output      [2:0]  HPS_DDR3_BA,
-      output             HPS_DDR3_CAS_N,
-      output             HPS_DDR3_CKE,
-      output             HPS_DDR3_CK_N,
-      output             HPS_DDR3_CK_P,
-      output             HPS_DDR3_CS_N,
-      output      [3:0]  HPS_DDR3_DM,
-      inout       [31:0] HPS_DDR3_DQ,
-      inout       [3:0]  HPS_DDR3_DQS_N,
-      inout       [3:0]  HPS_DDR3_DQS_P,
-      output             HPS_DDR3_ODT,
-      output             HPS_DDR3_RAS_N,
-      output             HPS_DDR3_RESET_N,
-      input              HPS_DDR3_RZQ,
-      output             HPS_DDR3_WE_N,
-      output             HPS_ENET_GTX_CLK,
-      inout              HPS_ENET_INT_N,
-      output             HPS_ENET_MDC,
-      inout              HPS_ENET_MDIO,
-      input              HPS_ENET_RX_CLK,
-      input       [3:0]  HPS_ENET_RX_DATA,
-      input              HPS_ENET_RX_DV,
-      output      [3:0]  HPS_ENET_TX_DATA,
-      output             HPS_ENET_TX_EN,
-      inout       [3:0]  HPS_FLASH_DATA,
-      output             HPS_FLASH_DCLK,
-      output             HPS_FLASH_NCSO,
-      inout              HPS_GSENSOR_INT,
-      inout              HPS_I2C1_SCLK,
-      inout              HPS_I2C1_SDAT,
-      inout              HPS_I2C2_SCLK,
-      inout              HPS_I2C2_SDAT,
-      inout              HPS_I2C_CONTROL,
-      inout              HPS_KEY,
-      inout              HPS_LED,
-      inout              HPS_LTC_GPIO,
-      output             HPS_SD_CLK,
-      inout              HPS_SD_CMD,
-      inout       [3:0]  HPS_SD_DATA,
-      output             HPS_SPIM_CLK,
-      input              HPS_SPIM_MISO,
-      output             HPS_SPIM_MOSI,
-      inout              HPS_SPIM_SS,
-      input              HPS_UART_RX,
-      output             HPS_UART_TX,
-      input              HPS_USB_CLKOUT,
-      inout       [7:0]  HPS_USB_DATA,
-      input              HPS_USB_DIR,
-      input              HPS_USB_NXT,
-      output             HPS_USB_STP,
+    ///////// HPS /////////
+    inout              HPS_CONV_USB_N,
+    output      [14:0] HPS_DDR3_ADDR,
+    output      [2:0]  HPS_DDR3_BA,
+    output             HPS_DDR3_CAS_N,
+    output             HPS_DDR3_CKE,
+    output             HPS_DDR3_CK_N,
+    output             HPS_DDR3_CK_P,
+    output             HPS_DDR3_CS_N,
+    output      [3:0]  HPS_DDR3_DM,
+    inout       [31:0] HPS_DDR3_DQ,
+    inout       [3:0]  HPS_DDR3_DQS_N,
+    inout       [3:0]  HPS_DDR3_DQS_P,
+    output             HPS_DDR3_ODT,
+    output             HPS_DDR3_RAS_N,
+    output             HPS_DDR3_RESET_N,
+    input              HPS_DDR3_RZQ,
+    output             HPS_DDR3_WE_N,
+    output             HPS_ENET_GTX_CLK,
+    inout              HPS_ENET_INT_N,
+    output             HPS_ENET_MDC,
+    inout              HPS_ENET_MDIO,
+    input              HPS_ENET_RX_CLK,
+    input       [3:0]  HPS_ENET_RX_DATA,
+    input              HPS_ENET_RX_DV,
+    output      [3:0]  HPS_ENET_TX_DATA,
+    output             HPS_ENET_TX_EN,
+    inout       [3:0]  HPS_FLASH_DATA,
+    output             HPS_FLASH_DCLK,
+    output             HPS_FLASH_NCSO,
+    inout              HPS_GSENSOR_INT,
+    inout              HPS_I2C1_SCLK,
+    inout              HPS_I2C1_SDAT,
+    inout              HPS_I2C2_SCLK,
+    inout              HPS_I2C2_SDAT,
+    inout              HPS_I2C_CONTROL,
+    inout              HPS_KEY,
+    inout              HPS_LED,
+    inout              HPS_LTC_GPIO,
+    output             HPS_SD_CLK,
+    inout              HPS_SD_CMD,
+    inout       [3:0]  HPS_SD_DATA,
+    output             HPS_SPIM_CLK,
+    input              HPS_SPIM_MISO,
+    output             HPS_SPIM_MOSI,
+    inout              HPS_SPIM_SS,
+    input              HPS_UART_RX,
+    output             HPS_UART_TX,
+    input              HPS_USB_CLKOUT,
+    inout       [7:0]  HPS_USB_DATA,
+    input              HPS_USB_DIR,
+    input              HPS_USB_NXT,
+    output             HPS_USB_STP,
 `endif /*ENABLE_HPS*/
 
-      ///////// IRDA /////////
-      input              IRDA_RXD,
-      output             IRDA_TXD,
+    ///////// IRDA /////////
+    input              IRDA_RXD,
+    output             IRDA_TXD,
 
-      ///////// KEY /////////
-      input       [3:0]  KEY,
+    ///////// KEY /////////
+    input       [3:0]  KEY,
 
-      ///////// LEDR /////////
-      output      [9:0]  LEDR,
+    ///////// LEDR /////////
+    output      [9:0]  LEDR,
 
-      ///////// PS2 /////////
-      inout              PS2_CLK,
-      inout              PS2_CLK2,
-      inout              PS2_DAT,
-      inout              PS2_DAT2,
+    ///////// PS2 /////////
+    inout              PS2_CLK,
+    inout              PS2_CLK2,
+    inout              PS2_DAT,
+    inout              PS2_DAT2,
 
-      ///////// SW /////////
-      input       [9:0]  SW,
+    ///////// SW /////////
+    input       [9:0]  SW,
 
-      ///////// TD /////////
-      input              TD_CLK27,
-      input       [7:0]  TD_DATA,
-      input              TD_HS,
-      output             TD_RESET_N,
-      input              TD_VS,
+    ///////// TD /////////
+    input              TD_CLK27,
+    input       [7:0]  TD_DATA,
+    input              TD_HS,
+    output             TD_RESET_N,
+    input              TD_VS,
 
-      ///////// VGA /////////
-      output      [7:0]  VGA_B,
-      output             VGA_BLANK_N,
-      output             VGA_CLK,
-      output      [7:0]  VGA_G,
-      output             VGA_HS,
-      output      [7:0]  VGA_R,
-      output             VGA_SYNC_N,
-      output             VGA_VS
+    ///////// VGA /////////
+    output      [7:0]  VGA_B,
+    output             VGA_BLANK_N,
+    output             VGA_CLK,
+    output      [7:0]  VGA_G,
+    output             VGA_HS,
+    output      [7:0]  VGA_R,
+    output             VGA_SYNC_N,
+    output             VGA_VS
 );
 
 
@@ -246,65 +246,65 @@ delay_x00_ms delay_module_0(
 );
 
 delay_x00_ms delay_module_1(
-	.iCLOCK50(CLOCK_50),
-	.iTRIGGER(!KEY[1]),
-	.oDELAY100(trigger),
-	.oDELAY200(),
-	.oDELAY300(),
-	.oDELAY400()
+    .iCLOCK50(CLOCK_50),
+    .iTRIGGER(!KEY[1]),
+    .oDELAY100(trigger),
+    .oDELAY200(),
+    .oDELAY300(),
+    .oDELAY400()
 );
 
 delay_x00_ms delay_module_2(
-	.iCLOCK50(CLOCK_50),
-	.iTRIGGER(!KEY[2]),
-	.oDELAY100(update_y_to_read),
-	.oDELAY200(),
-	.oDELAY300(),
-	.oDELAY400()
+    .iCLOCK50(CLOCK_50),
+    .iTRIGGER(!KEY[2]),
+    .oDELAY100(update_y_to_read),
+    .oDELAY200(),
+    .oDELAY300(),
+    .oDELAY400()
 );
 
 delay_x00_ms delay_module_3(
-	.iCLOCK50(CLOCK_50),
-	.iTRIGGER(!KEY[3]),
-	.oDELAY100(update_frame_to_read),
-	.oDELAY200(),
-	.oDELAY300(),
-	.oDELAY400()
+    .iCLOCK50(CLOCK_50),
+    .iTRIGGER(!KEY[3]),
+    .oDELAY100(update_frame_to_read),
+    .oDELAY200(),
+    .oDELAY300(),
+    .oDELAY400()
 );
 
 assign TD_RESET_N = 1'b1;
 vga_pll vga_pll_0(
-	.refclk(TD_CLK27),
-	.rst(delayed_reset),
-	.outclk_0(vga_clock)
+    .refclk(TD_CLK27),
+    .rst(delayed_reset),
+    .outclk_0(vga_clock)
 );
 
 VGA_Controller vga_ctrl_0(
-	// FIFO read signal
-	.iData_R(vga_data),
-	.iData_G(vga_data),
-	.iData_B(vga_data),
-	.oFIFO_RCLK(vga_fifo_rclk),
-	.oFIFO_REQ(vga_fifo_rreq),
+    // FIFO read signal
+    .iData_R(vga_data),
+    .iData_G(vga_data),
+    .iData_B(vga_data),
+    .oFIFO_RCLK(vga_fifo_rclk),
+    .oFIFO_REQ(vga_fifo_rreq),
 
-	// FIFO load signal
-	.oFIFO_LOAD_REQ(vga_load_to_fifo_req),
-	.oFIFO_LOAD_VLINE(vga_fifo_loadline_id),
-	.oFIFO_CLEAR(vga_fifo_aclear),
-	
-	//	VGA Side
-	.oVGA_R(VGA_R),
-	.oVGA_G(VGA_G),
-	.oVGA_B(VGA_B),
-	.oVGA_H_SYNC(VGA_HS),
-	.oVGA_V_SYNC(VGA_VS),
-	.oVGA_SYNC_N(VGA_SYNC_N),
-	.oVGA_BLANK_N(VGA_BLANK_N),
-	.oVGA_CLK(VGA_CLK),
+    // FIFO load signal
+    .oFIFO_LOAD_REQ(vga_load_to_fifo_req),
+    .oFIFO_LOAD_VLINE(vga_fifo_loadline_id),
+    .oFIFO_CLEAR(vga_fifo_aclear),
+    
+    //    VGA Side
+    .oVGA_R(VGA_R),
+    .oVGA_G(VGA_G),
+    .oVGA_B(VGA_B),
+    .oVGA_H_SYNC(VGA_HS),
+    .oVGA_V_SYNC(VGA_VS),
+    .oVGA_SYNC_N(VGA_SYNC_N),
+    .oVGA_BLANK_N(VGA_BLANK_N),
+    .oVGA_CLK(VGA_CLK),
 
-	//	Control Signal
-	.iCLK(vga_clock),
-	.iRST_N(~delayed_reset)
+    //    Control Signal
+    .iCLK(vga_clock),
+    .iRST_N(~delayed_reset)
 );
 
 sdram_to_vga_fifo sdram_to_vga_fifo_0(
@@ -320,8 +320,8 @@ sdram_to_vga_fifo sdram_to_vga_fifo_0(
     .iOFFSET_V(5),  // input [7:0], vertial offset, + to the bottom
 
     // VGA signals (as a trigger to load)
-	.iVGA_LINE_TO_LOAD(vga_fifo_loadline_id),
-	.iVGA_LOAD_TO_FIFO_REQ(vga_load_to_fifo_req),
+    .iVGA_LINE_TO_LOAD(vga_fifo_loadline_id),
+    .iVGA_LOAD_TO_FIFO_REQ(vga_load_to_fifo_req),
 
     // read from SDRAM
     .iWAIT_REQUEST(sdram_ctrl_wait_req),
@@ -329,74 +329,74 @@ sdram_to_vga_fifo sdram_to_vga_fifo_0(
     .oRD_ADDR(sdram_ctrl_read_addr),
     .iRD_DATA(sdram_ctrl_read_data),
     .iRD_DATAVALID(sdram_ctrl_read_datavalid),
-	
+    
     // write to FIFO
-	.oFIFO_WCLK(fifo_wclk),
-	.oFIFO_WDATA(fifo_wdata),
-	.oFIFO_WEN(fifo_wen)
-	,.o_tests(LEDR[7:0])
+    .oFIFO_WCLK(fifo_wclk),
+    .oFIFO_WDATA(fifo_wdata),
+    .oFIFO_WEN(fifo_wen)
+    ,.o_tests(LEDR[7:0])
 );
 
 vga_fifo vf0(
-	.aclr(vga_fifo_aclear),
-	.data(fifo_wdata),  // [7:0]
-	.rdclk(vga_fifo_rclk),
-	.rdreq(vga_fifo_rreq),
-	.wrclk(fifo_wclk),
-	.wrreq(fifo_wen),
-	.q(vga_data),  // output [7:0]
-	.rdempty(LEDR[9]),  //output
-	.wrfull(LEDR[8])  // output
+    .aclr(vga_fifo_aclear),
+    .data(fifo_wdata),  // [7:0]
+    .rdclk(vga_fifo_rclk),
+    .rdreq(vga_fifo_rreq),
+    .wrclk(fifo_wclk),
+    .wrreq(fifo_wen),
+    .q(vga_data),  // output [7:0]
+    .rdempty(LEDR[9]),  //output
+    .wrfull(LEDR[8])  // output
 );
 
 wire              HPS_SD_CLK;
 wire              HPS_SD_CMD;
 wire       [3:0]  HPS_SD_DATA;
 reader_system reader_system_0(
-		// clock and reset
-		.clk_clk(CLOCK_50),
-		.reset_reset_n(~delayed_reset),
-		
-		// SD card controller signals
-		.altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_chipselect(),  //  input  wire
-		.altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_address(),     //  input  wire [7:0]
-		.altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_read(),        //  input  wire
-		.altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_write(),       //  input  wire
-		.altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_byteenable(),  //  input  wire [3:0]
-		.altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_writedata(),   //  input  wire [31:0]
-		.altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_readdata(),    //  output wire [31:0]
-		.altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_waitrequest(), //  output wire
-		
-		// SD card device wires
-		.altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_cmd(HPS_SD_CMD),
-		.altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat(HPS_SD_DATA[0]),
-		.altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat3(HPS_SD_DATA[3]),
-		.altera_up_sd_card_avalon_interface_0_conduit_end_o_SD_clock(HPS_SD_CLK),
-		
-		// SDRAM controller signals
-		.sdram_controller_0_s1_address(sdram_ctrl_addr),                   //  input  wire [24:0]
-		.sdram_controller_0_s1_byteenable_n(2'b00),             //  input  wire [1:0]
-		.sdram_controller_0_s1_chipselect(1'b1),                                 //  input  wire
-		.sdram_controller_0_s1_writedata(sdram_ctrl_write_data),                 //  input  wire [15:0]
-		.sdram_controller_0_s1_read_n(~sdram_ctrl_read_en),                                         //  input  wire
-		.sdram_controller_0_s1_write_n(~sdram_ctrl_write_en),                    //  input  wire
-		.sdram_controller_0_s1_readdata(sdram_ctrl_read_data),                                       //  output wire [15:0]
-		.sdram_controller_0_s1_readdatavalid(sdram_ctrl_read_datavalid),                                  //  output wire
-		.sdram_controller_0_s1_waitrequest(sdram_ctrl_wait_req),                 //  output wire
-		.sdram_controller_clock_0_clk(sdram_ctrl_clock),                         //  output wire, the clock signal that drives the controller
-		
-		// SDRAM device wires
-		.sdram_controller_0_wire_addr(DRAM_ADDR),
-		.sdram_controller_0_wire_ba(DRAM_BA),
-		.sdram_controller_0_wire_cas_n(DRAM_CAS_N),
-		.sdram_controller_0_wire_cke(DRAM_CKE),
-		.sdram_controller_0_wire_cs_n(DRAM_CS_N),
-		.sdram_controller_0_wire_dq(DRAM_DQ),
-		.sdram_controller_0_wire_dqm({DRAM_UDQM,DRAM_LDQM}),
-		.sdram_controller_0_wire_ras_n(DRAM_RAS_N),
-		.sdram_controller_0_wire_we_n(DRAM_WE_N),
-		.sys_sdram_pll_0_sdram_clk_clk(DRAM_CLK)
-	);
+    // clock and reset
+    .clk_clk(CLOCK_50),
+    .reset_reset_n(~delayed_reset),
+    
+    // SD card controller signals
+    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_chipselect(),  //  input  wire
+    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_address(),     //  input  wire [7:0]
+    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_read(),        //  input  wire
+    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_write(),       //  input  wire
+    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_byteenable(),  //  input  wire [3:0]
+    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_writedata(),   //  input  wire [31:0]
+    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_readdata(),    //  output wire [31:0]
+    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_waitrequest(), //  output wire
+    
+    // SD card device wires
+    .altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_cmd(HPS_SD_CMD),
+    .altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat(HPS_SD_DATA[0]),
+    .altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat3(HPS_SD_DATA[3]),
+    .altera_up_sd_card_avalon_interface_0_conduit_end_o_SD_clock(HPS_SD_CLK),
+    
+    // SDRAM controller signals
+    .sdram_controller_0_s1_address(sdram_ctrl_addr),                         //  input  wire [24:0]
+    .sdram_controller_0_s1_byteenable_n(2'b00),                              //  input  wire [1:0]
+    .sdram_controller_0_s1_chipselect(1'b1),                                 //  input  wire
+    .sdram_controller_0_s1_writedata(sdram_ctrl_write_data),                 //  input  wire [15:0]
+    .sdram_controller_0_s1_read_n(~(sdram_ctrl_read_en&&sdram_ctrl_write_done)),  //  input  wire
+    .sdram_controller_0_s1_write_n(~sdram_ctrl_write_en),                    //  input  wire
+    .sdram_controller_0_s1_readdata(sdram_ctrl_read_data),                   //  output wire [15:0]
+    .sdram_controller_0_s1_readdatavalid(sdram_ctrl_read_datavalid),         //  output wire
+    .sdram_controller_0_s1_waitrequest(sdram_ctrl_wait_req),                 //  output wire
+    .sdram_controller_clock_0_clk(sdram_ctrl_clock),                         //  output wire, the clock signal that drives the controller
+    
+    // SDRAM device wires
+    .sdram_controller_0_wire_addr(DRAM_ADDR),
+    .sdram_controller_0_wire_ba(DRAM_BA),
+    .sdram_controller_0_wire_cas_n(DRAM_CAS_N),
+    .sdram_controller_0_wire_cke(DRAM_CKE),
+    .sdram_controller_0_wire_cs_n(DRAM_CS_N),
+    .sdram_controller_0_wire_dq(DRAM_DQ),
+    .sdram_controller_0_wire_dqm({DRAM_UDQM,DRAM_LDQM}),
+    .sdram_controller_0_wire_ras_n(DRAM_RAS_N),
+    .sdram_controller_0_wire_we_n(DRAM_WE_N),
+    .sys_sdram_pll_0_sdram_clk_clk(DRAM_CLK)
+);
 
 
 
