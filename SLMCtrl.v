@@ -217,7 +217,7 @@ wire        sdram_ctrl_wait_req;
 wire [24:0] sdram_ctrl_write_addr;
 wire        sdram_ctrl_write_en;
 wire [15:0] sdram_ctrl_write_data;
-wire        sdram_ctrl_test_write_done;
+wire        sdram_ctrl_write_done;
 
 wire        sdram_ctrl_read_en;
 wire [24:0] sdram_ctrl_addr;
@@ -225,8 +225,7 @@ wire [24:0] sdram_ctrl_read_addr;
 wire [15:0] sdram_ctrl_read_data;
 wire        sdram_ctrl_read_datavalid;
 
-wire        delayed_reset;
-wire        delayed_reset_1;
+wire        delayed_reset, delayed_reset_1, delayed_reset_2;
 wire        trigger;
 wire        update_frame_to_read;
 wire        update_y_to_read;
@@ -234,15 +233,15 @@ wire        update_y_to_read;
 //=======================================================
 //  Structural coding
 //=======================================================
-assign sdram_ctrl_addr = sdram_ctrl_test_write_done? sdram_ctrl_read_addr : sdram_ctrl_write_addr;
+assign sdram_ctrl_addr = sdram_ctrl_write_done? sdram_ctrl_read_addr : sdram_ctrl_write_addr;
 
 delay_x00_ms delay_module_0(
-	.iCLOCK50(CLOCK_50),
-	.iTRIGGER(!KEY[0]),
-	.oDELAY100(delayed_reset),
-	.oDELAY200(delayed_reset_1),
-	.oDELAY300(),
-	.oDELAY400()
+    .iCLOCK50(CLOCK_50),
+    .iTRIGGER(!KEY[0]),
+    .oDELAY100(delayed_reset),
+    .oDELAY200(delayed_reset_1),
+    .oDELAY300(delayed_reset_2),
+    .oDELAY400()
 );
 
 delay_x00_ms delay_module_1(
@@ -308,8 +307,8 @@ VGA_Controller vga_ctrl_0(
 );
 
 sdram_to_vga_fifo sdram_to_vga_fifo_0(
-	.iRST(delayed_reset),
-	.iCLK(sdram_ctrl_clock),
+    .iRST(delayed_reset_2 || !sdram_ctrl_write_done),
+    .iCLK(sdram_ctrl_clock),
 
     // control signals for current frame
     // FIXME: the 5 values here are for testing
@@ -410,13 +409,13 @@ test_sdram_write test_sdram_write_0(
 	.oWR_EN(sdram_ctrl_write_en),
 	.oWR_DATA(sdram_ctrl_write_data),
 	.oWR_ADDR(sdram_ctrl_write_addr),
-	.oDONE(sdram_ctrl_test_write_done)
+	.oDONE(sdram_ctrl_write_done)
 );
 
-assign HEX5 = sdram_ctrl_test_write_done? 7'b1111111 : 7'b0000011;  // letter b
-assign HEX4 = sdram_ctrl_test_write_done? 7'b1111111 : 7'b1000001;  // letter u
-assign HEX3 = sdram_ctrl_test_write_done? 7'b1111111 : 7'b0010010;  // letter s
-assign HEX2 = sdram_ctrl_test_write_done? 7'b1111111 : 7'b0010001;  // letter y
+assign HEX5 = sdram_ctrl_write_done? 7'b1111111 : 7'b0000011;  // letter b
+assign HEX4 = sdram_ctrl_write_done? 7'b1111111 : 7'b1000001;  // letter u
+assign HEX3 = sdram_ctrl_write_done? 7'b1111111 : 7'b0010010;  // letter s
+assign HEX2 = sdram_ctrl_write_done? 7'b1111111 : 7'b0010001;  // letter y
 assign HEX1 = 7'h7f;
 assign HEX0 = 7'h7f;
 
@@ -425,7 +424,7 @@ assign HEX0 = 7'h7f;
 //  .iCLK(sdram_ctrl_clock),
 //  .iRST(delayed_reset_1),
 //  
-//  .iTEST_WRITE_DONE(sdram_ctrl_test_write_done),
+//  .iTEST_WRITE_DONE(sdram_ctrl_write_done),
 //  
 //  .iWAIT_REQUEST(sdram_ctrl_wait_req),
 //  .oRD_EN(sdram_ctrl_read_en),
