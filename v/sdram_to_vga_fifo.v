@@ -51,112 +51,32 @@ reg [15:0]  r_data;         // changed in negedge of clock  (controlled by SDRAM
 reg         r_write_single; // changed in negedge of clock  (controlled by SDRAM read submodule)
 wire        sdram_fifo_empty;
 wire [16:0] sdram_fifo_data;
-reg         sdram_fifo_rdreq;
+wire        sdram_fifo_rdreq;
 sdram_read_fifo sdram_read_fifo_0(
 	.clock(clock),
-	// SDRAM read side
+	// put what the SDRAM reads
 	.data({r_write_single,r_data}),
 	.wrreq(r_data_valid),
-	// VGA fifo (another fifo) write side
+	// read data for writing to VGA fifo (another fifo)
 	.rdreq(sdram_fifo_rdreq),
 	.empty(sdram_fifo_empty),  // output
 	.q(sdram_fifo_data)  // output
 );
 
 
-// =================================
-//  VGA FIFO writer
-// =================================
-/*
-                      _____       _____       _____       _____       _____       _____
-clock              __|     |_____|     |_____|     |_____|     |_____|     |_____|     |___
-                   __                                     _________________________________
-sdram_fifo_empty     |___________________________________|
-                   ______________ ___________ ___________ ___________ ___________ _________
-states_fifowriter  _____idle_____|__w upper__|__w lower__|__w upper__|__w lower__|__idle___
-                            ___________             ___________
-sdram_fifo_rdreq   ________|           |___________|           |___________________________ (when state is idle or w_lower and sdram fifo not empty)
-                                  _______________________ _________________________________
-sdram_fifo_data    ______________|_______________________|_________________________________
+fifo16to8  sdramfifo_to_vgafifo_0(
+	.iRST(iRST),
 
-vga fifo write                         o           o           o           o                (negedges when state is w_upper or w_lower)
+	.iINFIFO_CLK(clock),
+	.iINFIFO_EMPTY(sdram_fifo_empty),
+	.iINFIFO_DATA(sdram_fifo_data),
+	.oINFIFO_RDREQ(sdram_fifo_rdreq),
 
-*/
-parameter VFIFO_ST_IDLE = 3'd0;
-parameter VFIFO_ST_WR_U = 3'd1;
-parameter VFIFO_ST_WR_L = 3'd2;
-reg [2:0]  states_fifowriter, states_fifowriter_next;  // changed in negedge of clock
-reg        sdram_fifo_rdreq_next;
-reg [7:0]  vga_fifo_data;
-reg        vga_fifo_wen;
-wire       vga_write_single;
+	.oOUTFIFO_CLK(oFIFO_WCLK),
+	.oOUTFIFO_DATA(oFIFO_WDATA),
+	.oOUTFIFO_WEN(oFIFO_WEN)
+);
 
-assign oFIFO_WCLK = ~clock;
-assign oFIFO_WEN = vga_fifo_wen;
-assign oFIFO_WDATA = vga_fifo_data;
-assign vga_write_single = sdram_fifo_data[16];
-
-// posedge changes
-always @ (*)
-case(states_fifowriter)
-	VFIFO_ST_IDLE: begin
-		states_fifowriter_next = (sdram_fifo_empty)? VFIFO_ST_IDLE : VFIFO_ST_WR_U;
-		vga_fifo_data = 8'bxxxxxxxx;
-		vga_fifo_wen = 1'b0;
-	end
-	
-	VFIFO_ST_WR_U: begin
-		states_fifowriter_next = VFIFO_ST_WR_L;
-		vga_fifo_data = sdram_fifo_data[15:8];
-		vga_fifo_wen = 1'b1;
-	end
-	
-	VFIFO_ST_WR_L: begin
-		states_fifowriter_next = (sdram_fifo_empty)? VFIFO_ST_IDLE : VFIFO_ST_WR_U;
-		vga_fifo_data = sdram_fifo_data[7:0];
-		vga_fifo_wen = (vga_write_single)? 1'b0 : 1'b1;
-	end
-	
-	default: begin
-		states_fifowriter_next = VFIFO_ST_IDLE;
-		vga_fifo_data = 8'bxxxxxxxx;
-		vga_fifo_wen = 1'b0;
-	end
-endcase
-
-// negedge changes
-always @ (*)
-case(states_fifowriter)
-	VFIFO_ST_IDLE: begin
-		sdram_fifo_rdreq_next = (sdram_fifo_empty)? 1'b0 : 1'b1;
-	end
-	
-	VFIFO_ST_WR_U: begin
-		sdram_fifo_rdreq_next = 1'b0;
-	end
-	
-	VFIFO_ST_WR_L: begin
-		sdram_fifo_rdreq_next = (sdram_fifo_empty)? 1'b0 : 1'b1;
-	end
-	
-	default: begin
-		sdram_fifo_rdreq_next = 1'b0;
-	end
-endcase
-
-always @ (posedge clock or posedge iRST) begin
-	if(iRST)
-		states_fifowriter <= 3'd0;
-	else
-		states_fifowriter <= states_fifowriter_next;
-end
-
-always @ (negedge clock or posedge iRST) begin
-	if(iRST)
-		sdram_fifo_rdreq <= 1'b0;
-	else
-		sdram_fifo_rdreq <= sdram_fifo_rdreq_next;
-end
 
 
 
@@ -379,4 +299,118 @@ always @(posedge clock or posedge iRST) begin
 end
 
 
+endmodule
+
+
+
+
+
+module fifo16to8(
+	input         iRST,
+
+	input         iINFIFO_CLK,
+	input         iINFIFO_EMPTY,
+	input [16:0]  iINFIFO_DATA,
+	output        oINFIFO_RDREQ,
+
+	output        oOUTFIFO_CLK,
+	output [7:0]  oOUTFIFO_DATA,
+	output        oOUTFIFO_WEN
+);
+// =================================
+//  VGA FIFO writer
+// =================================
+/*
+                      _____       _____       _____       _____       _____       _____
+iINFIFO_CLK        __|     |_____|     |_____|     |_____|     |_____|     |_____|     |___
+                   __                                     _________________________________
+iINFIFO_EMPTY        |___________________________________|
+                   ______________ ___________ ___________ ___________ ___________ _________
+states             _____idle_____|__w upper__|__w lower__|__w upper__|__w lower__|__idle___
+                            ___________             ___________
+oINFIFO_RDREQ      ________|           |___________|           |___________________________ (when state is idle or w_lower and sdram fifo not empty)
+                                  _______________________ _________________________________
+iINFIFO_DATA       ______________|_______________________|_________________________________
+
+vga fifo write                         o           o           o           o                (negedges during state is w_upper or w_lower, hence oOUTFIFO_CLK = ~iINFIFO_CLK)
+
+*/
+parameter VFIFO_ST_IDLE = 3'd0;
+parameter VFIFO_ST_WR_U = 3'd1;
+parameter VFIFO_ST_WR_L = 3'd2;
+reg [2:0]  states, states_next;  // changed in negedge of clock
+reg        infifo_rdreq, infifo_rdreq_next;
+reg [7:0]  outfifo_data;
+reg        outfifo_wr;
+wire       mask_one_byte;
+
+
+assign oINFIFO_RDREQ = infifo_rdreq;
+
+assign oOUTFIFO_CLK = ~iINFIFO_CLK;
+assign oOUTFIFO_WEN = outfifo_wr;
+assign oOUTFIFO_DATA = outfifo_data;
+assign mask_one_byte = iINFIFO_DATA[16];
+
+// posedge changes
+always @ (*)
+case(states)
+	VFIFO_ST_IDLE: begin
+		states_next = (iINFIFO_EMPTY)? VFIFO_ST_IDLE : VFIFO_ST_WR_U;
+		outfifo_data = 8'bxxxxxxxx;
+		outfifo_wr = 1'b0;
+	end
+	
+	VFIFO_ST_WR_U: begin
+		states_next = VFIFO_ST_WR_L;
+		outfifo_data = iINFIFO_DATA[15:8];
+		outfifo_wr = 1'b1;
+	end
+	
+	VFIFO_ST_WR_L: begin
+		states_next = (iINFIFO_EMPTY)? VFIFO_ST_IDLE : VFIFO_ST_WR_U;
+		outfifo_data = iINFIFO_DATA[7:0];
+		outfifo_wr = (mask_one_byte)? 1'b0 : 1'b1;
+	end
+	
+	default: begin
+		states_next = VFIFO_ST_IDLE;
+		outfifo_data = 8'bxxxxxxxx;
+		outfifo_wr = 1'b0;
+	end
+endcase
+
+// negedge changes
+always @ (*)
+case(states)
+	VFIFO_ST_IDLE: begin
+		infifo_rdreq_next = (iINFIFO_EMPTY)? 1'b0 : 1'b1;
+	end
+	
+	VFIFO_ST_WR_U: begin
+		infifo_rdreq_next = 1'b0;
+	end
+	
+	VFIFO_ST_WR_L: begin
+		infifo_rdreq_next = (iINFIFO_EMPTY)? 1'b0 : 1'b1;
+	end
+	
+	default: begin
+		infifo_rdreq_next = 1'b0;
+	end
+endcase
+
+always @ (posedge iINFIFO_CLK or posedge iRST) begin
+	if(iRST)
+		states <= VFIFO_ST_IDLE;
+	else
+		states <= states_next;
+end
+
+always @ (negedge iINFIFO_CLK or posedge iRST) begin
+	if(iRST)
+		infifo_rdreq <= 1'b0;
+	else
+		infifo_rdreq <= infifo_rdreq_next;
+end
 endmodule
