@@ -55,12 +55,13 @@ r_data_valid       _____|           |           |________ (change at negedge of 
 
 fifo write happen             o           o               (posedge of clock while r_data_valid == 1)
 */
-reg         r_data_valid;   // changed in negedge of clock  (controlled by SDRAM read submodule)
-reg [15:0]  r_data;         // changed in negedge of clock  (controlled by SDRAM read submodule)
-reg         r_write_single; // changed in negedge of clock  (controlled by SDRAM read submodule)
+reg         r0_data_valid, r1_data_valid, r_data_valid;   // changed in negedge of clock  (controlled by SDRAM read submodule)
+reg [15:0]  r0_data, r1_data, r_data;         // changed in negedge of clock  (controlled by SDRAM read submodule)
+reg         r0_write_single, r1_write_single, r_write_single; // changed in negedge of clock  (controlled by SDRAM read submodule)
 wire        sdram_fifo_empty;
 wire [16:0] sdram_fifo_data;
 wire        sdram_fifo_rdreq;
+
 sdram_read_fifo sdram_read_fifo_0(
 	.clock(clock),
 	// put what the SDRAM reads
@@ -93,6 +94,43 @@ fifo16to8  sdramfifo_to_vgafifo_0(
 // ============================================
 //  VGA data control and SDRAM read submodule
 // ============================================
+// Delayed signals for synthesis with good timing
+reg [5:0]  m0_FRAME_ID,             m1_FRAME_ID,             mFRAME_ID;
+reg        m0_OFFSET_H_SIGN,        m1_OFFSET_H_SIGN,        mOFFSET_H_SIGN;
+reg [7:0]  m0_OFFSET_H,             m1_OFFSET_H,             mOFFSET_H;
+reg        m0_OFFSET_V_SIGN,        m1_OFFSET_V_SIGN,        mOFFSET_V_SIGN;
+reg [7:0]  m0_OFFSET_V,             m1_OFFSET_V,             mOFFSET_V;
+reg [12:0] m0_VGA_LINE_TO_LOAD,     m1_VGA_LINE_TO_LOAD,     mVGA_LINE_TO_LOAD;
+reg        m0_VGA_LOAD_TO_FIFO_REQ, m1_VGA_LOAD_TO_FIFO_REQ, mVGA_LOAD_TO_FIFO_REQ;
+
+always @ (posedge clock) begin
+	m0_FRAME_ID             <= iFRAME_ID;
+	m0_OFFSET_H_SIGN        <= iOFFSET_H_SIGN;
+	m0_OFFSET_H             <= iOFFSET_H;
+	m0_OFFSET_V_SIGN        <= iOFFSET_V_SIGN;
+	m0_OFFSET_V             <= iOFFSET_V;
+	m0_VGA_LINE_TO_LOAD     <= iVGA_LINE_TO_LOAD;
+	m0_VGA_LOAD_TO_FIFO_REQ <= iVGA_LOAD_TO_FIFO_REQ;
+
+	m1_FRAME_ID             <= m0_FRAME_ID;
+	m1_OFFSET_H_SIGN        <= m0_OFFSET_H_SIGN;
+	m1_OFFSET_H             <= m0_OFFSET_H;
+	m1_OFFSET_V_SIGN        <= m0_OFFSET_V_SIGN;
+	m1_OFFSET_V             <= m0_OFFSET_V;
+	m1_VGA_LINE_TO_LOAD     <= m0_VGA_LINE_TO_LOAD;
+	m1_VGA_LOAD_TO_FIFO_REQ <= m0_VGA_LOAD_TO_FIFO_REQ;
+end
+
+always @ (*) begin
+	mFRAME_ID             = m1_FRAME_ID;
+	mOFFSET_H_SIGN        = m1_OFFSET_H_SIGN;
+	mOFFSET_H             = m1_OFFSET_H;
+	mOFFSET_V_SIGN        = m1_OFFSET_V_SIGN;
+	mOFFSET_V             = m1_OFFSET_V;
+	mVGA_LINE_TO_LOAD     = m1_VGA_LINE_TO_LOAD;
+	mVGA_LOAD_TO_FIFO_REQ = m1_VGA_LOAD_TO_FIFO_REQ;
+end
+
 
 // States
 // idle
@@ -116,37 +154,41 @@ reg [2:0]   read_ending_counter, read_ending_counter_next;
 reg [8:1]   blank_counter, blank_counter_next;
 reg [8:0]   front_blank_count, back_blank_count;
 reg         write_single;
+reg [5:0]   current_frame_id, current_frame_id_next;
 reg [9:0]   current_line_id, current_line_id_next;
 
 assign oRD_EN = (states == ST_FILL_DATA_READ) || (states == ST_FILL_DATA_READ_STALLED);
-assign oRD_ADDR[24:19] = iFRAME_ID;
+assign oRD_ADDR[24:19] = current_frame_id;
 assign oRD_ADDR[18:9] = current_line_id;
 assign oRD_ADDR[8:0] = horizontal_counter[9:1];
 
 
 always @ (*) begin
-	if(iOFFSET_H_SIGN == 1'b1) begin // negative offset
-		front_blank_count = 9'd128 - iOFFSET_H;
-		back_blank_count = 9'd128 + iOFFSET_H;
+	if(mOFFSET_H_SIGN == 1'b1) begin // negative offset
+		front_blank_count = 9'd128 - mOFFSET_H;
+		back_blank_count = 9'd128 + mOFFSET_H;
 	end
 	else begin  // positive offset
-		front_blank_count = 9'd128 + iOFFSET_H;
-		back_blank_count = 9'd128 - iOFFSET_H;
+		front_blank_count = 9'd128 + mOFFSET_H;
+		back_blank_count = 9'd128 - mOFFSET_H;
 	end
 end
 
 
-// current_line_id_next
+// current_line_id_next, current_frame_id_next
 always @ (*)
 case(states)
 	ST_LISTEN_VGA_REQ: begin
-		if(iOFFSET_V_SIGN == 1'b1)  // negative y offset
-			current_line_id_next = iVGA_LINE_TO_LOAD[9:0] + iOFFSET_V;
+		current_frame_id_next = mFRAME_ID;
+		if(mOFFSET_V_SIGN == 1'b1)  // negative y offset
+			current_line_id_next = mVGA_LINE_TO_LOAD[9:0] + mOFFSET_V;
 		else  // positive y offset
-			current_line_id_next = iVGA_LINE_TO_LOAD[9:0] - iOFFSET_V;
+			current_line_id_next = mVGA_LINE_TO_LOAD[9:0] - mOFFSET_V;
 	end
-	default:
+	default: begin
+		current_frame_id_next = current_frame_id;
 		current_line_id_next = current_line_id;
+	end
 endcase
 
 
@@ -194,11 +236,11 @@ else
 always @ (*)
 case(states)
 	ST_LISTEN_VGA_REQ: begin
-		if(!iVGA_LOAD_TO_FIFO_REQ)
+		if(!mVGA_LOAD_TO_FIFO_REQ)
 			states_next = ST_LISTEN_VGA_REQ;
 		else begin
-			if( (iOFFSET_V_SIGN == 1'b1 && iVGA_LINE_TO_LOAD[10:0] >= 11'd1024-iOFFSET_V)||  // negative offset
-			    (iOFFSET_V_SIGN == 1'b0 && iVGA_LINE_TO_LOAD[10:0] <  {3'b000,iOFFSET_V}))  // positive offset
+			if( (mOFFSET_V_SIGN == 1'b1 && mVGA_LINE_TO_LOAD[10:0] >= 11'd1024-mOFFSET_V)||  // negative offset
+			    (mOFFSET_V_SIGN == 1'b0 && mVGA_LINE_TO_LOAD[10:0] <  {3'b000,mOFFSET_V}))  // positive offset
 			begin  
 				states_next = ST_FILL_EMPTY_LINES;
 			end
@@ -263,31 +305,41 @@ endcase
 // negedge required by the usage of r_data, r_data_valid and r_write_single.
 always @(negedge clock or posedge iRST) begin
 	if (iRST) begin
-		r_data <= 16'd0;
-		r_data_valid <= 1'b0;
-		r_write_single <= 1'b0;
+		r0_data <= 16'd0;
+		r0_data_valid <= 1'b0;
+		r0_write_single <= 1'b0;
 	end
 	else case(states)
 		ST_FILL_EMPTY_LINES,
 		ST_FILL_HORIZONTAL_BLANK_FRONT_ODD, ST_FILL_HORIZONTAL_BLANK_FRONT, 
 		ST_FILL_HORIZONTAL_BLANK_BACK_ODD, ST_FILL_HORIZONTAL_BLANK_BACK: begin
-			r_data <= 16'd0;
-			r_data_valid <= 1'b1;
-			r_write_single <= write_single;
+			r0_data <= 16'd0;
+			r0_data_valid <= 1'b1;
+			r0_write_single <= write_single;
 		end
 
 		ST_FILL_DATA_READ, ST_FILL_DATA_READ_STALLED, ST_FILL_DATA_READ_ENDING: begin
-			r_data <= iRD_DATA;
-			r_data_valid <= iRD_DATAVALID;
-			r_write_single <= write_single;
+			r0_data <= iRD_DATA;
+			r0_data_valid <= iRD_DATAVALID;
+			r0_write_single <= write_single;
 		end
 
 		default: begin
-			r_data <= 16'd0;
-			r_data_valid <= 1'b0;
-			r_write_single <= 1'b0;
+			r0_data <= 16'd0;
+			r0_data_valid <= 1'b0;
+			r0_write_single <= 1'b0;
 		end
 	endcase
+end
+always @ (negedge clock) begin
+	r1_data <= r0_data;
+	r1_data_valid <= r0_data_valid;
+	r1_write_single <= r0_write_single;
+end
+always @ (*) begin
+	r_data = r1_data;
+	r_data_valid = r1_data_valid;
+	r_write_single = r1_write_single;
 end
 
 
@@ -299,6 +351,7 @@ always @(posedge clock or posedge iRST) begin
 		blank_counter <= 0;
 		read_ending_counter <= 0;
 		current_line_id <= 0;
+		current_frame_id <= 0;
 	end
 	else begin
 		states <= states_next;
@@ -306,10 +359,11 @@ always @(posedge clock or posedge iRST) begin
 		blank_counter <= blank_counter_next;
 		read_ending_counter <= read_ending_counter_next;
 		current_line_id <= current_line_id_next;
+		current_frame_id <= current_frame_id_next;
 	end
 end
-assign o_tests[7:4] = states;
-assign o_tests[3:0] = states_next;
+// assign o_tests[7:4] = states;
+// assign o_tests[3:0] = states_next;
 
 endmodule
 
