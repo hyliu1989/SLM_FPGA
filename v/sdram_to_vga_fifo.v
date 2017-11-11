@@ -100,9 +100,9 @@ parameter ST_FILL_HORIZONTAL_BLANK_BACK       = 4'd7;
 parameter READ_ENDING_WAIT_CYCLES = 3'd5;
 
 reg [3:0]	states, states_next;
-reg [10:0]	horizontal_counter, horizontal_counter_next;
+reg [10:1]	horizontal_counter, horizontal_counter_next;
 reg [2:0]   read_ending_counter, read_ending_counter_next;
-reg [8:0]   blank_counter, blank_counter_next;
+reg [8:1]   blank_counter, blank_counter_next;
 reg [8:0]   front_blank_count, back_blank_count;
 reg         write_single;
 reg [9:0]   current_line_id, current_line_id_next;
@@ -142,32 +142,32 @@ endcase
 // horizontal_counter_next
 always @ (*)
 case(states)
-	ST_LISTEN_VGA_REQ:          horizontal_counter_next = 11'd0;
-	ST_FILL_EMPTY_LINES:        horizontal_counter_next = horizontal_counter + 2'b10;
+	ST_LISTEN_VGA_REQ:          horizontal_counter_next = 10'd0;
+	ST_FILL_EMPTY_LINES:        horizontal_counter_next = horizontal_counter[10:1] + 1'b1;
 	//ST_FILL_HORIZONTAL_BLANK_FRONT_ODD
 	//ST_FILL_HORIZONTAL_BLANK_FRONT
-	ST_FILL_DATA_READ:          horizontal_counter_next = (states_next==ST_FILL_DATA_READ)? horizontal_counter+2'b10 : horizontal_counter;
-	ST_FILL_DATA_READ_STALLED:  horizontal_counter_next = (states_next==ST_FILL_DATA_READ)? horizontal_counter+2'b10 : horizontal_counter;
+	ST_FILL_DATA_READ:          horizontal_counter_next = (states_next==ST_FILL_DATA_READ)? horizontal_counter[10:1] + 1'b1 : horizontal_counter;
+	ST_FILL_DATA_READ_STALLED:  horizontal_counter_next = (states_next==ST_FILL_DATA_READ)? horizontal_counter[10:1] + 1'b1 : horizontal_counter;
 	//ST_FILL_DATA_READ_ENDING
 	//ST_FILL_HORIZONTAL_BLANK_BACK_ODD
 	//ST_FILL_HORIZONTAL_BLANK_BACK
-	default:                    horizontal_counter_next = 11'd0;
+	default:                    horizontal_counter_next = 10'd0;
 endcase
 
 
 // blank_counter_next
 always @ (*)
 case(states)
-	ST_LISTEN_VGA_REQ:                   blank_counter_next = 9'd0;
+	ST_LISTEN_VGA_REQ:                   blank_counter_next[8:1] = 8'd0;
 	//ST_FILL_EMPTY_LINES
-	ST_FILL_HORIZONTAL_BLANK_FRONT_ODD:  blank_counter_next = 9'd1;
-	ST_FILL_HORIZONTAL_BLANK_FRONT:      blank_counter_next = blank_counter + 2'b10;
-	ST_FILL_DATA_READ:                   blank_counter_next = 9'd0;
+	ST_FILL_HORIZONTAL_BLANK_FRONT_ODD:  blank_counter_next[8:1] = 8'd0;
+	ST_FILL_HORIZONTAL_BLANK_FRONT:      blank_counter_next[8:1] = blank_counter[8:1] + 1'b1;
+	ST_FILL_DATA_READ:                   blank_counter_next[8:1] = 8'd0;
 	//ST_FILL_DATA_READ_STALLED
 	//ST_FILL_DATA_READ_ENDING
-	ST_FILL_HORIZONTAL_BLANK_BACK_ODD:   blank_counter_next = 9'd1;
-	ST_FILL_HORIZONTAL_BLANK_BACK:       blank_counter_next = blank_counter + 2'b10;
-	default:                             blank_counter_next = 9'd0;
+	ST_FILL_HORIZONTAL_BLANK_BACK_ODD:   blank_counter_next[8:1] = 8'd0;
+	ST_FILL_HORIZONTAL_BLANK_BACK:       blank_counter_next[8:1] = blank_counter[8:1] + 1'b1;
+	default:                             blank_counter_next[8:1] = 8'd0;
 endcase
 
 
@@ -197,7 +197,7 @@ case(states)
 	end
 
 	ST_FILL_EMPTY_LINES: begin
-		states_next = (horizontal_counter_next[10:1] == 10'd640)? ST_LISTEN_VGA_REQ : ST_FILL_EMPTY_LINES;  // 640 due to 1280/2=640
+		states_next = (horizontal_counter[10:1] == 1280/2-1)? ST_LISTEN_VGA_REQ : ST_FILL_EMPTY_LINES;
 	end
 
 	ST_FILL_HORIZONTAL_BLANK_FRONT_ODD, ST_FILL_HORIZONTAL_BLANK_FRONT: begin
@@ -219,7 +219,7 @@ case(states)
 	end
 
 	ST_FILL_DATA_READ_ENDING: begin
-		if(read_ending_counter_next == READ_ENDING_WAIT_CYCLES)
+		if(read_ending_counter == READ_ENDING_WAIT_CYCLES-1)
 			states_next = (back_blank_count[0]==1'b1)? ST_FILL_HORIZONTAL_BLANK_BACK_ODD : ST_FILL_HORIZONTAL_BLANK_BACK;
 		else
 			states_next = ST_FILL_DATA_READ_ENDING;
