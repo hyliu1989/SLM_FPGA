@@ -24,6 +24,7 @@ module	sdram_to_vga_fifo(
 	output        oFIFO_WCLK,
 	output [7:0]  oFIFO_WDATA,
 	output        oFIFO_WEN
+	,output [7:0] o_tests
 );
 
 // =================================
@@ -57,6 +58,7 @@ sdram_read_fifo sdram_read_fifo_0(
 	// put what the SDRAM reads
 	.data({r_write_single,r_data}),
 	.wrreq(r_data_valid),
+	.full(/*o_tests[0]*/),
 	// read data for writing to VGA fifo (another fifo)
 	.rdreq(sdram_fifo_rdreq),
 	.empty(sdram_fifo_empty),  // output
@@ -297,8 +299,8 @@ always @(posedge clock or posedge iRST) begin
 		current_line_id <= current_line_id_next;
 	end
 end
-
-
+assign o_tests[7:4] = states;
+assign o_tests[3:0] = states_next;
 endmodule
 
 

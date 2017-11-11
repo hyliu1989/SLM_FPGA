@@ -43,6 +43,7 @@ module sdram_read_fifo (
 	rdreq,
 	wrreq,
 	empty,
+	full,
 	q);
 
 	input	  clock;
@@ -50,12 +51,15 @@ module sdram_read_fifo (
 	input	  rdreq;
 	input	  wrreq;
 	output	  empty;
+	output	  full;
 	output	[16:0]  q;
 
 	wire  sub_wire0;
-	wire [16:0] sub_wire1;
+	wire  sub_wire1;
+	wire [16:0] sub_wire2;
 	wire  empty = sub_wire0;
-	wire [16:0] q = sub_wire1[16:0];
+	wire  full = sub_wire1;
+	wire [16:0] q = sub_wire2[16:0];
 
 	scfifo	scfifo_component (
 				.clock (clock),
@@ -63,12 +67,12 @@ module sdram_read_fifo (
 				.rdreq (rdreq),
 				.wrreq (wrreq),
 				.empty (sub_wire0),
-				.q (sub_wire1),
+				.full (sub_wire1),
+				.q (sub_wire2),
 				.aclr (),
 				.almost_empty (),
 				.almost_full (),
 				.eccstatus (),
-				.full (),
 				.sclr (),
 				.usedw ());
 	defparam
@@ -97,7 +101,7 @@ endmodule
 // Retrieval info: PRIVATE: Clock NUMERIC "0"
 // Retrieval info: PRIVATE: Depth NUMERIC "512"
 // Retrieval info: PRIVATE: Empty NUMERIC "1"
-// Retrieval info: PRIVATE: Full NUMERIC "0"
+// Retrieval info: PRIVATE: Full NUMERIC "1"
 // Retrieval info: PRIVATE: INTENDED_DEVICE_FAMILY STRING "Cyclone V"
 // Retrieval info: PRIVATE: LE_BasedFIFO NUMERIC "0"
 // Retrieval info: PRIVATE: LegacyRREQ NUMERIC "1"
@@ -135,6 +139,7 @@ endmodule
 // Retrieval info: USED_PORT: clock 0 0 0 0 INPUT NODEFVAL "clock"
 // Retrieval info: USED_PORT: data 0 0 17 0 INPUT NODEFVAL "data[16..0]"
 // Retrieval info: USED_PORT: empty 0 0 0 0 OUTPUT NODEFVAL "empty"
+// Retrieval info: USED_PORT: full 0 0 0 0 OUTPUT NODEFVAL "full"
 // Retrieval info: USED_PORT: q 0 0 17 0 OUTPUT NODEFVAL "q[16..0]"
 // Retrieval info: USED_PORT: rdreq 0 0 0 0 INPUT NODEFVAL "rdreq"
 // Retrieval info: USED_PORT: wrreq 0 0 0 0 INPUT NODEFVAL "wrreq"
@@ -143,6 +148,7 @@ endmodule
 // Retrieval info: CONNECT: @rdreq 0 0 0 0 rdreq 0 0 0 0
 // Retrieval info: CONNECT: @wrreq 0 0 0 0 wrreq 0 0 0 0
 // Retrieval info: CONNECT: empty 0 0 0 0 @empty 0 0 0 0
+// Retrieval info: CONNECT: full 0 0 0 0 @full 0 0 0 0
 // Retrieval info: CONNECT: q 0 0 17 0 @q 0 0 17 0
 // Retrieval info: GEN_FILE: TYPE_NORMAL sdram_read_fifo.v TRUE
 // Retrieval info: GEN_FILE: TYPE_NORMAL sdram_read_fifo.inc FALSE

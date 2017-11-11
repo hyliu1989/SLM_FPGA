@@ -244,7 +244,6 @@ delay_x00_ms delay_module_0(
 	.oDELAY300(),
 	.oDELAY400()
 );
-assign LEDR[9] = delayed_reset;
 
 delay_x00_ms delay_module_1(
 	.iCLOCK50(CLOCK_50),
@@ -314,7 +313,7 @@ sdram_to_vga_fifo sdram_to_vga_fifo_0(
 
     // control signals for current frame
     // FIXME: the 5 values here are for testing
-    .iFRAME_ID(45),  // input [5:0]
+    .iFRAME_ID(SW[5:0]),  // input [5:0]
     .iOFFSET_H_SIGN(0),  // input
     .iOFFSET_H(3),  // input [7:0], horizontal offset, + to the right
     .iOFFSET_V_SIGN(1),  // input
@@ -335,6 +334,7 @@ sdram_to_vga_fifo sdram_to_vga_fifo_0(
 	.oFIFO_WCLK(fifo_wclk),
 	.oFIFO_WDATA(fifo_wdata),
 	.oFIFO_WEN(fifo_wen)
+	,.o_tests(LEDR[7:0])
 );
 
 vga_fifo vf0(
@@ -345,8 +345,8 @@ vga_fifo vf0(
 	.wrclk(fifo_wclk),
 	.wrreq(fifo_wen),
 	.q(vga_data),  // output [7:0]
-	.rdempty(),  //output
-	.wrfull()  // output
+	.rdempty(LEDR[9]),  //output
+	.wrfull(LEDR[8])  // output
 );
 
 wire              HPS_SD_CLK;
