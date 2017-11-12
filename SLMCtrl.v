@@ -227,8 +227,14 @@ wire        sdram_ctrl_read_datavalid;
 
 wire        delayed_reset, delayed_reset_1, delayed_reset_2;
 wire        trigger;
-wire        update_frame_to_read;
-wire        update_y_to_read;
+
+// testing signals
+wire        update_x_offset;
+wire        update_y_offset;
+reg [7:0]   test_x_offset;
+reg         test_x_offset_sign;
+reg [7:0]   test_y_offset;
+reg         test_y_offset_sign;
 
 //=======================================================
 //  Structural coding
@@ -256,7 +262,7 @@ delay_x00_ms delay_module_1(
 delay_x00_ms delay_module_2(
     .iCLOCK50(CLOCK_50),
     .iTRIGGER(!KEY[2]),
-    .oDELAY100(update_y_to_read),
+    .oDELAY100(update_y_offset),
     .oDELAY200(),
     .oDELAY300(),
     .oDELAY400()
@@ -265,7 +271,7 @@ delay_x00_ms delay_module_2(
 delay_x00_ms delay_module_3(
     .iCLOCK50(CLOCK_50),
     .iTRIGGER(!KEY[3]),
-    .oDELAY100(update_frame_to_read),
+    .oDELAY100(update_x_offset),
     .oDELAY200(),
     .oDELAY300(),
     .oDELAY400()
@@ -313,10 +319,10 @@ sdram_to_vga_fifo sdram_to_vga_fifo_0(
     // control signals for current frame
     // FIXME: the 5 values here are for testing
     .iFRAME_ID(SW[5:0]),  // input [5:0]
-    .iOFFSET_H_SIGN(0),  // input
-    .iOFFSET_H(3),  // input [7:0], horizontal offset, + to the right
-    .iOFFSET_V_SIGN(1),  // input
-    .iOFFSET_V(5),  // input [7:0], vertial offset, + to the bottom
+    .iOFFSET_H_SIGN(test_x_offset_sign),  // input
+    .iOFFSET_H(test_x_offset),  // input [7:0], horizontal offset, + to the right
+    .iOFFSET_V_SIGN(test_y_offset_sign),  // input
+    .iOFFSET_V(test_y_offset),  // input [7:0], vertial offset, + to the bottom
 
     // VGA signals (as a trigger to load)
     .iVGA_LINE_TO_LOAD(vga_fifo_loadline_id),
@@ -344,8 +350,8 @@ vga_fifo vf0(
     .wrclk(fifo_wclk),
     .wrreq(fifo_wen),
     .q(vga_data),  // output [7:0]
-    .rdempty(LEDR[9]),  //output
-    .wrfull(LEDR[8])  // output
+    .rdempty(/*LEDR[9]*/),  //output
+    .wrfull(/*LEDR[8]*/)  // output
 );
 
 wire              HPS_SD_CLK;
@@ -418,6 +424,25 @@ assign HEX3 = sdram_ctrl_write_done? 7'b1111111 : 7'b0010010;  // letter s
 assign HEX2 = sdram_ctrl_write_done? 7'b1111111 : 7'b0010001;  // letter y
 assign HEX1 = 7'h7f;
 assign HEX0 = 7'h7f;
+
+always @ (posedge CLOCK_50 or posedge delayed_reset) begin
+	if(delayed_reset) begin
+		test_x_offset = 8;
+		test_x_offset_sign = 1;
+		test_y_offset = 3;
+		test_y_offset_sign = 0;
+	end
+	else begin
+		if(update_x_offset) begin
+			test_x_offset = SW[7:0];
+			test_x_offset_sign = SW[9];
+		end
+		if(update_y_offset) begin
+			test_y_offset = SW[7:0];
+			test_y_offset_sign = SW[9];
+		end
+	end
+end
 
 // // testing code for sdram reading
 // test_sdram_read test_sdram_read_0(
