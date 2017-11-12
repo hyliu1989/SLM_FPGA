@@ -19,9 +19,11 @@ data-ready signal (is_data_ready) from SD card read is always captured.
 
 // states
 parameter ST_IDLE           = 4'd0;
+parameter ST_WAIT_WAITREQ_0 = 4'd4;
+parameter ST_WAIT_WAITREQ_1 = 4'd5;
+parameter ST_WRITE_WAITDATA = 4'd3;
 parameter ST_WRITE_REQ      = 4'd1;
 parameter ST_WRITE_STALLED  = 4'd2;
-parameter ST_WRITE_WAITDATA = 4'd3;
 parameter ST_DONE_AND_WAIT  = 4'd15;
 // states for ready-signal capturing
 parameter RDST_WAITNEW             = 2'b00;
@@ -94,6 +96,12 @@ case(states)
 	// idle
 	ST_IDLE:
 		states_next = (iTRIGGER)? ST_WRITE_WAITDATA : ST_IDLE;
+		
+	ST_WAIT_WAITREQ_0:
+		states_next = (iWAIT_REQUEST)? ST_WAIT_WAITREQ_0 : ST_WAIT_WAITREQ_1;
+	
+	ST_WAIT_WAITREQ_1:
+		states_next = ST_WRITE_WAITDATA;
 
 	// wait for data to be ready
 	ST_WRITE_WAITDATA:
@@ -210,13 +218,23 @@ reg [15:0]        data, data_next;
 wire [5:0]        frame_id;
 wire [9:0]        line_id;
 wire [8:0]        twobytes_id;
+reg [15:0]        rDATA;
+reg               rDATA_READY;
+reg               rLAST_DATA;
+
 assign frame_id = counter[24:19];
 assign line_id = counter[18:9];
 assign twobytes_id = counter[8:0];
 
-assign oDATA = data;
-assign oDATA_READY = (states == ST_SEND_REQ) || (states == ST_REQ_LAST);
-assign oLAST_DATA = (states == ST_REQ_LAST);
+always @ (posedge CLOCK) begin
+	// retarding the output signals
+	rDATA <= data;
+	rDATA_READY <= (states == ST_SEND_REQ) || (states == ST_REQ_LAST);
+	rLAST_DATA <= (states == ST_REQ_LAST);
+end
+assign oDATA = rDATA;
+assign oDATA_READY = rDATA_READY;
+assign oLAST_DATA = rLAST_DATA;
 
 // states_next
 always @ (*)
