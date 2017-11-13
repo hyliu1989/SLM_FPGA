@@ -37,7 +37,7 @@
 // synopsys translate_off
 `timescale 1 ps / 1 ps
 // synopsys translate_on
-module sdram_read_fifo (
+module fifo_sdram_read (
 	clock,
 	data,
 	rdreq,
@@ -150,10 +150,10 @@ endmodule
 // Retrieval info: CONNECT: empty 0 0 0 0 @empty 0 0 0 0
 // Retrieval info: CONNECT: full 0 0 0 0 @full 0 0 0 0
 // Retrieval info: CONNECT: q 0 0 17 0 @q 0 0 17 0
-// Retrieval info: GEN_FILE: TYPE_NORMAL sdram_read_fifo.v TRUE
-// Retrieval info: GEN_FILE: TYPE_NORMAL sdram_read_fifo.inc FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL sdram_read_fifo.cmp FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL sdram_read_fifo.bsf FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL sdram_read_fifo_inst.v FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL sdram_read_fifo_bb.v TRUE
+// Retrieval info: GEN_FILE: TYPE_NORMAL fifo_sdram_read.v TRUE
+// Retrieval info: GEN_FILE: TYPE_NORMAL fifo_sdram_read.inc FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL fifo_sdram_read.cmp FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL fifo_sdram_read.bsf FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL fifo_sdram_read_inst.v FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL fifo_sdram_read_bb.v TRUE
 // Retrieval info: LIB_FILE: altera_mf

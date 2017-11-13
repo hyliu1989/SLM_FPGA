@@ -1,4 +1,4 @@
-module	sdram_to_vga_fifo(
+module	sdram_to_vgafifo(
 	input         iRST,
 	input         iCLK,
 	
@@ -62,7 +62,7 @@ wire        sdram_fifo_empty;
 wire [16:0] sdram_fifo_data;
 wire        sdram_fifo_rdreq;
 
-sdram_read_fifo sdram_read_fifo_0(
+fifo_sdram_read fifo_sdram_read_0(
 	.clock(clock),
 	// put what the SDRAM reads
 	.data({r_write_single,r_data}),

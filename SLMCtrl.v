@@ -284,7 +284,7 @@ vga_pll vga_pll_0(
     .outclk_0(vga_clock)
 );
 
-VGA_Controller vga_ctrl_0(
+vga_control vga_ctrl_0(
     // FIFO read signal
     .iData_R(vga_data),
     .iData_G(vga_data),
@@ -312,7 +312,7 @@ VGA_Controller vga_ctrl_0(
     .iRST_N(~delayed_reset)
 );
 
-sdram_to_vga_fifo sdram_to_vga_fifo_0(
+sdram_to_vgafifo sdram_to_vgafifo_0(
     .iRST(delayed_reset_2 || !sdram_ctrl_write_done),
     .iCLK(sdram_ctrl_clock),
 
@@ -342,7 +342,7 @@ sdram_to_vga_fifo sdram_to_vga_fifo_0(
     ,.o_tests(LEDR[7:0])
 );
 
-vga_fifo vf0(
+fifo_vga fv0(
     .aclr(vga_fifo_aclear),
     .data(fifo_wdata),  // [7:0]
     .rdclk(vga_fifo_rclk),

@@ -1,4 +1,4 @@
-module	VGA_Controller(	// FIFO read signal
+module	vga_control(	// FIFO read signal
 						iData_R,
 						iData_G,
 						iData_B,
@@ -26,7 +26,7 @@ module	VGA_Controller(	// FIFO read signal
 						//,iZOOM_MODE_SW
 							);
 
-`include "VGA_Param.h"
+`include "vga_parameter.h"
 
 //	FIFO read
 input		[7:0]	iData_R;

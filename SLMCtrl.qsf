@@ -310,11 +310,11 @@ set_global_assignment -name VERILOG_FILE v/delay_x00_ms.v
 set_global_assignment -name VERILOG_FILE v/test_sdram_read.v
 set_global_assignment -name VERILOG_FILE v/test_sdram_write.v
 set_global_assignment -name QSYS_FILE reader_system.qsys
-set_global_assignment -name VERILOG_FILE v/sdram_to_vga_fifo.v
+set_global_assignment -name VERILOG_FILE v/sdram_to_vgafifo.v
 set_global_assignment -name QIP_FILE v/vga_pll.qip
 set_global_assignment -name VERILOG_FILE SLMCtrl.v
-set_global_assignment -name VERILOG_FILE v/VGA_Controller.v
-set_global_assignment -name QIP_FILE v/vga_fifo.qip
+set_global_assignment -name VERILOG_FILE v/vga_control.v
 set_global_assignment -name CDF_FILE PofChain.cdf
-set_global_assignment -name QIP_FILE v/sdram_read_fifo.qip
+set_global_assignment -name QIP_FILE v/fifo_sdram_read.qip
+set_global_assignment -name QIP_FILE v/fifo_vga.qip
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

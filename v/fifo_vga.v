@@ -4,7 +4,7 @@
 // MODULE: dcfifo 
 
 // ============================================================
-// File Name: vga_fifo.v
+// File Name: fifo_vga.v
 // Megafunction Name(s):
 // 			dcfifo
 //
@@ -37,7 +37,7 @@
 // synopsys translate_off
 `timescale 1 ps / 1 ps
 // synopsys translate_on
-module vga_fifo (
+module fifo_vga (
 	aclr,
 	data,
 	rdclk,
@@ -172,10 +172,10 @@ endmodule
 // Retrieval info: CONNECT: q 0 0 8 0 @q 0 0 8 0
 // Retrieval info: CONNECT: rdempty 0 0 0 0 @rdempty 0 0 0 0
 // Retrieval info: CONNECT: wrfull 0 0 0 0 @wrfull 0 0 0 0
-// Retrieval info: GEN_FILE: TYPE_NORMAL vga_fifo.v TRUE
-// Retrieval info: GEN_FILE: TYPE_NORMAL vga_fifo.inc FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL vga_fifo.cmp FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL vga_fifo.bsf FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL vga_fifo_inst.v FALSE
-// Retrieval info: GEN_FILE: TYPE_NORMAL vga_fifo_bb.v TRUE
+// Retrieval info: GEN_FILE: TYPE_NORMAL fifo_vga.v TRUE
+// Retrieval info: GEN_FILE: TYPE_NORMAL fifo_vga.inc FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL fifo_vga.cmp FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL fifo_vga.bsf FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL fifo_vga_inst.v FALSE
+// Retrieval info: GEN_FILE: TYPE_NORMAL fifo_vga_bb.v TRUE
 // Retrieval info: LIB_FILE: altera_mf
