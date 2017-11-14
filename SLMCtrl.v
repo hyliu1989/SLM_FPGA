@@ -36,18 +36,18 @@
 module SLMCtrl(
 
     ///////// ADC /////////
-    output             ADC_CONVST,
-    output             ADC_DIN,
-    input              ADC_DOUT,
-    output             ADC_SCLK,
+//    output             ADC_CONVST,
+//    output             ADC_DIN,
+//    input              ADC_DOUT,
+//    output             ADC_SCLK,
 
     ///////// AUD /////////
-    input              AUD_ADCDAT,
-    inout              AUD_ADCLRCK,
-    inout              AUD_BCLK,
-    output             AUD_DACDAT,
-    inout              AUD_DACLRCK,
-    output             AUD_XCK,
+//    input              AUD_ADCDAT,
+//    inout              AUD_ADCLRCK,
+//    inout              AUD_BCLK,
+//    output             AUD_DACDAT,
+//    inout              AUD_DACLRCK,
+//    output             AUD_XCK,
 
     ///////// CLOCK2 /////////
     input              CLOCK2_50,
@@ -75,11 +75,11 @@ module SLMCtrl(
     output             DRAM_WE_N,
 
     ///////// FAN /////////
-    output             FAN_CTRL,
+//    output             FAN_CTRL,
 
     ///////// FPGA /////////
-    output             FPGA_I2C_SCLK,
-    inout              FPGA_I2C_SDAT,
+//    output             FPGA_I2C_SCLK,
+//    inout              FPGA_I2C_SDAT,
 
     ///////// GPIO /////////
     inout     [35:0]         GPIO_0,
@@ -161,8 +161,8 @@ module SLMCtrl(
 `endif /*ENABLE_HPS*/
 
     ///////// IRDA /////////
-    input              IRDA_RXD,
-    output             IRDA_TXD,
+//    input              IRDA_RXD,
+//    output             IRDA_TXD,
 
     ///////// KEY /////////
     input       [3:0]  KEY,
@@ -171,20 +171,20 @@ module SLMCtrl(
     output      [9:0]  LEDR,
 
     ///////// PS2 /////////
-    inout              PS2_CLK,
-    inout              PS2_CLK2,
-    inout              PS2_DAT,
-    inout              PS2_DAT2,
+//    inout              PS2_CLK,
+//    inout              PS2_CLK2,
+//    inout              PS2_DAT,
+//    inout              PS2_DAT2,
 
     ///////// SW /////////
     input       [9:0]  SW,
 
     ///////// TD /////////
     input              TD_CLK27,
-    input       [7:0]  TD_DATA,
-    input              TD_HS,
+//    input       [7:0]  TD_DATA,
+//    input              TD_HS,
     output             TD_RESET_N,
-    input              TD_VS,
+//    input              TD_VS,
 
     ///////// VGA /////////
     output      [7:0]  VGA_B,
@@ -339,7 +339,7 @@ sdram_to_vgafifo sdram_to_vgafifo_0(
     .oFIFO_WCLK(fifo_wclk),
     .oFIFO_WDATA(fifo_wdata),
     .oFIFO_WEN(fifo_wen)
-    ,.o_tests(LEDR[7:0])
+    //,.o_tests(LEDR[7:0])
 );
 
 fifo_vga fv0(
