@@ -427,7 +427,7 @@ assign HEX0 = 7'h7f;
 
 always @ (posedge CLOCK_50 or posedge delayed_reset) begin
 	if(delayed_reset) begin
-		test_x_offset = 8;
+		test_x_offset = 127;
 		test_x_offset_sign = 1;
 		test_y_offset = 3;
 		test_y_offset_sign = 0;

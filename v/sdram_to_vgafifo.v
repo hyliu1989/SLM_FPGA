@@ -322,7 +322,7 @@ always @(negedge clock or posedge iRST) begin
 		ST_FILL_EMPTY_LINES,
 		ST_FILL_HORIZONTAL_BLANK_FRONT_ODD, ST_FILL_HORIZONTAL_BLANK_FRONT, 
 		ST_FILL_HORIZONTAL_BLANK_BACK_ODD, ST_FILL_HORIZONTAL_BLANK_BACK: begin
-			r0_data <= 16'd0;
+			r0_data <= 16'h1010;  // TODO: make this line 'r0_data <= 16'd0;'
 			r0_data_valid <= 1'b1;
 			r0_write_single <= write_single;
 		end
