@@ -226,15 +226,17 @@ wire [24:0] sdram_ctrl_read_addr;
 wire [15:0] sdram_ctrl_read_data;
 wire        sdram_ctrl_read_datavalid;
 
-wire        sd_cmd;
-wire        sd_clk;
-wire [3:0]  sd_data;
 wire [66:0] loan_in;
 wire [66:0] loan_out;
 wire [66:0] loan_out_en;
+wire        sd_cmd;
+wire        sd_clk;
+wire [3:0]  sd_data;
+wire [7:0]  sdcard_addr;
+wire        sdcard_rd_req;
+wire [31:0] sdcard_data; 
+wire        sdcard_wait_req;
 
-wire [2:0]  hps_reset_req;
-wire        hps_warm_reset, hps_cold_reset, hps_debug_reset;
 wire        delayed_reset, delayed_reset_1, delayed_reset_2;
 wire        trigger;
 
@@ -371,14 +373,14 @@ reader_system reader_system_0(
     .reset_reset_n(~delayed_reset),
     
     // SD card controller signals
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_chipselect(),  //  input  wire
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_address(),     //  input  wire [7:0]
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_read(),        //  input  wire
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_write(),       //  input  wire
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_byteenable(),  //  input  wire [3:0]
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_writedata(),   //  input  wire [31:0]
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_readdata(),    //  output wire [31:0]
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_waitrequest(), //  output wire
+    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_chipselect(1'b1),      //  input  wire
+    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_address(sdcard_addr),  //  input  wire [7:0]
+    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_read(sdcard_rd_req),   //  input  wire
+    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_write(1'b0),           //  input  wire
+    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_byteenable(4'hf),      //  input  wire [3:0]
+    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_writedata(32'd0),      //  input  wire [31:0]
+    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_readdata(sdcard_data), //  output wire [31:0]
+    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_waitrequest(sdcard_wait_req), //  output wire
     
     // SD card device wires
     .altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_cmd(sd_cmd),      //  inout  wire
@@ -391,12 +393,12 @@ reader_system reader_system_0(
     .sdram_controller_0_s1_byteenable_n(2'b00),                              //  input  wire [1:0]
     .sdram_controller_0_s1_chipselect(1'b1),                                 //  input  wire
     .sdram_controller_0_s1_writedata(sdram_ctrl_write_data),                 //  input  wire [15:0]
-    .sdram_controller_0_s1_read_n(~(sdram_ctrl_read_en&&sdram_ctrl_write_done)),  //  input  wire
+    .sdram_controller_0_s1_read_n(~(sdram_ctrl_read_en&&sdram_ctrl_write_done)),  //  input  wire  // sdram_ctrl_write_done is a safeguard
     .sdram_controller_0_s1_write_n(~sdram_ctrl_write_en),                    //  input  wire
     .sdram_controller_0_s1_readdata(sdram_ctrl_read_data),                   //  output wire [15:0]
     .sdram_controller_0_s1_readdatavalid(sdram_ctrl_read_datavalid),         //  output wire
     .sdram_controller_0_s1_waitrequest(sdram_ctrl_wait_req),                 //  output wire
-    .sdram_controller_clock_0_clk(sdram_ctrl_clock),                         //  output wire, the clock signal that drives the controller
+    .sdram_controller_0_s1_clock_clk(sdram_ctrl_clock),                         //  output wire, the clock signal that drives the controller
     
     // SDRAM device wires
     .sdram_controller_0_wire_addr(DRAM_ADDR),
@@ -408,14 +410,14 @@ reader_system reader_system_0(
     .sdram_controller_0_wire_dqm({DRAM_UDQM,DRAM_LDQM}),
     .sdram_controller_0_wire_ras_n(DRAM_RAS_N),
     .sdram_controller_0_wire_we_n(DRAM_WE_N),
-    .sys_sdram_pll_0_sdram_clk_clk(DRAM_CLK),
+    .sdram_controller_0_wire_clk_clk(DRAM_CLK),
 
 
     // HPS part
     .hps_0_h2f_loan_io_in(loan_in),                      //  output wire [66:0]
     .hps_0_h2f_loan_io_out(loan_out),                    //  input  wire [66:0]
     .hps_0_h2f_loan_io_oe(loan_out_en),                  //  input  wire [66:0]
-//    .hps_0_h2f_reset_reset_n(),                        //  output wire
+    .hps_0_h2f_reset_reset_n(),  //  output wire and not used
     .hps_io_hps_io_gpio_inst_LOANIO36(HPS_SD_CMD),       //  inout  wire
     .hps_io_hps_io_gpio_inst_LOANIO38(HPS_SD_DATA[0]),   //  inout  wire
     .hps_io_hps_io_gpio_inst_LOANIO39(HPS_SD_DATA[1]),   //  inout  wire
@@ -437,12 +439,7 @@ reader_system reader_system_0(
     .memory_mem_dqs_n(HPS_DDR3_DQS_N),                   //  inout  wire [3:0]
     .memory_mem_odt(HPS_DDR3_ODT),                       //  output wire
     .memory_mem_dm(HPS_DDR3_DM),                         //  output wire [3:0]
-    .memory_oct_rzqin(HPS_DDR3_RZQ),                     //  input  wire
-
-//    .in_system_sources_probes_0_hps_reset_source(hps_reset_req),             //  output wire
-//    .hps_0_f2h_cold_reset_req_reset_n(hps_cold_reset),                       //  input  wire
-//    .hps_0_f2h_debug_reset_req_reset_n(hps_debug_reset),                     //  input  wire
-//    .hps_0_f2h_warm_reset_req_reset_n(hps_warm_reset)                        //  input  wire
+    .memory_oct_rzqin(HPS_DDR3_RZQ)                      //  input  wire
 );
 
 loaned_signals_to_sdcard_inout loaned_wiring_0(
@@ -471,36 +468,6 @@ assign loan_out[44:40] = 0;
 assign loan_out[37] = 0;
 assign loan_out[35:0] = 0;
 
-
-altera_edge_detector pulse_cold_reset (
-  .clk       (CLOCK_50),
-  .rst_n     (~delayed_reset),
-  .signal_in (hps_reset_req[0]),
-  .pulse_out (hps_cold_reset)
-);
-  defparam pulse_cold_reset.PULSE_EXT = 6;
-  defparam pulse_cold_reset.EDGE_TYPE = 1;
-  defparam pulse_cold_reset.IGNORE_RST_WHILE_BUSY = 1;
-
-altera_edge_detector pulse_warm_reset (
-  .clk       (CLOCK_50),
-  .rst_n     (~delayed_reset),
-  .signal_in (hps_reset_req[1]),
-  .pulse_out (hps_warm_reset)
-);
-  defparam pulse_warm_reset.PULSE_EXT = 2;
-  defparam pulse_warm_reset.EDGE_TYPE = 1;
-  defparam pulse_warm_reset.IGNORE_RST_WHILE_BUSY = 1;
-  
-altera_edge_detector pulse_debug_reset (
-  .clk       (CLOCK_50),
-  .rst_n     (~delayed_reset),
-  .signal_in (hps_reset_req[2]),
-  .pulse_out (hps_debug_reset)
-);
-  defparam pulse_debug_reset.PULSE_EXT = 32;
-  defparam pulse_debug_reset.EDGE_TYPE = 1;
-  defparam pulse_debug_reset.IGNORE_RST_WHILE_BUSY = 1;
 
 // testing code for sdram writing
 test_sdram_write test_sdram_write_0(
