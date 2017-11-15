@@ -29,7 +29,7 @@
    {
       datum _sortIndex
       {
-         value = "5";
+         value = "4";
          type = "int";
       }
    }
@@ -37,15 +37,7 @@
    {
       datum _sortIndex
       {
-         value = "4";
-         type = "int";
-      }
-   }
-   element sdram_tri_controller_0
-   {
-      datum _sortIndex
-      {
-         value = "2";
+         value = "3";
          type = "int";
       }
    }
@@ -53,7 +45,7 @@
    {
       datum _sortIndex
       {
-         value = "3";
+         value = "2";
          type = "int";
       }
    }
@@ -151,7 +143,7 @@
   <parameter name="casLatency" value="2" />
   <parameter name="clockRate" value="133333333" />
   <parameter name="columnWidth" value="10" />
-  <parameter name="componentName">$${FILENAME}_sdram_controller_0</parameter>
+  <parameter name="componentName">reader_system_sdram_controller_0</parameter>
   <parameter name="dataWidth" value="16" />
   <parameter name="generateSimulationModel" value="false" />
   <parameter name="initNOPDelay" value="0.0" />
@@ -165,31 +157,6 @@
   <parameter name="refreshPeriod" value="15.625" />
   <parameter name="registerDataIn" value="true" />
   <parameter name="rowWidth" value="13" />
- </module>
- <module
-   name="sdram_tri_controller_0"
-   kind="altera_sdram_tri_controller"
-   version="16.0"
-   enabled="0">
-  <parameter name="CAS_LATENCY" value="2" />
-  <parameter name="INIT_REFRESH" value="2" />
-  <parameter name="NUM_CHIPSELECTS" value="1" />
-  <parameter name="SDRAM_COL_WIDTH" value="10" />
-  <parameter name="SDRAM_DATA_WIDTH" value="16" />
-  <parameter name="SDRAM_ROW_WIDTH" value="13" />
-  <parameter name="TAC" value="5.4" />
-  <parameter name="TRCD" value="20.0" />
-  <parameter name="TRFC" value="70.0" />
-  <parameter name="TRISTATE_EN" value="true" />
-  <parameter name="TRP" value="20.0" />
-  <parameter name="TWR" value="14.0" />
-  <parameter name="clockRate" value="133333333" />
-  <parameter name="componentName">reader_system_sdram_tri_controller_0</parameter>
-  <parameter name="generateSimulationModel" value="false" />
-  <parameter name="model">single_Micron_MT48LC4M32B2_7_chip</parameter>
-  <parameter name="numberOfBanks" value="4" />
-  <parameter name="powerUpDelay" value="100.0" />
-  <parameter name="refreshPeriod" value="15.625" />
  </module>
  <module
    name="sys_sdram_pll_0"
@@ -219,11 +186,6 @@
  <connection
    kind="clock"
    version="16.0"
-   start="sys_sdram_pll_0.sdram_clk"
-   end="sdram_tri_controller_0.clock_sink" />
- <connection
-   kind="clock"
-   version="16.0"
    start="sys_sdram_pll_0.sys_clk"
    end="sdram_controller_0.clk" />
  <connection
@@ -241,11 +203,6 @@
    version="16.0"
    start="clk_sdcard.clk_reset"
    end="Altera_UP_SD_Card_Avalon_Interface_0.reset" />
- <connection
-   kind="reset"
-   version="16.0"
-   start="clk_sdcard.clk_reset"
-   end="sdram_tri_controller_0.reset_sink" />
  <connection
    kind="reset"
    version="16.0"

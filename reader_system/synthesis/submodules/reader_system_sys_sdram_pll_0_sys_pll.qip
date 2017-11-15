@@ -1,4 +1,0 @@
-set_instance_assignment -name PLL_COMPENSATION_MODE DIRECT -to "*reader_system_sys_sdram_pll_0_sys_pll*|altera_pll:altera_pll_i*|*"
- 
-set_instance_assignment -name PLL_AUTO_RESET OFF -to "*reader_system_sys_sdram_pll_0_sys_pll*|altera_pll:altera_pll_i*|*"
-set_instance_assignment -name PLL_BANDWIDTH_PRESET AUTO -to "*reader_system_sys_sdram_pll_0_sys_pll*|altera_pll:altera_pll_i*|*"
