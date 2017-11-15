@@ -11,3 +11,4 @@ The mask file is loaded from a micro SD card which 1) is in FAT32 format and 2) 
 - [x] Memory to FIFO with the id of line_to_load and the id of image_to_load
 - [ ] MicroSD card reader and save images to memory (LED indicator for loading taking place)
 - [ ] JTAG-UART communication for experimental commands
+

@@ -31,7 +31,7 @@
 //Date:  Thu Jul 11 11:26:45 2013
 // ============================================================================
 
-//`define ENABLE_HPS
+`define ENABLE_HPS
 
 module SLMCtrl(
 
@@ -106,7 +106,7 @@ module SLMCtrl(
 
 `ifdef ENABLE_HPS
     ///////// HPS /////////
-    inout              HPS_CONV_USB_N,
+//    inout              HPS_CONV_USB_N,
     output      [14:0] HPS_DDR3_ADDR,
     output      [2:0]  HPS_DDR3_BA,
     output             HPS_DDR3_CAS_N,
@@ -123,7 +123,7 @@ module SLMCtrl(
     output             HPS_DDR3_RESET_N,
     input              HPS_DDR3_RZQ,
     output             HPS_DDR3_WE_N,
-    output             HPS_ENET_GTX_CLK,
+/*    output             HPS_ENET_GTX_CLK,
     inout              HPS_ENET_INT_N,
     output             HPS_ENET_MDC,
     inout              HPS_ENET_MDIO,
@@ -143,11 +143,11 @@ module SLMCtrl(
     inout              HPS_I2C_CONTROL,
     inout              HPS_KEY,
     inout              HPS_LED,
-    inout              HPS_LTC_GPIO,
-    output             HPS_SD_CLK,
+    inout              HPS_LTC_GPIO,*/
+    inout              HPS_SD_CLK,  //output             HPS_SD_CLK,
     inout              HPS_SD_CMD,
     inout       [3:0]  HPS_SD_DATA,
-    output             HPS_SPIM_CLK,
+/*    output             HPS_SPIM_CLK,
     input              HPS_SPIM_MISO,
     output             HPS_SPIM_MOSI,
     inout              HPS_SPIM_SS,
@@ -157,7 +157,7 @@ module SLMCtrl(
     inout       [7:0]  HPS_USB_DATA,
     input              HPS_USB_DIR,
     input              HPS_USB_NXT,
-    output             HPS_USB_STP,
+    output             HPS_USB_STP,*/
 `endif /*ENABLE_HPS*/
 
     ///////// IRDA /////////
@@ -212,6 +212,8 @@ wire        fifo_wclk;
 wire [7:0]  fifo_wdata;
 wire        fifo_wen;
 
+wire [24:0] sdram_ctrl_addr;
+
 wire        sdram_ctrl_clock;
 wire        sdram_ctrl_wait_req;
 wire [24:0] sdram_ctrl_write_addr;
@@ -220,11 +222,19 @@ wire [15:0] sdram_ctrl_write_data;
 wire        sdram_ctrl_write_done;
 
 wire        sdram_ctrl_read_en;
-wire [24:0] sdram_ctrl_addr;
 wire [24:0] sdram_ctrl_read_addr;
 wire [15:0] sdram_ctrl_read_data;
 wire        sdram_ctrl_read_datavalid;
 
+wire        sd_cmd;
+wire        sd_clk;
+wire [3:0]  sd_data;
+wire [66:0] loan_in;
+wire [66:0] loan_out;
+wire [66:0] loan_out_en;
+
+wire [2:0]  hps_reset_req;
+wire        hps_warm_reset, hps_cold_reset, hps_debug_reset;
 wire        delayed_reset, delayed_reset_1, delayed_reset_2;
 wire        trigger;
 
@@ -354,9 +364,7 @@ fifo_vga fv0(
     .wrfull(/*LEDR[8]*/)  // output
 );
 
-wire              HPS_SD_CLK;
-wire              HPS_SD_CMD;
-wire       [3:0]  HPS_SD_DATA;
+
 reader_system reader_system_0(
     // clock and reset
     .clk_clk(CLOCK_50),
@@ -373,10 +381,10 @@ reader_system reader_system_0(
     .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_waitrequest(), //  output wire
     
     // SD card device wires
-    .altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_cmd(HPS_SD_CMD),
-    .altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat(HPS_SD_DATA[0]),
-    .altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat3(HPS_SD_DATA[3]),
-    .altera_up_sd_card_avalon_interface_0_conduit_end_o_SD_clock(HPS_SD_CLK),
+    .altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_cmd(sd_cmd),      //  inout  wire
+    .altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat(sd_data[0]),  //  inout  wire
+    .altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat3(sd_data[3]), //  inout  wire
+    .altera_up_sd_card_avalon_interface_0_conduit_end_o_SD_clock(sd_clk),    //  output  wire
     
     // SDRAM controller signals
     .sdram_controller_0_s1_address(sdram_ctrl_addr),                         //  input  wire [24:0]
@@ -400,22 +408,111 @@ reader_system reader_system_0(
     .sdram_controller_0_wire_dqm({DRAM_UDQM,DRAM_LDQM}),
     .sdram_controller_0_wire_ras_n(DRAM_RAS_N),
     .sdram_controller_0_wire_we_n(DRAM_WE_N),
-    .sys_sdram_pll_0_sdram_clk_clk(DRAM_CLK)
+    .sys_sdram_pll_0_sdram_clk_clk(DRAM_CLK),
+
+
+    // HPS part
+    .hps_0_h2f_loan_io_in(loan_in),                      //  output wire [66:0]
+    .hps_0_h2f_loan_io_out(loan_out),                    //  input  wire [66:0]
+    .hps_0_h2f_loan_io_oe(loan_out_en),                  //  input  wire [66:0]
+//    .hps_0_h2f_reset_reset_n(),                        //  output wire
+    .hps_io_hps_io_gpio_inst_LOANIO36(HPS_SD_CMD),       //  inout  wire
+    .hps_io_hps_io_gpio_inst_LOANIO38(HPS_SD_DATA[0]),   //  inout  wire
+    .hps_io_hps_io_gpio_inst_LOANIO39(HPS_SD_DATA[1]),   //  inout  wire
+    .hps_io_hps_io_gpio_inst_LOANIO45(HPS_SD_CLK),       //  inout  wire
+    .hps_io_hps_io_gpio_inst_LOANIO46(HPS_SD_DATA[2]),   //  inout  wire
+    .hps_io_hps_io_gpio_inst_LOANIO47(HPS_SD_DATA[3]),   //  inout  wire
+    .memory_mem_a(HPS_DDR3_ADDR),                        //  output wire [14:0]
+    .memory_mem_ba(HPS_DDR3_BA),                         //  output wire [2:0]
+    .memory_mem_ck(HPS_DDR3_CK_P),                       //  output wire
+    .memory_mem_ck_n(HPS_DDR3_CK_N),                     //  output wire
+    .memory_mem_cke(HPS_DDR3_CKE),                       //  output wire
+    .memory_mem_cs_n(HPS_DDR3_CS_N),                     //  output wire
+    .memory_mem_ras_n(HPS_DDR3_RAS_N),                   //  output wire
+    .memory_mem_cas_n(HPS_DDR3_CAS_N),                   //  output wire
+    .memory_mem_we_n(HPS_DDR3_WE_N),                     //  output wire
+    .memory_mem_reset_n(HPS_DDR3_RESET_N),               //  output wire
+    .memory_mem_dq(HPS_DDR3_DQ),                         //  inout  wire [31:0]
+    .memory_mem_dqs(HPS_DDR3_DQS_P),                     //  inout  wire [3:0]
+    .memory_mem_dqs_n(HPS_DDR3_DQS_N),                   //  inout  wire [3:0]
+    .memory_mem_odt(HPS_DDR3_ODT),                       //  output wire
+    .memory_mem_dm(HPS_DDR3_DM),                         //  output wire [3:0]
+    .memory_oct_rzqin(HPS_DDR3_RZQ),                     //  input  wire
+
+//    .in_system_sources_probes_0_hps_reset_source(hps_reset_req),             //  output wire
+//    .hps_0_f2h_cold_reset_req_reset_n(hps_cold_reset),                       //  input  wire
+//    .hps_0_f2h_debug_reset_req_reset_n(hps_debug_reset),                     //  input  wire
+//    .hps_0_f2h_warm_reset_req_reset_n(hps_warm_reset)                        //  input  wire
 );
 
+loaned_signals_to_sdcard_inout loaned_wiring_0(
+    .iLOANED_CLK(loan_in[45]),
+    .iLOANED_CMD(loan_in[36]),
+    .iLOANED_DATA({loan_in[47:46],loan_in[39:38]}),
+    
+    .oLOANED_CLK(loan_out[45]),                        // output to the HPS
+    .oLOANED_CMD(loan_out[36]),                        // output to the HPS
+    .oLOANED_DATA({loan_out[47:46],loan_out[39:38]}),  // output to the HPS
+    .oLOANED_CLK_EN(loan_out_en[45]),                  // output to the HPS
+    .oLOANED_CMD_EN(loan_out_en[36]),                  // output to the HPS
+    .oLOANED_DATA_EN({loan_out_en[47:46],loan_out_en[39:38]}), // output to the HPS
+    
+    .iSDCARD_CTRL_CLK(sd_clk),
+    .ioSDCARD_CTRL_CMD(sd_cmd),
+    .ioSDCARD_CTRL_DATA(sd_data)
+);
+// synthesize out unused pins
+assign loan_out_en[66:48] = 0;
+assign loan_out_en[44:40] = 0;
+assign loan_out_en[37] = 0;
+assign loan_out_en[35:0] = 0;
+assign loan_out[66:48] = 0;
+assign loan_out[44:40] = 0;
+assign loan_out[37] = 0;
+assign loan_out[35:0] = 0;
 
+
+altera_edge_detector pulse_cold_reset (
+  .clk       (CLOCK_50),
+  .rst_n     (~delayed_reset),
+  .signal_in (hps_reset_req[0]),
+  .pulse_out (hps_cold_reset)
+);
+  defparam pulse_cold_reset.PULSE_EXT = 6;
+  defparam pulse_cold_reset.EDGE_TYPE = 1;
+  defparam pulse_cold_reset.IGNORE_RST_WHILE_BUSY = 1;
+
+altera_edge_detector pulse_warm_reset (
+  .clk       (CLOCK_50),
+  .rst_n     (~delayed_reset),
+  .signal_in (hps_reset_req[1]),
+  .pulse_out (hps_warm_reset)
+);
+  defparam pulse_warm_reset.PULSE_EXT = 2;
+  defparam pulse_warm_reset.EDGE_TYPE = 1;
+  defparam pulse_warm_reset.IGNORE_RST_WHILE_BUSY = 1;
+  
+altera_edge_detector pulse_debug_reset (
+  .clk       (CLOCK_50),
+  .rst_n     (~delayed_reset),
+  .signal_in (hps_reset_req[2]),
+  .pulse_out (hps_debug_reset)
+);
+  defparam pulse_debug_reset.PULSE_EXT = 32;
+  defparam pulse_debug_reset.EDGE_TYPE = 1;
+  defparam pulse_debug_reset.IGNORE_RST_WHILE_BUSY = 1;
 
 // testing code for sdram writing
 test_sdram_write test_sdram_write_0(
-	.iCLK(sdram_ctrl_clock),
-	.iRST(delayed_reset_1),
+    .iCLK(sdram_ctrl_clock),
+    .iRST(delayed_reset_1),
 
-	.iTRIGGER(trigger),
-	.iWAIT_REQUEST(sdram_ctrl_wait_req),
-	.oWR_EN(sdram_ctrl_write_en),
-	.oWR_DATA(sdram_ctrl_write_data),
-	.oWR_ADDR(sdram_ctrl_write_addr),
-	.oDONE(sdram_ctrl_write_done)
+    .iTRIGGER(trigger),
+    .iWAIT_REQUEST(sdram_ctrl_wait_req),
+    .oWR_EN(sdram_ctrl_write_en),
+    .oWR_DATA(sdram_ctrl_write_data),
+    .oWR_ADDR(sdram_ctrl_write_addr),
+    .oDONE(sdram_ctrl_write_done)
 );
 
 assign HEX5 = sdram_ctrl_write_done? 7'b1111111 : 7'b0000011;  // letter b
@@ -426,22 +523,22 @@ assign HEX1 = 7'h7f;
 assign HEX0 = 7'h7f;
 
 always @ (posedge CLOCK_50 or posedge delayed_reset) begin
-	if(delayed_reset) begin
-		test_x_offset = 127;
-		test_x_offset_sign = 1;
-		test_y_offset = 3;
-		test_y_offset_sign = 0;
-	end
-	else begin
-		if(update_x_offset) begin
-			test_x_offset = SW[7:0];
-			test_x_offset_sign = SW[9];
-		end
-		if(update_y_offset) begin
-			test_y_offset = SW[7:0];
-			test_y_offset_sign = SW[9];
-		end
-	end
+    if(delayed_reset) begin
+        test_x_offset = 127;
+        test_x_offset_sign = 1;
+        test_y_offset = 3;
+        test_y_offset_sign = 0;
+    end
+    else begin
+        if(update_x_offset) begin
+            test_x_offset = SW[7:0];
+            test_x_offset_sign = SW[9];
+        end
+        if(update_y_offset) begin
+            test_y_offset = SW[7:0];
+            test_y_offset_sign = SW[9];
+        end
+    end
 end
 
 // // testing code for sdram reading
