@@ -110,15 +110,20 @@ entity Altera_UP_SD_Card_Avalon_Interface is
 		i_avalon_read			: in STD_LOGIC;
 		i_avalon_write			: in STD_LOGIC;
 		i_avalon_byteenable 	: in STD_LOGIC_VECTOR(3 downto 0);
-		i_avalon_writedata	: in STD_LOGIC_VECTOR(31 downto 0);
+		i_avalon_writedata		: in STD_LOGIC_VECTOR(31 downto 0);
 		o_avalon_readdata		: out STD_LOGIC_VECTOR(31 downto 0);
 		o_avalon_waitrequest	: out STD_LOGIC;
 		
 		-- SD Card interface ports
 		b_SD_cmd			: inout STD_LOGIC;
 		b_SD_dat			: inout STD_LOGIC;
-		b_SD_dat3		: inout STD_LOGIC;
-		o_SD_clock		: out STD_LOGIC
+		b_SD_dat3			: inout STD_LOGIC;
+		o_SD_clock			: out STD_LOGIC;
+		
+		-- Tri-state direction telling
+		o_is_SD_cmd_output	: out STD_LOGIC;
+		o_is_SD_dat_output	: out STD_LOGIC;
+		o_is_SD_dat3_output	: out STD_LOGIC
 	);
 
 end entity;
@@ -144,7 +149,12 @@ architecture rtl of Altera_UP_SD_Card_Avalon_Interface is
 		o_command_completed	: out std_logic;
 		o_command_valid 		: out std_logic;
 		o_command_timed_out	: out std_logic;
-		o_command_crc_failed	: out std_logic;			
+		o_command_crc_failed	: out std_logic;
+		
+		-- Tri-state direction telling
+		o_is_SD_cmd_output	: out STD_LOGIC;
+		o_is_SD_dat_output	: out STD_LOGIC;
+		o_is_SD_dat3_output	: out STD_LOGIC;
 		
 		-- Buffer access
 		i_buffer_enable		: in std_logic;
@@ -496,6 +506,11 @@ begin
 		o_command_valid 		=> command_valid,
 		o_command_timed_out	=> command_timed_out,
 		o_command_crc_failed => command_crc_failed,
+		
+		-- Tri-state direction telling
+		o_is_SD_cmd_output	=> o_is_SD_cmd_output,
+		o_is_SD_dat_output	=> o_is_SD_dat_output,
+		o_is_SD_dat3_output	=> o_is_SD_dat3_output,
 				
 		-- Buffer access
 		i_buffer_enable 		=> buffer_enable,

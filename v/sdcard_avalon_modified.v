@@ -17,7 +17,10 @@ module sdcard_avalon_modified (
 		inout  wire        b_SD_dat,             //                    .b_SD_dat
 		inout  wire        b_SD_dat3,            //                    .b_SD_dat3
 		output wire        o_SD_clock,           //                    .o_SD_clock
-		input  wire        i_reset_n             //               reset.reset_n
+		input  wire        i_reset_n,            //               reset.reset_n
+		output wire        o_is_SD_cmd_output,
+		output wire        o_is_SD_dat_output,
+		output wire        o_is_SD_dat3_output
 	);
 
 	Altera_UP_SD_Card_Avalon_Interface altera_up_sd_card_avalon_interface_0 (
@@ -34,7 +37,10 @@ module sdcard_avalon_modified (
 		.b_SD_cmd             (b_SD_cmd),             //         conduit_end.export
 		.b_SD_dat             (b_SD_dat),             //                    .export
 		.b_SD_dat3            (b_SD_dat3),            //                    .export
-		.o_SD_clock           (o_SD_clock)            //                    .export
+		.o_SD_clock           (o_SD_clock),           //                    .export
+		.o_is_SD_cmd_output(o_is_SD_cmd_output),
+		.o_is_SD_dat_output(o_is_SD_dat_output),
+		.o_is_SD_dat3_output(o_is_SD_dat3_output)
 	);
 
 endmodule

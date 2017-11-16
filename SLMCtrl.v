@@ -232,6 +232,9 @@ wire [66:0] loan_out_en;
 wire        sd_cmd;
 wire        sd_clk;
 wire [3:0]  sd_data;
+wire        is_sd_cmd_output;
+wire        is_sd_data0_output;
+wire        is_sd_data3_output;
 wire [7:0]  sdcard_addr;
 wire        sdcard_rd_req;
 wire [31:0] sdcard_data; 
@@ -383,8 +386,13 @@ sdcard_avalon_modified sdcard_avalon_0(
     .b_SD_cmd(sd_cmd),      //  inout  wire
     .b_SD_dat(sd_data[0]),  //  inout  wire
     .b_SD_dat3(sd_data[3]), //  inout  wire
-    .o_SD_clock(sd_clk)     //  output  wire
+    .o_SD_clock(sd_clk),    //  output  wire
+    // Tri-state direction telling
+    .o_is_SD_cmd_output(is_sd_cmd_output),
+    .o_is_SD_dat_output(is_sd_data0_output),
+    .o_is_SD_dat3_output(is_sd_data3_output)
 );
+
 
 reader_system reader_system_0(
     // clock and reset
@@ -458,8 +466,11 @@ loaned_signals_to_sdcard_inout loaned_wiring_0(
     .oLOANED_DATA_EN({loan_out_en[47:46],loan_out_en[39:38]}), // output to the HPS
     
     .iSDCARD_CTRL_CLK(sd_clk),
-    .ioSDCARD_CTRL_CMD(sd_cmd),
-    .ioSDCARD_CTRL_DATA(sd_data)
+    .bSDCARD_CTRL_CMD(sd_cmd),
+    .bSDCARD_CTRL_DATA(sd_data),
+	.iIS_CMD_OUTPUT(is_sd_cmd_output),
+	.iIS_DATA0_OUTPUT(is_sd_data0_output),
+	.iIS_DATA3_OUTPUT(is_sd_data3_output)
 );
 // synthesize out unused pins
 assign loan_out_en[66:48] = 0;

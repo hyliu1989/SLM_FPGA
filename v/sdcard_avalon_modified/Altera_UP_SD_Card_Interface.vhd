@@ -60,7 +60,12 @@ entity Altera_UP_SD_Card_Interface is
 		o_SD_REG_card_specific_data 				: out std_logic_vector(127 downto 0);
 		o_SD_REG_status_register 					: out std_logic_vector(31 downto 0);
 		o_SD_REG_response_R1							: out std_logic_vector(31 downto 0);		
-		o_SD_REG_status_register_valid 			: out std_logic		
+		o_SD_REG_status_register_valid 			: out std_logic;
+		
+		-- Tri-state direction telling
+		o_is_SD_cmd_output	: out STD_LOGIC;
+		o_is_SD_dat_output	: out STD_LOGIC;
+		o_is_SD_dat3_output	: out STD_LOGIC
 	);
 
 end entity;
@@ -506,6 +511,10 @@ begin
 	b_SD_cmd 				<= data_to_CMD_line when (CMD_tristate_buffer_enable = '1') else 'Z';
 	b_SD_dat 				<= data_line_out when (data_line_direction = '1') else 'Z';
 	b_SD_dat3 				<= 'Z'; -- Set SD card to SD mode.
+	o_is_SD_cmd_output	    <= CMD_tristate_buffer_enable;
+	o_is_SD_dat_output	    <= data_line_direction;
+	o_is_SD_dat3_output	    <= '0'; -- Set SD card to SD mode.
+	
 	-- SD card registers
 	o_SD_REG_card_identification_number 	<= SD_REG_card_identification_number;
 	o_SD_REG_relative_card_address 			<= SD_REG_relative_card_address;
