@@ -85,14 +85,10 @@
  <instanceScript></instanceScript>
  <interface
    name="altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave"
-   internal="Altera_UP_SD_Card_Avalon_Interface_0.avalon_sdcard_slave"
-   type="avalon"
-   dir="end" />
+   internal="Altera_UP_SD_Card_Avalon_Interface_0.avalon_sdcard_slave" />
  <interface
    name="altera_up_sd_card_avalon_interface_0_conduit_end"
-   internal="Altera_UP_SD_Card_Avalon_Interface_0.conduit_end"
-   type="conduit"
-   dir="end" />
+   internal="Altera_UP_SD_Card_Avalon_Interface_0.conduit_end" />
  <interface name="clk" internal="clk_source.clk_in" type="clock" dir="end" />
  <interface name="hps_0_f2h_cold_reset_req" internal="hps_0.f2h_cold_reset_req" />
  <interface name="hps_0_f2h_debug_reset_req" internal="hps_0.f2h_debug_reset_req" />
@@ -138,7 +134,7 @@
    name="Altera_UP_SD_Card_Avalon_Interface_0"
    kind="Altera_UP_SD_Card_Avalon_Interface"
    version="15.1"
-   enabled="1">
+   enabled="0">
   <parameter name="AUTO_CLK_CLOCK_RATE" value="50000000" />
   <parameter name="AUTO_DEVICE_FAMILY" value="Cyclone V" />
  </module>

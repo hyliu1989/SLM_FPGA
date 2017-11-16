@@ -366,27 +366,30 @@ fifo_vga fv0(
     .wrfull(/*LEDR[8]*/)  // output
 );
 
+sdcard_avalon_modified sdcard_avalon_0(
+    .i_clock(CLOCK_50),
+    .i_reset_n(~delayed_reset),
+    // SD card controller signals
+    .i_avalon_chip_select(1'b1),     //  input  wire
+    .i_avalon_address(sdcard_addr),  //  input  wire [7:0]
+    .i_avalon_read(sdcard_rd_req),   //  input  wire
+    .i_avalon_write(1'b0),           //  input  wire
+    .i_avalon_byteenable(4'hf),      //  input  wire [3:0]
+    .i_avalon_writedata(32'd0),      //  input  wire [31:0]
+    .o_avalon_readdata(sdcard_data), //  output wire [31:0]
+    .o_avalon_waitrequest(sdcard_wait_req), //  output wire
+    
+    // SD card device wires
+    .b_SD_cmd(sd_cmd),      //  inout  wire
+    .b_SD_dat(sd_data[0]),  //  inout  wire
+    .b_SD_dat3(sd_data[3]), //  inout  wire
+    .o_SD_clock(sd_clk)     //  output  wire
+);
 
 reader_system reader_system_0(
     // clock and reset
     .clk_clk(CLOCK_50),
     .reset_reset_n(~delayed_reset),
-    
-    // SD card controller signals
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_chipselect(1'b1),      //  input  wire
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_address(sdcard_addr),  //  input  wire [7:0]
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_read(sdcard_rd_req),   //  input  wire
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_write(1'b0),           //  input  wire
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_byteenable(4'hf),      //  input  wire [3:0]
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_writedata(32'd0),      //  input  wire [31:0]
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_readdata(sdcard_data), //  output wire [31:0]
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_waitrequest(sdcard_wait_req), //  output wire
-    
-    // SD card device wires
-    .altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_cmd(sd_cmd),      //  inout  wire
-    .altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat(sd_data[0]),  //  inout  wire
-    .altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat3(sd_data[3]), //  inout  wire
-    .altera_up_sd_card_avalon_interface_0_conduit_end_o_SD_clock(sd_clk),    //  output  wire
     
     // SDRAM controller signals
     .sdram_controller_0_s1_address(sdram_ctrl_addr),                         //  input  wire [24:0]
