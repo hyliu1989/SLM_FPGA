@@ -1,0 +1,2 @@
+Using HPS Loaner I/O in Cyclone V and Arria V SoCs
+https://www.youtube.com/watch?v=cRwzmsJ1Jkg

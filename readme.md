@@ -11,3 +11,12 @@ The mask file is loaded from a micro SD card which 1) is in FAT32 format and 2) 
 - [x] Memory to FIFO with the id of line_to_load and the id of image_to_load
 - [ ] MicroSD card reader and save images to memory (LED indicator for loading taking place)
 - [ ] JTAG-UART communication for experimental commands
+
+# Usage
+Compilation
+
+1. Open Qsys inside Quartus Prime and generate codes.
+2. Start "Analysis and Synthesis" part of the compilation
+3. HPS requires extra pin assignment (every time after Qsys generates codes for a system having HPS):
+Have to use the Tools -> Tcl Scripts in Quartus Prime to run pin assignment tcl script. The script in this project is reader_system/synthesis/submodules/hps_sdram_p0_pin_assignments.tcl
+4. Continue the rest of the compilation

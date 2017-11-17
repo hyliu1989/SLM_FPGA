@@ -45,18 +45,19 @@ assign clock = iCLK;
 //  sdram_read FIFO writer
 // =================================
 /* 
-A simple module that stores 16-bit data of SDRAM into a fifo and waits for another module
-to convert it into 8-bit data and to store them into VGA fifo.
-                   _____       _____       _____       __
-clock                   |_____|     |_____|     |_____|
+A simple module that stores 16-bit data of SDRAM into a fifo (the data are then waiting 
+for another module to convert them into twice as many 8-bit data and to store them into
+VGA fifo).
+                         _____       _____       _____
+clock              _____|     |_____|     |_____|     |__
                          ___________ ___________
-r_data_valid       _____|           |           |________ (change at negedge of clock if all bytes are written in pair)
+r_data_valid       _____|           |           |________ (change at posedge of clock)
 
-fifo write happen             o           o               (posedge of clock while r_data_valid == 1)
+fifo write happen                   o           o         (posedge of clock while r_data_valid == 1)
 */
-reg         r0_data_valid, r1_data_valid, r_data_valid;   // changed in negedge of clock  (controlled by SDRAM read submodule)
-reg [15:0]  r0_data, r1_data, r_data;         // changed in negedge of clock  (controlled by SDRAM read submodule)
-reg         r0_write_single, r1_write_single, r_write_single; // changed in negedge of clock  (controlled by SDRAM read submodule)
+reg         r0_data_valid, r1_data_valid, r_data_valid;   // changed in posedge of clock  (controlled by SDRAM read submodule)
+reg [15:0]  r0_data, r1_data, r_data;         // changed in posedge of clock  (controlled by SDRAM read submodule)
+reg         r0_write_single, r1_write_single, r_write_single; // changed in posedge of clock  (controlled by SDRAM read submodule)
 wire        sdram_fifo_empty;
 wire [16:0] sdram_fifo_data;
 wire        sdram_fifo_rdreq;
@@ -73,7 +74,9 @@ fifo_sdram_read fifo_sdram_read_0(
 	.q(sdram_fifo_data)  // output
 );
 
-
+// =================================
+//  Converting between two FIFOs
+// =================================
 fifo16to8  sdramfifo_to_vgafifo_0(
 	.iRST(iRST),
 
@@ -310,9 +313,9 @@ case(states)
 endcase
 
 
-// latch the data at the negedge
-// negedge required by the usage of r_data, r_data_valid and r_write_single.
-always @(negedge clock or posedge iRST) begin
+// latch the data at posedge
+// posedge required by the usage of r_data, r_data_valid and r_write_single.
+always @(posedge clock or posedge iRST) begin
 	if (iRST) begin
 		r0_data <= 16'd0;
 		r0_data_valid <= 1'b0;
@@ -340,7 +343,7 @@ always @(negedge clock or posedge iRST) begin
 		end
 	endcase
 end
-always @ (negedge clock) begin
+always @ (posedge clock) begin
 	r1_data <= r0_data;
 	r1_data_valid <= r0_data_valid;
 	r1_write_single <= r0_write_single;
