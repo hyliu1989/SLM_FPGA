@@ -31,7 +31,7 @@
 //Date:  Thu Jul 11 11:26:45 2013
 // ============================================================================
 
-`define ENABLE_HPS
+//`define ENABLE_HPS
 
 module SLMCtrl(
 
@@ -226,19 +226,12 @@ wire [24:0] sdram_ctrl_read_addr;
 wire [15:0] sdram_ctrl_read_data;
 wire        sdram_ctrl_read_datavalid;
 
-wire [66:0] loan_in;
-wire [66:0] loan_out;
-wire [66:0] loan_out_en;
-wire        sd_cmd;
-wire        sd_clk;
-wire [3:0]  sd_data;
-wire        is_sd_cmd_output;
-wire        is_sd_data0_output;
-wire        is_sd_data3_output;
-wire [7:0]  sdcard_addr;
-wire        sdcard_rd_req;
-wire [31:0] sdcard_data; 
-wire        sdcard_wait_req;
+wire        jtag_uart_avalon_addr;
+wire        jtag_uart_avalon_rd_req;
+wire [31:0] jtag_uart_avalon_rd_data;
+wire        jtag_uart_avalon_wr_req;
+wire [31:0] jtag_uart_avalon_wr_data;
+wire        jtag_uart_avalon_wait_req;
 
 wire        delayed_reset, delayed_reset_1, delayed_reset_2;
 wire        trigger;
@@ -369,30 +362,27 @@ fifo_vga fv0(
     .wrfull(/*LEDR[8]*/)  // output
 );
 
-sdcard_avalon_modified sdcard_avalon_0(
-    .i_clock(CLOCK_50),
-    .i_reset_n(~delayed_reset),
-    // SD card controller signals
-    .i_avalon_chip_select(1'b1),     //  input  wire
-    .i_avalon_address(sdcard_addr),  //  input  wire [7:0]
-    .i_avalon_read(sdcard_rd_req),   //  input  wire
-    .i_avalon_write(1'b0),           //  input  wire
-    .i_avalon_byteenable(4'hf),      //  input  wire [3:0]
-    .i_avalon_writedata(32'd0),      //  input  wire [31:0]
-    .o_avalon_readdata(sdcard_data), //  output wire [31:0]
-    .o_avalon_waitrequest(sdcard_wait_req), //  output wire
-    
-    // SD card device wires
-    .b_SD_cmd(sd_cmd),      //  inout  wire
-    .b_SD_dat(sd_data[0]),  //  inout  wire
-    .b_SD_dat3(sd_data[3]), //  inout  wire
-    .o_SD_clock(sd_clk),    //  output  wire
-    // Tri-state direction telling
-    .o_is_SD_cmd_output(is_sd_cmd_output),
-    .o_is_SD_dat_output(is_sd_data0_output),
-    .o_is_SD_dat3_output(is_sd_data3_output)
-);
 
+jtag_uart_decode jtag_uart_decode_0(
+    .iCLK(CLOCK_50),
+	.iRST(delayed_reset),
+    
+    // jtag uart signals
+    .oJTAG_SLAVE_ADDR(jtag_uart_avalon_addr),
+    .oJTAG_SLAVE_RDREQ(jtag_uart_avalon_rd_req),
+    .iJTAG_SLAVE_RDDATA(jtag_uart_avalon_rd_data),
+    .oJTAG_SLAVE_WRREQ(jtag_uart_avalon_wr_req),
+    .oJTAG_SLAVE_WRDATA(jtag_uart_avalon_wr_data),
+    .iJTAG_SLAVE_WAIT(jtag_uart_avalon_wait_req),
+    
+    // decoded signals
+    .iDECODEDIMAGE_RDFIFO_CLK(),  // input
+    .iDECODEDIMAGE_RDFIFO_REQ(),  // input
+    .oDECODEDIMAGE_RDFIFO_DATA(),  // output [7:0]
+    .oDECODEDIMAGE_RDFIFO_EMPTY()  // output
+    
+    ,.oTest(LEDR[7:0])
+);
 
 reader_system reader_system_0(
     // clock and reset
@@ -422,65 +412,17 @@ reader_system reader_system_0(
     .sdram_controller_0_wire_ras_n(DRAM_RAS_N),
     .sdram_controller_0_wire_we_n(DRAM_WE_N),
     .sdram_controller_0_wire_clk_clk(DRAM_CLK),
-
-
-    // HPS part
-    .hps_0_h2f_loan_io_in(loan_in),                      //  output wire [66:0]
-    .hps_0_h2f_loan_io_out(loan_out),                    //  input  wire [66:0]
-    .hps_0_h2f_loan_io_oe(loan_out_en),                  //  input  wire [66:0]
-    .hps_0_h2f_reset_reset_n(),  //  output wire and not used
-    .hps_io_hps_io_gpio_inst_LOANIO36(HPS_SD_CMD),       //  inout  wire
-    .hps_io_hps_io_gpio_inst_LOANIO38(HPS_SD_DATA[0]),   //  inout  wire
-    .hps_io_hps_io_gpio_inst_LOANIO39(HPS_SD_DATA[1]),   //  inout  wire
-    .hps_io_hps_io_gpio_inst_LOANIO45(HPS_SD_CLK),       //  inout  wire
-    .hps_io_hps_io_gpio_inst_LOANIO46(HPS_SD_DATA[2]),   //  inout  wire
-    .hps_io_hps_io_gpio_inst_LOANIO47(HPS_SD_DATA[3]),   //  inout  wire
-    .memory_mem_a(HPS_DDR3_ADDR),                        //  output wire [14:0]
-    .memory_mem_ba(HPS_DDR3_BA),                         //  output wire [2:0]
-    .memory_mem_ck(HPS_DDR3_CK_P),                       //  output wire
-    .memory_mem_ck_n(HPS_DDR3_CK_N),                     //  output wire
-    .memory_mem_cke(HPS_DDR3_CKE),                       //  output wire
-    .memory_mem_cs_n(HPS_DDR3_CS_N),                     //  output wire
-    .memory_mem_ras_n(HPS_DDR3_RAS_N),                   //  output wire
-    .memory_mem_cas_n(HPS_DDR3_CAS_N),                   //  output wire
-    .memory_mem_we_n(HPS_DDR3_WE_N),                     //  output wire
-    .memory_mem_reset_n(HPS_DDR3_RESET_N),               //  output wire
-    .memory_mem_dq(HPS_DDR3_DQ),                         //  inout  wire [31:0]
-    .memory_mem_dqs(HPS_DDR3_DQS_P),                     //  inout  wire [3:0]
-    .memory_mem_dqs_n(HPS_DDR3_DQS_N),                   //  inout  wire [3:0]
-    .memory_mem_odt(HPS_DDR3_ODT),                       //  output wire
-    .memory_mem_dm(HPS_DDR3_DM),                         //  output wire [3:0]
-    .memory_oct_rzqin(HPS_DDR3_RZQ)                      //  input  wire
+    
+    // JTAG-UART part
+    .jtag_uart_0_avalon_jtag_slave_chipselect  (1'b1),  // jtag_uart_0_avalon_jtag_slave.chipselect
+    .jtag_uart_0_avalon_jtag_slave_address     (jtag_uart_avalon_addr),     //                              .address
+    .jtag_uart_0_avalon_jtag_slave_read_n      (~jtag_uart_avalon_rd_req),  //                              .read_n
+    .jtag_uart_0_avalon_jtag_slave_readdata    (jtag_uart_avalon_rd_data),  //                              .readdata
+    .jtag_uart_0_avalon_jtag_slave_write_n     (~jtag_uart_avalon_wr_req),  //                              .write_n
+    .jtag_uart_0_avalon_jtag_slave_writedata   (jtag_uart_avalon_wr_data),  //                              .writedata
+    .jtag_uart_0_avalon_jtag_slave_waitrequest (jtag_uart_avalon_wait_req)  //                              .waitrequest
 );
 
-loaned_signals_to_sdcard_inout loaned_wiring_0(
-    .iLOANED_CLK(loan_in[45]),
-    .iLOANED_CMD(loan_in[36]),
-    .iLOANED_DATA({loan_in[47:46],loan_in[39:38]}),
-    
-    .oLOANED_CLK(loan_out[45]),                        // output to the HPS
-    .oLOANED_CMD(loan_out[36]),                        // output to the HPS
-    .oLOANED_DATA({loan_out[47:46],loan_out[39:38]}),  // output to the HPS
-    .oLOANED_CLK_EN(loan_out_en[45]),                  // output to the HPS
-    .oLOANED_CMD_EN(loan_out_en[36]),                  // output to the HPS
-    .oLOANED_DATA_EN({loan_out_en[47:46],loan_out_en[39:38]}), // output to the HPS
-    
-    .iSDCARD_CTRL_CLK(sd_clk),
-    .bSDCARD_CTRL_CMD(sd_cmd),
-    .bSDCARD_CTRL_DATA(sd_data),
-	.iIS_CMD_OUTPUT(is_sd_cmd_output),
-	.iIS_DATA0_OUTPUT(is_sd_data0_output),
-	.iIS_DATA3_OUTPUT(is_sd_data3_output)
-);
-// synthesize out unused pins
-assign loan_out_en[66:48] = 0;
-assign loan_out_en[44:40] = 0;
-assign loan_out_en[37] = 0;
-assign loan_out_en[35:0] = 0;
-assign loan_out[66:48] = 0;
-assign loan_out[44:40] = 0;
-assign loan_out[37] = 0;
-assign loan_out[35:0] = 0;
 
 
 // testing code for sdram writing
