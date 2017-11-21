@@ -16,7 +16,8 @@ module jtag_uart_decode(
     output [7:0]  oDECODEDIMAGE_RDFIFO_DATA,
     output        oDECODEDIMAGE_RDFIFO_EMPTY
     
-    ,output [7:0]  oTest
+    ,output [18:0]  oTest
+    ,input          iTest
 );
 
 
@@ -24,16 +25,21 @@ wire        fifo_wrreq;
 wire [7:0]  fifo_wrdata;
 wire [7:0]  data_to_parse;
 wire        data_to_parse_valid;
-reg  [7:0]  test_signals;
+reg  [9:0]  valid_count;
 
-always @ (posedge iCLK)
-    if(data_to_parse_valid)
-        test_signals <= data_to_parse;
-assign oTest = test_signals;
+always @ (posedge iCLK or posedge iRST) begin
+    if(iRST)
+        valid_count <= 0;
+    else if(data_to_parse_valid)
+        valid_count <= valid_count + 1'b1;
+end
+assign oTest[8] = data_to_parse_valid;
+assign oTest[7:0] = data_to_parse[7:0];
+assign oTest[18:9] = valid_count;
 
 uart_avalon_extraction uart_avalon_extraction_0(
     .iCLK(iCLK),
-    .iRST(iRST),
+    .iRST(iRST||iTest),
     .oJTAG_SLAVE_ADDR(oJTAG_SLAVE_ADDR),
     .oJTAG_SLAVE_RDREQ(oJTAG_SLAVE_RDREQ),
     .iJTAG_SLAVE_RDDATA(iJTAG_SLAVE_RDDATA),

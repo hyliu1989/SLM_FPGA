@@ -362,7 +362,7 @@ fifo_vga fv0(
     .wrfull(/*LEDR[8]*/)  // output
 );
 
-
+wire [18:0] test;
 jtag_uart_decode jtag_uart_decode_0(
     .iCLK(CLOCK_50),
 	.iRST(delayed_reset),
@@ -381,8 +381,43 @@ jtag_uart_decode jtag_uart_decode_0(
     .oDECODEDIMAGE_RDFIFO_DATA(),  // output [7:0]
     .oDECODEDIMAGE_RDFIFO_EMPTY()  // output
     
-    ,.oTest(LEDR[7:0])
+    ,.oTest(test)
+    ,.iTest(SW[9])
 );
+// logic analyzer test
+reg  [8:0] output_latch [15:0];
+reg  [8:0] shift_buffers [9:0];
+reg  [3:0] counter;
+integer i;
+always @ (posedge CLOCK_50) begin
+    if(test[8]) begin  // data valid
+        counter <= 1'b1;
+        for(i = 0; i <= 9; i = i + 1) begin
+            output_latch[i] <= shift_buffers[i];
+        end
+        output_latch[10] <= test[8:0];
+    end
+    else begin
+        counter <= counter + (counter != 4'd0);
+        case(counter)
+            4'd1: output_latch[11] <= test[8:0];
+            4'd2: output_latch[12] <= test[8:0];
+            4'd3: output_latch[13] <= test[8:0];
+            4'd4: output_latch[14] <= test[8:0];
+            4'd5: output_latch[15] <= test[8:0];
+        endcase
+    end
+    for(i = 0; i < 9; i = i + 1) begin
+        shift_buffers[i] <= shift_buffers[i+1];
+    end
+    shift_buffers[9] <= test[8:0];
+end
+reg [9:0] to_display;
+always @ (*) begin
+    to_display = output_latch[SW[3:0]];
+end
+assign LEDR = (SW <= 15)? to_display : test[18:9];
+// end of logic analyzer
 
 reader_system reader_system_0(
     // clock and reset
