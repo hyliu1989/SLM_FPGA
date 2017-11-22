@@ -378,7 +378,8 @@ jtag_uart_decode jtag_uart_decode_0(
     .oDECODEDIMAGE_RDFIFO_DATA(sdram_fifo_rd_data),  // output [7:0]
     .oDECODEDIMAGE_RDFIFO_EMPTY(sdram_fifo_rd_empty),  // output
     .oNUM_IMAGES(num_images_to_download),  // output [6:0]
-    .oTRIGGER_WRITE_SDRAM(download_images_trigger)  // output
+    .oTRIGGER_WRITE_SDRAM(download_images_trigger),  // output
+    .oERROR(LEDR[0])
 );
 
 

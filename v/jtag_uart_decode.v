@@ -16,14 +16,16 @@ module jtag_uart_decode(
     output [7:0]  oDECODEDIMAGE_RDFIFO_DATA,
     output        oDECODEDIMAGE_RDFIFO_EMPTY,
     output [6:0]  oNUM_IMAGES,
-    output        oTRIGGER_WRITE_SDRAM
+    output        oTRIGGER_WRITE_SDRAM,
+    
+    output        oERROR
 );
 
-
+// ====================================================
+//   Communicating with JTAG-UART core
+// ====================================================
 wire [7:0]  data_or_cmd;
 wire        data_or_cmd_valid;
-
-
 uart_avalon_extraction uart_avalon_extraction_0(
     .iCLK(iCLK),
     .iRST(iRST),
@@ -304,6 +306,8 @@ always @ (posedge iCLK or posedge iRST) begin
     end
 end
 
+
+assign oERROR = (states == ST_ERROR);
 
 
 endmodule
