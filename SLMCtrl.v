@@ -234,7 +234,13 @@ wire [31:0] jtag_uart_avalon_wr_data;
 wire        jtag_uart_avalon_wait_req;
 
 wire        delayed_reset, delayed_reset_1, delayed_reset_2;
-wire        trigger;
+wire        download_images_trigger;
+
+wire        sdram_fifo_rd_clk;
+wire        sdram_fifo_rd_req;
+wire [7:0]  sdram_fifo_rd_data;
+wire        sdram_fifo_rd_empty;
+wire [6:0]  num_images_to_download;
 
 // testing signals
 wire        update_x_offset;
@@ -255,15 +261,6 @@ delay_x00_ms delay_module_0(
     .oDELAY100(delayed_reset),
     .oDELAY200(delayed_reset_1),
     .oDELAY300(delayed_reset_2),
-    .oDELAY400()
-);
-
-delay_x00_ms delay_module_1(
-    .iCLOCK50(CLOCK_50),
-    .iTRIGGER(!KEY[1]),
-    .oDELAY100(trigger),
-    .oDELAY200(),
-    .oDELAY300(),
     .oDELAY400()
 );
 
@@ -376,12 +373,12 @@ jtag_uart_decode jtag_uart_decode_0(
     .iJTAG_SLAVE_WAIT(jtag_uart_avalon_wait_req),
     
     // decoded signals
-    .iDECODEDIMAGE_RDFIFO_CLK(),  // input
-    .iDECODEDIMAGE_RDFIFO_REQ(),  // input
-    .oDECODEDIMAGE_RDFIFO_DATA(),  // output [7:0]
-    .oDECODEDIMAGE_RDFIFO_EMPTY(),  // output
-    .oNUM_IMAGES(),  // output [6:0]
-    .oTRIGGER_WRITE_SDRAM()  // output
+    .iDECODEDIMAGE_RDFIFO_CLK(sdram_fifo_rd_clk),  // input
+    .iDECODEDIMAGE_RDFIFO_REQ(sdram_fifo_rd_req),  // input
+    .oDECODEDIMAGE_RDFIFO_DATA(sdram_fifo_rd_data),  // output [7:0]
+    .oDECODEDIMAGE_RDFIFO_EMPTY(sdram_fifo_rd_empty),  // output
+    .oNUM_IMAGES(num_images_to_download),  // output [6:0]
+    .oTRIGGER_WRITE_SDRAM(download_images_trigger)  // output
     
     ,.oTest(test)
     ,.iTest(SW[9])
@@ -420,6 +417,30 @@ always @ (*) begin
 end
 assign LEDR = (SW <= 15)? to_display : test[18:9];
 // end of logic analyzer
+
+
+write_to_sdram write_to_sdram_0(
+	.iCLK(sdram_ctrl_clock),
+	.iRST(delayed_reset_1),
+
+	.iTRIGGER(download_images_trigger),
+    
+    // SDRAM Avalon signals
+	.iWAIT_REQUEST(sdram_ctrl_wait_req),
+	.oWR_REQ(sdram_ctrl_write_en),
+	.oWR_DATA(sdram_ctrl_write_data),  // [15:0]
+	.oWR_ADDR(sdram_ctrl_write_addr),  // [24:0]
+	.oDONE(sdram_ctrl_write_done),
+    
+    // signals from the FIFO that contains data_out
+    .oFIFO_RD_CLK(sdram_fifo_rd_clk),
+    .oFIFO_RD_REQ(sdram_fifo_rd_req),
+    .iFIFO_RD_DATA(sdram_fifo_rd_data),  // [7:0]
+    .iFIFO_RD_EMPTY(sdram_fifo_rd_empty),
+    .iNUM_IMAGES(num_images_to_download),  // [6:0]
+    .iID_OF_STARTING_IMAGE(6'd0)  // [5:0]
+);
+
 
 reader_system reader_system_0(
     // clock and reset
@@ -461,20 +482,6 @@ reader_system reader_system_0(
 );
 
 
-
-// testing code for sdram writing
-test_sdram_write test_sdram_write_0(
-    .iCLK(sdram_ctrl_clock),
-    .iRST(delayed_reset_1),
-
-    .iTRIGGER(trigger),
-    .iWAIT_REQUEST(sdram_ctrl_wait_req),
-    .oWR_EN(sdram_ctrl_write_en),
-    .oWR_DATA(sdram_ctrl_write_data),
-    .oWR_ADDR(sdram_ctrl_write_addr),
-    .oDONE(sdram_ctrl_write_done)
-);
-
 assign HEX5 = sdram_ctrl_write_done? 7'b1111111 : 7'b0000011;  // letter b
 assign HEX4 = sdram_ctrl_write_done? 7'b1111111 : 7'b1000001;  // letter u
 assign HEX3 = sdram_ctrl_write_done? 7'b1111111 : 7'b0010010;  // letter s
@@ -500,6 +507,21 @@ always @ (posedge CLOCK_50 or posedge delayed_reset) begin
         end
     end
 end
+
+
+// // testing code for sdram writing
+// test_sdram_write test_sdram_write_0(
+//     .iCLK(sdram_ctrl_clock),
+//     .iRST(delayed_reset_1),
+// 
+//     .iTRIGGER(trigger),
+//     .iWAIT_REQUEST(sdram_ctrl_wait_req),
+//     .oWR_EN(sdram_ctrl_write_en),
+//     .oWR_DATA(sdram_ctrl_write_data),
+//     .oWR_ADDR(sdram_ctrl_write_addr),
+//     .oDONE(sdram_ctrl_write_done)
+// );
+
 
 // // testing code for sdram reading
 // test_sdram_read test_sdram_read_0(

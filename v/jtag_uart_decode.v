@@ -56,7 +56,7 @@ reg         new_instr_ack, new_data_ack;
 parameter ST_IDLE                              = 7'h00;
 parameter INSTRUCTION_ACK                      = 7'h01;  // not a state but just an acknowledge instruction
 parameter ST_ERROR                             = 7'h0F;
-parameter ST_UPDATE_RAM_validate_num_of_frames = 7'h10;
+parameter ST_UPDATE_RAM_get_num_of_frames      = 7'h10;
 
 
 // =============================================================
@@ -117,7 +117,7 @@ always @ (*) begin
                 casez(data_or_cmd)
                     // Kick off transferring data to SDRAM
                     8'b10??_????: begin
-                        state_instuction_next = ST_UPDATE_RAM_validate_num_of_frames;
+                        state_instuction_next = ST_UPDATE_RAM_get_num_of_frames;
                         is_there_new_instruct_next = 1'b1;
                         is_there_new_data_next = 1'b1;  // the data in this case is the number of frames to transfer minus 1.
                     end
@@ -187,7 +187,7 @@ end
 parameter ST_IDLE                              = 7'h00;
 parameter INSTRUCTION_ACK                      = 7'h01;  // not a state but just an acknowledge instruction
 parameter ST_ERROR                             = 7'h0F;
-parameter ST_UPDATE_RAM_validate_num_of_frames = 7'h10;  */
+parameter ST_UPDATE_RAM_get_num_of_frames      = 7'h10;  */
 parameter ST_UPDATE_RAM_trigger                = 7'h11;
 parameter ST_UPDATE_RAM_wait_data              = 7'h12;
 parameter ST_UPDATE_RAM_idle                   = 7'h13;  // waiting for instruction
@@ -214,12 +214,13 @@ always @ (*) begin
         end
 
         /// ==== Updating the RAM ====================================
-        ST_UPDATE_RAM_validate_num_of_frames: begin
+        ST_UPDATE_RAM_get_num_of_frames: begin
             new_instr_ack = 1'b0;
             new_data_ack  = 1'b1;
             states_next = ST_UPDATE_RAM_trigger;
             // update total_frames_next = data[5:0] + 1
             // update counter = 0
+            // clear fifo
         end
         ST_UPDATE_RAM_trigger: begin
             new_instr_ack = 1'b0;
@@ -262,9 +263,9 @@ always @ (*) begin
 
 
     /// ==== Updating the RAM ====================================
-    total_frames_next = (states == ST_UPDATE_RAM_validate_num_of_frames)? data[5:0] + 1'b1 : total_frames;
+    total_frames_next = (states == ST_UPDATE_RAM_get_num_of_frames)? data[5:0] + 1'b1 : total_frames;
     case(states)
-        ST_UPDATE_RAM_validate_num_of_frames:   counter_next = 26'd0;
+        ST_UPDATE_RAM_get_num_of_frames:        counter_next = 26'd0;
         ST_UPDATE_RAM_trigger:                  counter_next = counter;
         ST_UPDATE_RAM_wait_data:                counter_next = (is_there_new_data)? counter + 1'b1: counter;
         ST_UPDATE_RAM_idle:                     counter_next = counter;
@@ -283,8 +284,8 @@ end
 assign oNUM_IMAGES = total_frames;
 assign oTRIGGER_WRITE_SDRAM = (states == ST_UPDATE_RAM_trigger);
 
-fifo_vga fifo_for_pixels(
-    .aclr(iRST),
+fifo_sdram_write fifo_for_pixels(
+    .aclr(iRST||(states==ST_UPDATE_RAM_get_num_of_frames)),
     .wrclk(iCLK),
     .wrreq(fifo_wrreq),
     .data(fifo_wrdata),
