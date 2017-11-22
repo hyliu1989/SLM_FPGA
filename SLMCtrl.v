@@ -206,11 +206,11 @@ wire [7:0]  vga_data;
 wire        vga_fifo_rclk;
 wire        vga_fifo_rreq;
 wire        vga_fifo_aclear;
-wire        vga_load_to_fifo_req;
-wire [12:0] vga_fifo_loadline_id;
-wire        fifo_wclk;
-wire [7:0]  fifo_wdata;
-wire        fifo_wen;
+wire        vga_request_load_to_fifo;
+wire [12:0] vga_request_loadline_id;
+wire        vga_fifo_wclk;
+wire [7:0]  vga_fifo_wdata;
+wire        vga_fifo_wen;
 
 wire [24:0] sdram_ctrl_addr;
 
@@ -301,8 +301,8 @@ vga_control vga_ctrl_0(
     .oFIFO_REQ(vga_fifo_rreq),
 
     // FIFO load signal
-    .oFIFO_LOAD_REQ(vga_load_to_fifo_req),
-    .oFIFO_LOAD_VLINE(vga_fifo_loadline_id),
+    .oFIFO_LOAD_REQ(vga_request_load_to_fifo),
+    .oFIFO_LOAD_VLINE(vga_request_loadline_id),
     .oFIFO_CLEAR(vga_fifo_aclear),
     
     //    VGA Side
@@ -333,8 +333,8 @@ sdram_to_vgafifo sdram_to_vgafifo_0(
     .iOFFSET_V(test_y_offset),  // input [7:0], vertial offset, + to the bottom
 
     // VGA signals (as a trigger to load)
-    .iVGA_LINE_TO_LOAD(vga_fifo_loadline_id),
-    .iVGA_LOAD_TO_FIFO_REQ(vga_load_to_fifo_req),
+    .iVGA_LINE_TO_LOAD(vga_request_loadline_id),
+    .iVGA_LOAD_TO_FIFO_REQ(vga_request_load_to_fifo),
 
     // read from SDRAM
     .iWAIT_REQUEST(sdram_ctrl_wait_req),
@@ -344,19 +344,19 @@ sdram_to_vgafifo sdram_to_vgafifo_0(
     .iRD_DATAVALID(sdram_ctrl_read_datavalid),
     
     // write to FIFO
-    .oFIFO_WCLK(fifo_wclk),
-    .oFIFO_WDATA(fifo_wdata),
-    .oFIFO_WEN(fifo_wen)
+    .oFIFO_WCLK(vga_fifo_wclk),
+    .oFIFO_WDATA(vga_fifo_wdata),
+    .oFIFO_WEN(vga_fifo_wen)
     //,.o_tests(LEDR[7:0])
 );
 
 fifo_vga fv0(
     .aclr(vga_fifo_aclear),
-    .data(fifo_wdata),  // [7:0]
+    .data(vga_fifo_wdata),  // [7:0]
     .rdclk(vga_fifo_rclk),
     .rdreq(vga_fifo_rreq),
-    .wrclk(fifo_wclk),
-    .wrreq(fifo_wen),
+    .wrclk(vga_fifo_wclk),
+    .wrreq(vga_fifo_wen),
     .q(vga_data),  // output [7:0]
     .rdempty(/*LEDR[9]*/),  //output
     .wrfull(/*LEDR[8]*/)  // output
