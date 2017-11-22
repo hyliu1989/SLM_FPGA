@@ -1,0 +1,13 @@
+?jtagatlantic_bytes_available@@YAHPEAUJTAGATLANTIC@@@Z
+?jtagatlantic_cable_warning@@YAHPEAUJTAGATLANTIC@@@Z
+?jtagatlantic_close@@YAXPEAUJTAGATLANTIC@@@Z
+?jtagatlantic_flush@@YAHPEAUJTAGATLANTIC@@@Z
+?jtagatlantic_get_error@@YA?AW4JATL_ERROR@@PEAPEBD@Z
+?jtagatlantic_get_info@@YAXPEAUJTAGATLANTIC@@PEAPEBDPEAH2@Z
+?jtagatlantic_is_setup_done@@YA_NPEAUJTAGATLANTIC@@@Z
+?jtagatlantic_open@@YAPEAUJTAGATLANTIC@@PEBDHH0@Z
+?jtagatlantic_open@@YAPEAUJTAGATLANTIC@@PEBDHH0PEAVLOCK_HANDLER@@@Z
+?jtagatlantic_read@@YAHPEAUJTAGATLANTIC@@PEADI@Z
+?jtagatlantic_scan_thread@@YAXPEAUJTAGATLANTIC@@@Z
+?jtagatlantic_wait_open@@YAHPEAUJTAGATLANTIC@@@Z
+?jtagatlantic_write@@YAHPEAUJTAGATLANTIC@@PEBDI@Z
