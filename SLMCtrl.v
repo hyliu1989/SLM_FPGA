@@ -379,7 +379,9 @@ jtag_uart_decode jtag_uart_decode_0(
     .iDECODEDIMAGE_RDFIFO_CLK(),  // input
     .iDECODEDIMAGE_RDFIFO_REQ(),  // input
     .oDECODEDIMAGE_RDFIFO_DATA(),  // output [7:0]
-    .oDECODEDIMAGE_RDFIFO_EMPTY()  // output
+    .oDECODEDIMAGE_RDFIFO_EMPTY(),  // output
+    .oNUM_IMAGES(),  // output [6:0]
+    .oTRIGGER_WRITE_SDRAM()  // output
     
     ,.oTest(test)
     ,.iTest(SW[9])
