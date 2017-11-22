@@ -4,65 +4,56 @@
 
 `timescale 1 ps / 1 ps
 module reader_system (
-		input  wire        altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_chipselect,  // altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave.chipselect
-		input  wire [7:0]  altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_address,     //                                                         .address
-		input  wire        altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_read,        //                                                         .read
-		input  wire        altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_write,       //                                                         .write
-		input  wire [3:0]  altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_byteenable,  //                                                         .byteenable
-		input  wire [31:0] altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_writedata,   //                                                         .writedata
-		output wire [31:0] altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_readdata,    //                                                         .readdata
-		output wire        altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_waitrequest, //                                                         .waitrequest
-		inout  wire        altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_cmd,            //         altera_up_sd_card_avalon_interface_0_conduit_end.b_SD_cmd
-		inout  wire        altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat,            //                                                         .b_SD_dat
-		inout  wire        altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat3,           //                                                         .b_SD_dat3
-		output wire        altera_up_sd_card_avalon_interface_0_conduit_end_o_SD_clock,          //                                                         .o_SD_clock
-		input  wire        clk_clk,                                                              //                                                      clk.clk
-		input  wire        reset_reset_n,                                                        //                                                    reset.reset_n
-		input  wire [24:0] sdram_controller_0_s1_address,                                        //                                    sdram_controller_0_s1.address
-		input  wire [1:0]  sdram_controller_0_s1_byteenable_n,                                   //                                                         .byteenable_n
-		input  wire        sdram_controller_0_s1_chipselect,                                     //                                                         .chipselect
-		input  wire [15:0] sdram_controller_0_s1_writedata,                                      //                                                         .writedata
-		input  wire        sdram_controller_0_s1_read_n,                                         //                                                         .read_n
-		input  wire        sdram_controller_0_s1_write_n,                                        //                                                         .write_n
-		output wire [15:0] sdram_controller_0_s1_readdata,                                       //                                                         .readdata
-		output wire        sdram_controller_0_s1_readdatavalid,                                  //                                                         .readdatavalid
-		output wire        sdram_controller_0_s1_waitrequest,                                    //                                                         .waitrequest
-		output wire [12:0] sdram_controller_0_wire_addr,                                         //                                  sdram_controller_0_wire.addr
-		output wire [1:0]  sdram_controller_0_wire_ba,                                           //                                                         .ba
-		output wire        sdram_controller_0_wire_cas_n,                                        //                                                         .cas_n
-		output wire        sdram_controller_0_wire_cke,                                          //                                                         .cke
-		output wire        sdram_controller_0_wire_cs_n,                                         //                                                         .cs_n
-		inout  wire [15:0] sdram_controller_0_wire_dq,                                           //                                                         .dq
-		output wire [1:0]  sdram_controller_0_wire_dqm,                                          //                                                         .dqm
-		output wire        sdram_controller_0_wire_ras_n,                                        //                                                         .ras_n
-		output wire        sdram_controller_0_wire_we_n,                                         //                                                         .we_n
-		output wire        sdram_controller_clock_0_clk,                                         //                                 sdram_controller_clock_0.clk
-		output wire        sys_sdram_pll_0_sdram_clk_clk                                         //                                sys_sdram_pll_0_sdram_clk.clk
+		input  wire        clk_clk,                                   //                           clk.clk
+		input  wire        jtag_uart_0_avalon_jtag_slave_chipselect,  // jtag_uart_0_avalon_jtag_slave.chipselect
+		input  wire        jtag_uart_0_avalon_jtag_slave_address,     //                              .address
+		input  wire        jtag_uart_0_avalon_jtag_slave_read_n,      //                              .read_n
+		output wire [31:0] jtag_uart_0_avalon_jtag_slave_readdata,    //                              .readdata
+		input  wire        jtag_uart_0_avalon_jtag_slave_write_n,     //                              .write_n
+		input  wire [31:0] jtag_uart_0_avalon_jtag_slave_writedata,   //                              .writedata
+		output wire        jtag_uart_0_avalon_jtag_slave_waitrequest, //                              .waitrequest
+		input  wire        reset_reset_n,                             //                         reset.reset_n
+		input  wire [24:0] sdram_controller_0_s1_address,             //         sdram_controller_0_s1.address
+		input  wire [1:0]  sdram_controller_0_s1_byteenable_n,        //                              .byteenable_n
+		input  wire        sdram_controller_0_s1_chipselect,          //                              .chipselect
+		input  wire [15:0] sdram_controller_0_s1_writedata,           //                              .writedata
+		input  wire        sdram_controller_0_s1_read_n,              //                              .read_n
+		input  wire        sdram_controller_0_s1_write_n,             //                              .write_n
+		output wire [15:0] sdram_controller_0_s1_readdata,            //                              .readdata
+		output wire        sdram_controller_0_s1_readdatavalid,       //                              .readdatavalid
+		output wire        sdram_controller_0_s1_waitrequest,         //                              .waitrequest
+		output wire        sdram_controller_0_s1_clock_clk,           //   sdram_controller_0_s1_clock.clk
+		output wire [12:0] sdram_controller_0_wire_addr,              //       sdram_controller_0_wire.addr
+		output wire [1:0]  sdram_controller_0_wire_ba,                //                              .ba
+		output wire        sdram_controller_0_wire_cas_n,             //                              .cas_n
+		output wire        sdram_controller_0_wire_cke,               //                              .cke
+		output wire        sdram_controller_0_wire_cs_n,              //                              .cs_n
+		inout  wire [15:0] sdram_controller_0_wire_dq,                //                              .dq
+		output wire [1:0]  sdram_controller_0_wire_dqm,               //                              .dqm
+		output wire        sdram_controller_0_wire_ras_n,             //                              .ras_n
+		output wire        sdram_controller_0_wire_we_n,              //                              .we_n
+		output wire        sdram_controller_0_wire_clk_clk            //   sdram_controller_0_wire_clk.clk
 	);
 
-	wire    rst_controller_reset_out_reset;     // rst_controller:reset_out -> Altera_UP_SD_Card_Avalon_Interface_0:i_reset_n
+	wire    rst_controller_reset_out_reset;     // rst_controller:reset_out -> jtag_uart_0:rst_n
 	wire    rst_controller_001_reset_out_reset; // rst_controller_001:reset_out -> sdram_controller_0:reset_n
 	wire    sys_sdram_pll_0_reset_source_reset; // sys_sdram_pll_0:reset_source_reset -> rst_controller_001:reset_in0
 
-	Altera_UP_SD_Card_Avalon_Interface altera_up_sd_card_avalon_interface_0 (
-		.i_avalon_chip_select (altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_chipselect),  // avalon_sdcard_slave.chipselect
-		.i_avalon_address     (altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_address),     //                    .address
-		.i_avalon_read        (altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_read),        //                    .read
-		.i_avalon_write       (altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_write),       //                    .write
-		.i_avalon_byteenable  (altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_byteenable),  //                    .byteenable
-		.i_avalon_writedata   (altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_writedata),   //                    .writedata
-		.o_avalon_readdata    (altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_readdata),    //                    .readdata
-		.o_avalon_waitrequest (altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_waitrequest), //                    .waitrequest
-		.i_clock              (clk_clk),                                                              //                 clk.clk
-		.i_reset_n            (~rst_controller_reset_out_reset),                                      //               reset.reset_n
-		.b_SD_cmd             (altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_cmd),            //         conduit_end.export
-		.b_SD_dat             (altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat),            //                    .export
-		.b_SD_dat3            (altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat3),           //                    .export
-		.o_SD_clock           (altera_up_sd_card_avalon_interface_0_conduit_end_o_SD_clock)           //                    .export
+	reader_system_jtag_uart_0 jtag_uart_0 (
+		.clk            (clk_clk),                                   //               clk.clk
+		.rst_n          (~rst_controller_reset_out_reset),           //             reset.reset_n
+		.av_chipselect  (jtag_uart_0_avalon_jtag_slave_chipselect),  // avalon_jtag_slave.chipselect
+		.av_address     (jtag_uart_0_avalon_jtag_slave_address),     //                  .address
+		.av_read_n      (jtag_uart_0_avalon_jtag_slave_read_n),      //                  .read_n
+		.av_readdata    (jtag_uart_0_avalon_jtag_slave_readdata),    //                  .readdata
+		.av_write_n     (jtag_uart_0_avalon_jtag_slave_write_n),     //                  .write_n
+		.av_writedata   (jtag_uart_0_avalon_jtag_slave_writedata),   //                  .writedata
+		.av_waitrequest (jtag_uart_0_avalon_jtag_slave_waitrequest), //                  .waitrequest
+		.av_irq         ()                                           //               irq.irq
 	);
 
 	reader_system_sdram_controller_0 sdram_controller_0 (
-		.clk            (sdram_controller_clock_0_clk),        //   clk.clk
+		.clk            (sdram_controller_0_s1_clock_clk),     //   clk.clk
 		.reset_n        (~rst_controller_001_reset_out_reset), // reset.reset_n
 		.az_addr        (sdram_controller_0_s1_address),       //    s1.address
 		.az_be_n        (sdram_controller_0_s1_byteenable_n),  //      .byteenable_n
@@ -87,8 +78,8 @@ module reader_system (
 	reader_system_sys_sdram_pll_0 sys_sdram_pll_0 (
 		.ref_clk_clk        (clk_clk),                            //      ref_clk.clk
 		.ref_reset_reset    (~reset_reset_n),                     //    ref_reset.reset
-		.sys_clk_clk        (sdram_controller_clock_0_clk),       //      sys_clk.clk
-		.sdram_clk_clk      (sys_sdram_pll_0_sdram_clk_clk),      //    sdram_clk.clk
+		.sys_clk_clk        (sdram_controller_0_s1_clock_clk),    //      sys_clk.clk
+		.sdram_clk_clk      (sdram_controller_0_wire_clk_clk),    //    sdram_clk.clk
 		.reset_source_reset (sys_sdram_pll_0_reset_source_reset)  // reset_source.reset
 	);
 
@@ -182,7 +173,7 @@ module reader_system (
 		.ADAPT_RESET_REQUEST       (0)
 	) rst_controller_001 (
 		.reset_in0      (sys_sdram_pll_0_reset_source_reset), // reset_in0.reset
-		.clk            (sdram_controller_clock_0_clk),       //       clk.clk
+		.clk            (sdram_controller_0_s1_clock_clk),    //       clk.clk
 		.reset_out      (rst_controller_001_reset_out_reset), // reset_out.reset
 		.reset_req      (),                                   // (terminated)
 		.reset_req_in0  (1'b0),                               // (terminated)

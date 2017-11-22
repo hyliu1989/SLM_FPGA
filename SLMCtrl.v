@@ -36,18 +36,18 @@
 module SLMCtrl(
 
     ///////// ADC /////////
-    output             ADC_CONVST,
-    output             ADC_DIN,
-    input              ADC_DOUT,
-    output             ADC_SCLK,
+//    output             ADC_CONVST,
+//    output             ADC_DIN,
+//    input              ADC_DOUT,
+//    output             ADC_SCLK,
 
     ///////// AUD /////////
-    input              AUD_ADCDAT,
-    inout              AUD_ADCLRCK,
-    inout              AUD_BCLK,
-    output             AUD_DACDAT,
-    inout              AUD_DACLRCK,
-    output             AUD_XCK,
+//    input              AUD_ADCDAT,
+//    inout              AUD_ADCLRCK,
+//    inout              AUD_BCLK,
+//    output             AUD_DACDAT,
+//    inout              AUD_DACLRCK,
+//    output             AUD_XCK,
 
     ///////// CLOCK2 /////////
     input              CLOCK2_50,
@@ -75,11 +75,11 @@ module SLMCtrl(
     output             DRAM_WE_N,
 
     ///////// FAN /////////
-    output             FAN_CTRL,
+//    output             FAN_CTRL,
 
     ///////// FPGA /////////
-    output             FPGA_I2C_SCLK,
-    inout              FPGA_I2C_SDAT,
+//    output             FPGA_I2C_SCLK,
+//    inout              FPGA_I2C_SDAT,
 
     ///////// GPIO /////////
     inout     [35:0]         GPIO_0,
@@ -106,7 +106,7 @@ module SLMCtrl(
 
 `ifdef ENABLE_HPS
     ///////// HPS /////////
-    inout              HPS_CONV_USB_N,
+//    inout              HPS_CONV_USB_N,
     output      [14:0] HPS_DDR3_ADDR,
     output      [2:0]  HPS_DDR3_BA,
     output             HPS_DDR3_CAS_N,
@@ -123,7 +123,7 @@ module SLMCtrl(
     output             HPS_DDR3_RESET_N,
     input              HPS_DDR3_RZQ,
     output             HPS_DDR3_WE_N,
-    output             HPS_ENET_GTX_CLK,
+/*    output             HPS_ENET_GTX_CLK,
     inout              HPS_ENET_INT_N,
     output             HPS_ENET_MDC,
     inout              HPS_ENET_MDIO,
@@ -143,11 +143,11 @@ module SLMCtrl(
     inout              HPS_I2C_CONTROL,
     inout              HPS_KEY,
     inout              HPS_LED,
-    inout              HPS_LTC_GPIO,
-    output             HPS_SD_CLK,
+    inout              HPS_LTC_GPIO,*/
+    inout              HPS_SD_CLK,  //output             HPS_SD_CLK,
     inout              HPS_SD_CMD,
     inout       [3:0]  HPS_SD_DATA,
-    output             HPS_SPIM_CLK,
+/*    output             HPS_SPIM_CLK,
     input              HPS_SPIM_MISO,
     output             HPS_SPIM_MOSI,
     inout              HPS_SPIM_SS,
@@ -157,12 +157,12 @@ module SLMCtrl(
     inout       [7:0]  HPS_USB_DATA,
     input              HPS_USB_DIR,
     input              HPS_USB_NXT,
-    output             HPS_USB_STP,
+    output             HPS_USB_STP,*/
 `endif /*ENABLE_HPS*/
 
     ///////// IRDA /////////
-    input              IRDA_RXD,
-    output             IRDA_TXD,
+//    input              IRDA_RXD,
+//    output             IRDA_TXD,
 
     ///////// KEY /////////
     input       [3:0]  KEY,
@@ -171,20 +171,20 @@ module SLMCtrl(
     output      [9:0]  LEDR,
 
     ///////// PS2 /////////
-    inout              PS2_CLK,
-    inout              PS2_CLK2,
-    inout              PS2_DAT,
-    inout              PS2_DAT2,
+//    inout              PS2_CLK,
+//    inout              PS2_CLK2,
+//    inout              PS2_DAT,
+//    inout              PS2_DAT2,
 
     ///////// SW /////////
     input       [9:0]  SW,
 
     ///////// TD /////////
     input              TD_CLK27,
-    input       [7:0]  TD_DATA,
-    input              TD_HS,
+//    input       [7:0]  TD_DATA,
+//    input              TD_HS,
     output             TD_RESET_N,
-    input              TD_VS,
+//    input              TD_VS,
 
     ///////// VGA /////////
     output      [7:0]  VGA_B,
@@ -206,11 +206,13 @@ wire [7:0]  vga_data;
 wire        vga_fifo_rclk;
 wire        vga_fifo_rreq;
 wire        vga_fifo_aclear;
-wire        vga_load_to_fifo_req;
-wire [12:0] vga_fifo_loadline_id;
-wire        fifo_wclk;
-wire [7:0]  fifo_wdata;
-wire        fifo_wen;
+wire        vga_request_load_to_fifo;
+wire [12:0] vga_request_loadline_id;
+wire        vga_fifo_wclk;
+wire [7:0]  vga_fifo_wdata;
+wire        vga_fifo_wen;
+
+wire [24:0] sdram_ctrl_addr;
 
 wire        sdram_ctrl_clock;
 wire        sdram_ctrl_wait_req;
@@ -220,13 +222,25 @@ wire [15:0] sdram_ctrl_write_data;
 wire        sdram_ctrl_write_done;
 
 wire        sdram_ctrl_read_en;
-wire [24:0] sdram_ctrl_addr;
 wire [24:0] sdram_ctrl_read_addr;
 wire [15:0] sdram_ctrl_read_data;
 wire        sdram_ctrl_read_datavalid;
 
+wire        jtag_uart_avalon_addr;
+wire        jtag_uart_avalon_rd_req;
+wire [31:0] jtag_uart_avalon_rd_data;
+wire        jtag_uart_avalon_wr_req;
+wire [31:0] jtag_uart_avalon_wr_data;
+wire        jtag_uart_avalon_wait_req;
+
 wire        delayed_reset, delayed_reset_1, delayed_reset_2;
-wire        trigger;
+wire        download_images_trigger;
+
+wire        sdram_fifo_rd_clk;
+wire        sdram_fifo_rd_req;
+wire [7:0]  sdram_fifo_rd_data;
+wire        sdram_fifo_rd_empty;
+wire [6:0]  num_images_to_download;
 
 // testing signals
 wire        update_x_offset;
@@ -247,15 +261,6 @@ delay_x00_ms delay_module_0(
     .oDELAY100(delayed_reset),
     .oDELAY200(delayed_reset_1),
     .oDELAY300(delayed_reset_2),
-    .oDELAY400()
-);
-
-delay_x00_ms delay_module_1(
-    .iCLOCK50(CLOCK_50),
-    .iTRIGGER(!KEY[1]),
-    .oDELAY100(trigger),
-    .oDELAY200(),
-    .oDELAY300(),
     .oDELAY400()
 );
 
@@ -293,8 +298,8 @@ vga_control vga_ctrl_0(
     .oFIFO_REQ(vga_fifo_rreq),
 
     // FIFO load signal
-    .oFIFO_LOAD_REQ(vga_load_to_fifo_req),
-    .oFIFO_LOAD_VLINE(vga_fifo_loadline_id),
+    .oFIFO_LOAD_REQ(vga_request_load_to_fifo),
+    .oFIFO_LOAD_VLINE(vga_request_loadline_id),
     .oFIFO_CLEAR(vga_fifo_aclear),
     
     //    VGA Side
@@ -325,8 +330,8 @@ sdram_to_vgafifo sdram_to_vgafifo_0(
     .iOFFSET_V(test_y_offset),  // input [7:0], vertial offset, + to the bottom
 
     // VGA signals (as a trigger to load)
-    .iVGA_LINE_TO_LOAD(vga_fifo_loadline_id),
-    .iVGA_LOAD_TO_FIFO_REQ(vga_load_to_fifo_req),
+    .iVGA_LINE_TO_LOAD(vga_request_loadline_id),
+    .iVGA_LOAD_TO_FIFO_REQ(vga_request_load_to_fifo),
 
     // read from SDRAM
     .iWAIT_REQUEST(sdram_ctrl_wait_req),
@@ -336,59 +341,86 @@ sdram_to_vgafifo sdram_to_vgafifo_0(
     .iRD_DATAVALID(sdram_ctrl_read_datavalid),
     
     // write to FIFO
-    .oFIFO_WCLK(fifo_wclk),
-    .oFIFO_WDATA(fifo_wdata),
-    .oFIFO_WEN(fifo_wen)
-    ,.o_tests(LEDR[7:0])
+    .oFIFO_WCLK(vga_fifo_wclk),
+    .oFIFO_WDATA(vga_fifo_wdata),
+    .oFIFO_WEN(vga_fifo_wen)
+    //,.o_tests(LEDR[7:0])
 );
 
 fifo_vga fv0(
     .aclr(vga_fifo_aclear),
-    .data(fifo_wdata),  // [7:0]
+    .data(vga_fifo_wdata),  // [7:0]
     .rdclk(vga_fifo_rclk),
     .rdreq(vga_fifo_rreq),
-    .wrclk(fifo_wclk),
-    .wrreq(fifo_wen),
+    .wrclk(vga_fifo_wclk),
+    .wrreq(vga_fifo_wen),
     .q(vga_data),  // output [7:0]
     .rdempty(/*LEDR[9]*/),  //output
     .wrfull(/*LEDR[8]*/)  // output
 );
 
-wire              HPS_SD_CLK;
-wire              HPS_SD_CMD;
-wire       [3:0]  HPS_SD_DATA;
+wire [18:0] test;
+jtag_uart_decode jtag_uart_decode_0(
+    .iCLK(CLOCK_50),
+	.iRST(delayed_reset),
+    
+    // jtag uart signals
+    .oJTAG_SLAVE_ADDR(jtag_uart_avalon_addr),
+    .oJTAG_SLAVE_RDREQ(jtag_uart_avalon_rd_req),
+    .iJTAG_SLAVE_RDDATA(jtag_uart_avalon_rd_data),
+    .oJTAG_SLAVE_WRREQ(jtag_uart_avalon_wr_req),
+    .oJTAG_SLAVE_WRDATA(jtag_uart_avalon_wr_data),
+    .iJTAG_SLAVE_WAIT(jtag_uart_avalon_wait_req),
+    
+    // decoded signals
+    .iDECODEDIMAGE_RDFIFO_CLK(sdram_fifo_rd_clk),  // input
+    .iDECODEDIMAGE_RDFIFO_REQ(sdram_fifo_rd_req),  // input
+    .oDECODEDIMAGE_RDFIFO_DATA(sdram_fifo_rd_data),  // output [7:0]
+    .oDECODEDIMAGE_RDFIFO_EMPTY(sdram_fifo_rd_empty),  // output
+    .oNUM_IMAGES(num_images_to_download),  // output [6:0]
+    .oTRIGGER_WRITE_SDRAM(download_images_trigger)  // output
+);
+
+
+write_to_sdram write_to_sdram_0(
+	.iCLK(sdram_ctrl_clock),
+	.iRST(delayed_reset_1),
+
+	.iTRIGGER(download_images_trigger),
+    
+    // SDRAM Avalon signals
+	.iWAIT_REQUEST(sdram_ctrl_wait_req),
+	.oWR_REQ(sdram_ctrl_write_en),
+	.oWR_DATA(sdram_ctrl_write_data),  // [15:0]
+	.oWR_ADDR(sdram_ctrl_write_addr),  // [24:0]
+	.oDONE(sdram_ctrl_write_done),
+    
+    // signals from the FIFO that contains data_out
+    .oFIFO_RD_CLK(sdram_fifo_rd_clk),
+    .oFIFO_RD_REQ(sdram_fifo_rd_req),
+    .iFIFO_RD_DATA(sdram_fifo_rd_data),  // [7:0]
+    .iFIFO_RD_EMPTY(sdram_fifo_rd_empty),
+    .iNUM_IMAGES(num_images_to_download),  // [6:0]
+    .iID_OF_STARTING_IMAGE(6'd0)  // [5:0]
+);
+
+
 reader_system reader_system_0(
     // clock and reset
     .clk_clk(CLOCK_50),
     .reset_reset_n(~delayed_reset),
-    
-    // SD card controller signals
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_chipselect(),  //  input  wire
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_address(),     //  input  wire [7:0]
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_read(),        //  input  wire
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_write(),       //  input  wire
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_byteenable(),  //  input  wire [3:0]
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_writedata(),   //  input  wire [31:0]
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_readdata(),    //  output wire [31:0]
-    .altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_waitrequest(), //  output wire
-    
-    // SD card device wires
-    .altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_cmd(HPS_SD_CMD),
-    .altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat(HPS_SD_DATA[0]),
-    .altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat3(HPS_SD_DATA[3]),
-    .altera_up_sd_card_avalon_interface_0_conduit_end_o_SD_clock(HPS_SD_CLK),
     
     // SDRAM controller signals
     .sdram_controller_0_s1_address(sdram_ctrl_addr),                         //  input  wire [24:0]
     .sdram_controller_0_s1_byteenable_n(2'b00),                              //  input  wire [1:0]
     .sdram_controller_0_s1_chipselect(1'b1),                                 //  input  wire
     .sdram_controller_0_s1_writedata(sdram_ctrl_write_data),                 //  input  wire [15:0]
-    .sdram_controller_0_s1_read_n(~(sdram_ctrl_read_en&&sdram_ctrl_write_done)),  //  input  wire
+    .sdram_controller_0_s1_read_n(~(sdram_ctrl_read_en&&sdram_ctrl_write_done)),  //  input  wire  // sdram_ctrl_write_done is a safeguard
     .sdram_controller_0_s1_write_n(~sdram_ctrl_write_en),                    //  input  wire
     .sdram_controller_0_s1_readdata(sdram_ctrl_read_data),                   //  output wire [15:0]
     .sdram_controller_0_s1_readdatavalid(sdram_ctrl_read_datavalid),         //  output wire
     .sdram_controller_0_s1_waitrequest(sdram_ctrl_wait_req),                 //  output wire
-    .sdram_controller_clock_0_clk(sdram_ctrl_clock),                         //  output wire, the clock signal that drives the controller
+    .sdram_controller_0_s1_clock_clk(sdram_ctrl_clock),                         //  output wire, the clock signal that drives the controller
     
     // SDRAM device wires
     .sdram_controller_0_wire_addr(DRAM_ADDR),
@@ -400,23 +432,18 @@ reader_system reader_system_0(
     .sdram_controller_0_wire_dqm({DRAM_UDQM,DRAM_LDQM}),
     .sdram_controller_0_wire_ras_n(DRAM_RAS_N),
     .sdram_controller_0_wire_we_n(DRAM_WE_N),
-    .sys_sdram_pll_0_sdram_clk_clk(DRAM_CLK)
+    .sdram_controller_0_wire_clk_clk(DRAM_CLK),
+    
+    // JTAG-UART part
+    .jtag_uart_0_avalon_jtag_slave_chipselect  (1'b1),  // jtag_uart_0_avalon_jtag_slave.chipselect
+    .jtag_uart_0_avalon_jtag_slave_address     (jtag_uart_avalon_addr),     //                              .address
+    .jtag_uart_0_avalon_jtag_slave_read_n      (~jtag_uart_avalon_rd_req),  //                              .read_n
+    .jtag_uart_0_avalon_jtag_slave_readdata    (jtag_uart_avalon_rd_data),  //                              .readdata
+    .jtag_uart_0_avalon_jtag_slave_write_n     (~jtag_uart_avalon_wr_req),  //                              .write_n
+    .jtag_uart_0_avalon_jtag_slave_writedata   (jtag_uart_avalon_wr_data),  //                              .writedata
+    .jtag_uart_0_avalon_jtag_slave_waitrequest (jtag_uart_avalon_wait_req)  //                              .waitrequest
 );
 
-
-
-// testing code for sdram writing
-test_sdram_write test_sdram_write_0(
-	.iCLK(sdram_ctrl_clock),
-	.iRST(delayed_reset_1),
-
-	.iTRIGGER(trigger),
-	.iWAIT_REQUEST(sdram_ctrl_wait_req),
-	.oWR_EN(sdram_ctrl_write_en),
-	.oWR_DATA(sdram_ctrl_write_data),
-	.oWR_ADDR(sdram_ctrl_write_addr),
-	.oDONE(sdram_ctrl_write_done)
-);
 
 assign HEX5 = sdram_ctrl_write_done? 7'b1111111 : 7'b0000011;  // letter b
 assign HEX4 = sdram_ctrl_write_done? 7'b1111111 : 7'b1000001;  // letter u
@@ -426,23 +453,38 @@ assign HEX1 = 7'h7f;
 assign HEX0 = 7'h7f;
 
 always @ (posedge CLOCK_50 or posedge delayed_reset) begin
-	if(delayed_reset) begin
-		test_x_offset = 8;
-		test_x_offset_sign = 1;
-		test_y_offset = 3;
-		test_y_offset_sign = 0;
-	end
-	else begin
-		if(update_x_offset) begin
-			test_x_offset = SW[7:0];
-			test_x_offset_sign = SW[9];
-		end
-		if(update_y_offset) begin
-			test_y_offset = SW[7:0];
-			test_y_offset_sign = SW[9];
-		end
-	end
+    if(delayed_reset) begin
+        test_x_offset = 127;
+        test_x_offset_sign = 1;
+        test_y_offset = 3;
+        test_y_offset_sign = 0;
+    end
+    else begin
+        if(update_x_offset) begin
+            test_x_offset = SW[7:0];
+            test_x_offset_sign = SW[9];
+        end
+        if(update_y_offset) begin
+            test_y_offset = SW[7:0];
+            test_y_offset_sign = SW[9];
+        end
+    end
 end
+
+
+// // testing code for sdram writing
+// test_sdram_write test_sdram_write_0(
+//     .iCLK(sdram_ctrl_clock),
+//     .iRST(delayed_reset_1),
+// 
+//     .iTRIGGER(trigger),
+//     .iWAIT_REQUEST(sdram_ctrl_wait_req),
+//     .oWR_EN(sdram_ctrl_write_en),
+//     .oWR_DATA(sdram_ctrl_write_data),
+//     .oWR_ADDR(sdram_ctrl_write_addr),
+//     .oDONE(sdram_ctrl_write_done)
+// );
+
 
 // // testing code for sdram reading
 // test_sdram_read test_sdram_read_0(

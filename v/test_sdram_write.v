@@ -265,7 +265,9 @@ case(states)
 	ST_IDLE:
 		data_next = 16'd0;
 	ST_PREPARE_DATA, ST_PREP_LAST: begin
-		if((twobytes_id >= frame_id*8) && (twobytes_id < frame_id*8 + STRIP_WIDTH/2))
+		if(line_id == 10'd0)
+			data_next = 16'hffff;
+		else if((twobytes_id >= frame_id*8) && (twobytes_id < frame_id*8 + STRIP_WIDTH/2))
 			data_next = {2'b11, line_id[9:7],3'b111, 2'b11,line_id[9:7],3'b111};
 		else
 			data_next = 16'd0;

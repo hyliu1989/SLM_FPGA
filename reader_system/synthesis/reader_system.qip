@@ -2,8 +2,9 @@ set_global_assignment -entity "reader_system" -library "reader_system" -name IP_
 set_global_assignment -entity "reader_system" -library "reader_system" -name IP_TOOL_VERSION "16.0"
 set_global_assignment -entity "reader_system" -library "reader_system" -name IP_TOOL_ENV "Qsys"
 set_global_assignment -library "reader_system" -name SOPCINFO_FILE [file join $::quartus(qip_path) "../../reader_system.sopcinfo"]
-set_global_assignment -entity "reader_system" -library "reader_system" -name SLD_INFO "QSYS_NAME reader_system HAS_SOPCINFO 1 GENERATION_ID 1510616382"
+set_global_assignment -entity "reader_system" -library "reader_system" -name SLD_INFO "QSYS_NAME reader_system HAS_SOPCINFO 1 GENERATION_ID 1511392413"
 set_global_assignment -library "reader_system" -name MISC_FILE [file join $::quartus(qip_path) "../reader_system.cmp"]
+set_global_assignment -library "reader_system" -name SLD_FILE [file join $::quartus(qip_path) "reader_system.regmap"]
 set_global_assignment -library "reader_system" -name SLD_FILE [file join $::quartus(qip_path) "reader_system.debuginfo"]
 set_global_assignment -entity "reader_system" -library "reader_system" -name IP_TARGETED_DEVICE_FAMILY "Cyclone V"
 set_global_assignment -entity "reader_system" -library "reader_system" -name IP_GENERATED_DEVICE_FAMILY "{Cyclone V}"
@@ -15,7 +16,7 @@ set_global_assignment -entity "reader_system" -library "reader_system" -name IP_
 set_global_assignment -entity "reader_system" -library "reader_system" -name IP_COMPONENT_REPORT_HIERARCHY "On"
 set_global_assignment -entity "reader_system" -library "reader_system" -name IP_COMPONENT_INTERNAL "Off"
 set_global_assignment -entity "reader_system" -library "reader_system" -name IP_COMPONENT_VERSION "MS4w"
-set_global_assignment -entity "reader_system" -library "reader_system" -name IP_COMPONENT_PARAMETER "QVVUT19HRU5FUkFUSU9OX0lE::MTUxMDYxNjM4Mg==::QXV0byBHRU5FUkFUSU9OX0lE"
+set_global_assignment -entity "reader_system" -library "reader_system" -name IP_COMPONENT_PARAMETER "QVVUT19HRU5FUkFUSU9OX0lE::MTUxMTM5MjQxMw==::QXV0byBHRU5FUkFUSU9OX0lE"
 set_global_assignment -entity "reader_system" -library "reader_system" -name IP_COMPONENT_PARAMETER "QVVUT19ERVZJQ0VfRkFNSUxZ::Q3ljbG9uZSBW::QXV0byBERVZJQ0VfRkFNSUxZ"
 set_global_assignment -entity "reader_system" -library "reader_system" -name IP_COMPONENT_PARAMETER "QVVUT19ERVZJQ0U=::NUNTRU1BNUYzMUM2::QXV0byBERVZJQ0U="
 set_global_assignment -entity "reader_system" -library "reader_system" -name IP_COMPONENT_PARAMETER "QVVUT19ERVZJQ0VfU1BFRURHUkFERQ==::Ng==::QXV0byBERVZJQ0VfU1BFRURHUkFERQ=="
@@ -398,21 +399,21 @@ set_global_assignment -entity "reader_system_sdram_controller_0" -library "reade
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_AUTHOR "QWx0ZXJhIENvcnBvcmF0aW9u"
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_VERSION "MTYuMA=="
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "VEFD::NS40::QWNjZXNzIHRpbWUgKHRfYWMp"
-set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "VFJDRA==::MjAuMA==::QUNUSVZFIHRvIFJFQUQgb3IgV1JJVEUgZGVsYXkgKHRfcmNkKQ=="
+set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "VFJDRA==::MTUuMA==::QUNUSVZFIHRvIFJFQUQgb3IgV1JJVEUgZGVsYXkgKHRfcmNkKQ=="
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "VFJGQw==::NzAuMA==::RHVyYXRpb24gb2YgcmVmcmVzaCBjb21tYW5kICh0X3JmYyk="
-set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "VFJQ::MjAuMA==::RHVyYXRpb24gb2YgcHJlY2hhcmdlIGNvbW1hbmQgKHRfcnAp"
+set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "VFJQ::MTUuMA==::RHVyYXRpb24gb2YgcHJlY2hhcmdlIGNvbW1hbmQgKHRfcnAp"
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "VFdS::MTQuMA==::V3JpdGUgcmVjb3ZlcnkgdGltZSAodF93ciwgbm8gYXV0byBwcmVjaGFyZ2Up"
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "Y2FzTGF0ZW5jeQ==::Mg==::Q0FTIGxhdGVuY3kgY3ljbGVzOg=="
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "Y29sdW1uV2lkdGg=::MTA=::Q29sdW1u"
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "ZGF0YVdpZHRo::MTY=::Qml0cw=="
-set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "Z2VuZXJhdGVTaW11bGF0aW9uTW9kZWw=::ZmFsc2U=::SW5jbHVkZSBhIGZ1bmN0aW9uYWwgbWVtb3J5IG1vZGVsIGluIHRoZSBzeXN0ZW0gdGVzdGJlbmNo"
+set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "Z2VuZXJhdGVTaW11bGF0aW9uTW9kZWw=::dHJ1ZQ==::SW5jbHVkZSBhIGZ1bmN0aW9uYWwgbWVtb3J5IG1vZGVsIGluIHRoZSBzeXN0ZW0gdGVzdGJlbmNo"
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "aW5pdFJlZnJlc2hDb21tYW5kcw==::Mg==::SW5pdGlhbGl6YXRpb24gcmVmcmVzaCBjeWNsZXM="
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "bW9kZWw=::c2luZ2xlX01pY3Jvbl9NVDQ4TEM0TTMyQjJfN19jaGlw::bW9kZWw="
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "bnVtYmVyT2ZCYW5rcw==::NA==::QmFua3M="
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "bnVtYmVyT2ZDaGlwU2VsZWN0cw==::MQ==::Q2hpcCBzZWxlY3Q="
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "cGluc1NoYXJlZFZpYVRyaVN0YXRl::ZmFsc2U=::Q29udHJvbGxlciBzaGFyZXMgZHEvZHFtL2FkZHIgSS9PIHBpbnM="
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "cG93ZXJVcERlbGF5::MTAwLjA=::RGVsYXkgYWZ0ZXIgcG93ZXJ1cCwgYmVmb3JlIGluaXRpYWxpemF0aW9u"
-set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "cmVmcmVzaFBlcmlvZA==::MTUuNjI1::SXNzdWUgb25lIHJlZnJlc2ggY29tbWFuZCBldmVyeQ=="
+set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "cmVmcmVzaFBlcmlvZA==::Ny44MTI1::SXNzdWUgb25lIHJlZnJlc2ggY29tbWFuZCBldmVyeQ=="
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "cm93V2lkdGg=::MTM=::Um93"
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "VE1SRA==::Mw==::VE1SRA=="
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "aW5pdE5PUERlbGF5::MC4w::aW5pdE5PUERlbGF5"
@@ -422,14 +423,27 @@ set_global_assignment -entity "reader_system_sdram_controller_0" -library "reade
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "c2l6ZQ==::NjcxMDg4NjQ=::c2l6ZQ=="
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "YWRkcmVzc1dpZHRo::MjU=::YWRkcmVzc1dpZHRo"
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "YmFua1dpZHRo::Mg==::YmFua1dpZHRo"
-set_global_assignment -entity "Altera_UP_SD_Card_Avalon_Interface" -library "reader_system" -name IP_COMPONENT_NAME "QWx0ZXJhX1VQX1NEX0NhcmRfQXZhbG9uX0ludGVyZmFjZQ=="
-set_global_assignment -entity "Altera_UP_SD_Card_Avalon_Interface" -library "reader_system" -name IP_COMPONENT_DISPLAY_NAME "U0QgQ2FyZCBJbnRlcmZhY2U="
-set_global_assignment -entity "Altera_UP_SD_Card_Avalon_Interface" -library "reader_system" -name IP_COMPONENT_REPORT_HIERARCHY "Off"
-set_global_assignment -entity "Altera_UP_SD_Card_Avalon_Interface" -library "reader_system" -name IP_COMPONENT_INTERNAL "Off"
-set_global_assignment -entity "Altera_UP_SD_Card_Avalon_Interface" -library "reader_system" -name IP_COMPONENT_VERSION "MTUuMQ=="
-set_global_assignment -entity "Altera_UP_SD_Card_Avalon_Interface" -library "reader_system" -name IP_COMPONENT_DESCRIPTION "QSBtb2R1bGUgdGhhdCBhbGxvd3MgY29tbXVuaWNhdGlvbiB3aXRoIGFuIFNEIENhcmQ="
-set_global_assignment -entity "Altera_UP_SD_Card_Avalon_Interface" -library "reader_system" -name IP_COMPONENT_PARAMETER "QVVUT19ERVZJQ0VfRkFNSUxZ::Q3ljbG9uZSBW::QXV0byBERVZJQ0VfRkFNSUxZ"
-set_global_assignment -entity "Altera_UP_SD_Card_Avalon_Interface" -library "reader_system" -name IP_COMPONENT_PARAMETER "QVVUT19DTEtfQ0xPQ0tfUkFURQ==::NTAwMDAwMDA=::QXV0byBDTE9DS19SQVRF"
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_NAME "cmVhZGVyX3N5c3RlbV9qdGFnX3VhcnRfMA=="
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_DISPLAY_NAME "SlRBRyBVQVJU"
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_REPORT_HIERARCHY "Off"
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_INTERNAL "Off"
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_AUTHOR "QWx0ZXJhIENvcnBvcmF0aW9u"
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_VERSION "MTYuMA=="
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "YWxsb3dNdWx0aXBsZUNvbm5lY3Rpb25z::ZmFsc2U=::QWxsb3cgbXVsdGlwbGUgY29ubmVjdGlvbnMgdG8gQXZhbG9uIEpUQUcgc2xhdmU="
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "aHViSW5zdGFuY2VJRA==::MA==::aHViSW5zdGFuY2VJRA=="
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "cmVhZEJ1ZmZlckRlcHRo::NjQ=::QnVmZmVyIGRlcHRoIChieXRlcyk="
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "cmVhZElSUVRocmVzaG9sZA==::OA==::SVJRIHRocmVzaG9sZA=="
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "c2ltSW50ZXJhY3RpdmVPcHRpb25z::Tk9fSU5URVJBQ1RJVkVfV0lORE9XUw==::T3B0aW9ucw=="
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "dXNlUmVnaXN0ZXJzRm9yUmVhZEJ1ZmZlcg==::ZmFsc2U=::Q29uc3RydWN0IHVzaW5nIHJlZ2lzdGVycyBpbnN0ZWFkIG9mIG1lbW9yeSBibG9ja3M="
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "dXNlUmVnaXN0ZXJzRm9yV3JpdGVCdWZmZXI=::ZmFsc2U=::Q29uc3RydWN0IHVzaW5nIHJlZ2lzdGVycyBpbnN0ZWFkIG9mIG1lbW9yeSBibG9ja3M="
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "dXNlUmVsYXRpdmVQYXRoRm9yU2ltRmlsZQ==::ZmFsc2U=::dXNlUmVsYXRpdmVQYXRoRm9yU2ltRmlsZQ=="
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "d3JpdGVCdWZmZXJEZXB0aA==::NjQ=::QnVmZmVyIGRlcHRoIChieXRlcyk="
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "d3JpdGVJUlFUaHJlc2hvbGQ=::OA==::SVJRIHRocmVzaG9sZA=="
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "Y2xrRnJlcQ==::NTAwMDAwMDA=::Y2xrRnJlcQ=="
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "YXZhbG9uU3BlYw==::Mi4w::YXZhbG9uU3BlYw=="
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "bGVnYWN5U2lnbmFsQWxsb3c=::ZmFsc2U=::bGVnYWN5U2lnbmFsQWxsb3c="
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "ZW5hYmxlSW50ZXJhY3RpdmVJbnB1dA==::ZmFsc2U=::ZW5hYmxlSW50ZXJhY3RpdmVJbnB1dA=="
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_COMPONENT_PARAMETER "ZW5hYmxlSW50ZXJhY3RpdmVPdXRwdXQ=::ZmFsc2U=::ZW5hYmxlSW50ZXJhY3RpdmVPdXRwdXQ="
 
 set_global_assignment -library "reader_system" -name VERILOG_FILE [file join $::quartus(qip_path) "reader_system.v"]
 set_global_assignment -library "reader_system" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/altera_reset_controller.v"]
@@ -440,17 +454,8 @@ set_global_assignment -library "reader_system" -name VERILOG_FILE [file join $::
 set_global_assignment -library "reader_system" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/reader_system_sys_sdram_pll_0_sys_pll.v"]
 set_global_assignment -library "reader_system" -name QIP_FILE [file join $::quartus(qip_path) "submodules/reader_system_sys_sdram_pll_0_sys_pll.qip"]
 set_global_assignment -library "reader_system" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/reader_system_sdram_controller_0.v"]
-set_global_assignment -library "reader_system" -name VHDL_FILE [file join $::quartus(qip_path) "submodules/Altera_UP_SD_Card_Avalon_Interface.vhd"]
-set_global_assignment -library "reader_system" -name VHDL_FILE [file join $::quartus(qip_path) "submodules/Altera_UP_SD_Card_48_bit_Command_Generator.vhd"]
-set_global_assignment -library "reader_system" -name VHDL_FILE [file join $::quartus(qip_path) "submodules/Altera_UP_SD_Card_Buffer.vhd"]
-set_global_assignment -library "reader_system" -name VHDL_FILE [file join $::quartus(qip_path) "submodules/Altera_UP_SD_Card_Clock.vhd"]
-set_global_assignment -library "reader_system" -name VHDL_FILE [file join $::quartus(qip_path) "submodules/Altera_UP_SD_Card_Control_FSM.vhd"]
-set_global_assignment -library "reader_system" -name VHDL_FILE [file join $::quartus(qip_path) "submodules/Altera_UP_SD_Card_Interface.vhd"]
-set_global_assignment -library "reader_system" -name VHDL_FILE [file join $::quartus(qip_path) "submodules/Altera_UP_SD_Card_Response_Receiver.vhd"]
-set_global_assignment -library "reader_system" -name VHDL_FILE [file join $::quartus(qip_path) "submodules/Altera_UP_SD_CRC16_Generator.vhd"]
-set_global_assignment -library "reader_system" -name VHDL_FILE [file join $::quartus(qip_path) "submodules/Altera_UP_SD_CRC7_Generator.vhd"]
-set_global_assignment -library "reader_system" -name VHDL_FILE [file join $::quartus(qip_path) "submodules/Altera_UP_SD_Signal_Trigger.vhd"]
-set_global_assignment -library "reader_system" -name VHDL_FILE [file join $::quartus(qip_path) "submodules/Altera_UP_SD_Card_Memory_Block.vhd"]
+set_global_assignment -library "reader_system" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/reader_system_sdram_controller_0_test_component.v"]
+set_global_assignment -library "reader_system" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/reader_system_jtag_uart_0.v"]
 
 set_global_assignment -entity "altera_reset_controller" -library "reader_system" -name IP_TOOL_NAME "altera_reset_controller"
 set_global_assignment -entity "altera_reset_controller" -library "reader_system" -name IP_TOOL_VERSION "16.0"
@@ -461,3 +466,6 @@ set_global_assignment -entity "reader_system_sys_sdram_pll_0_sys_pll" -library "
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_TOOL_NAME "altera_avalon_new_sdram_controller"
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_TOOL_VERSION "16.0"
 set_global_assignment -entity "reader_system_sdram_controller_0" -library "reader_system" -name IP_TOOL_ENV "Qsys"
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_TOOL_NAME "altera_avalon_jtag_uart"
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_TOOL_VERSION "16.0"
+set_global_assignment -entity "reader_system_jtag_uart_0" -library "reader_system" -name IP_TOOL_ENV "Qsys"

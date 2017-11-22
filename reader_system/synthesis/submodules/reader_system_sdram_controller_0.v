@@ -302,7 +302,7 @@ module reader_system_sdram_controller_0 (
       if (reset_n == 0)
           refresh_counter <= 13334;
       else if (refresh_counter == 0)
-          refresh_counter <= 2083;
+          refresh_counter <= 1041;
       else 
         refresh_counter <= refresh_counter - 1'b1;
     end
@@ -365,7 +365,7 @@ module reader_system_sdram_controller_0 (
               3'b001: begin
                   i_state <= 3'b011;
                   i_cmd <= {{1{1'b0}},3'h2};
-                  i_count <= 2;
+                  i_count <= 1;
                   i_next <= 3'b010;
               end // 3'b001 
           
@@ -456,7 +456,7 @@ module reader_system_sdram_controller_0 (
                         begin
                           m_state <= 9'b001000000;
                           m_next <= 9'b010000000;
-                          m_count <= 2;
+                          m_count <= 1;
                           active_cs_n <= 1'b1;
                         end
                       else if (!f_empty)
@@ -486,7 +486,7 @@ module reader_system_sdram_controller_0 (
                   m_addr <= active_addr[23 : 11];
                   m_data <= active_data;
                   m_dqm <= active_dqm;
-                  m_count <= 3;
+                  m_count <= 2;
                   m_next <= active_rnw ? 9'b000001000 : 9'b000010000;
               end // 9'b000000010 
           
@@ -584,7 +584,7 @@ module reader_system_sdram_controller_0 (
                   else 
                     begin
                       m_state <= 9'b001000000;
-                      m_count <= 2;
+                      m_count <= 1;
                     end
               end // 9'b000100000 
           
@@ -687,19 +687,6 @@ module reader_system_sdram_controller_0 (
 
 //synthesis translate_off
 //////////////// SIMULATION-ONLY CONTENTS
-initial
-  begin
-    $write("\n");
-    $write("This reference design requires a vendor simulation model.\n");
-    $write("To simulate accesses to SDRAM, you must:\n");
-    $write("	 - Download the vendor model\n");
-    $write("	 - Install the model in the system_sim directory\n");
-    $write("	 - `include the vendor model in the the top-level system file,\n");
-    $write("	 - Instantiate sdram simulation models and wire them to testbench signals\n");
-    $write("	 - Be aware that you may have to disable some timing checks in the vendor model\n");
-    $write("		   (because this simulation is zero-delay based)\n");
-    $write("\n");
-  end
   assign txt_code = (cmd_code == 3'h0)? 24'h4c4d52 :
     (cmd_code == 3'h1)? 24'h415246 :
     (cmd_code == 3'h2)? 24'h505245 :

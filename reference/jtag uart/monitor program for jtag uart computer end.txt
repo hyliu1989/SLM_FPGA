@@ -1,0 +1,7 @@
+https://www.altera.com/support/training/university/materials-software.html
+
+nios2-terminal.exe under quartus prime folder
+
+JTAG on computer side (instead of using nios2-terminal but using the same DLL it uses)
+https://www.alteraforum.com/forum/showthread.php?t=6002
+http://alterawiki.com/wiki/High_Speed_Image_Download_Demo

@@ -24,7 +24,6 @@ module	sdram_to_vgafifo(
 	output        oFIFO_WCLK,
 	output [7:0]  oFIFO_WDATA,
 	output        oFIFO_WEN
-	,output [7:0] o_tests
 );
 /*****************************************************************************************
 This module determines how to read from the SDRAM given the control signals of positioning
@@ -46,18 +45,19 @@ assign clock = iCLK;
 //  sdram_read FIFO writer
 // =================================
 /* 
-A simple module that stores 16-bit data of SDRAM into a fifo and waits for another module
-to convert it into 8-bit data and to store them into VGA fifo.
-                   _____       _____       _____       __
-clock                   |_____|     |_____|     |_____|
+A simple module that stores 16-bit data of SDRAM into a fifo (the data are then waiting 
+for another module to convert them into twice as many 8-bit data and to store them into
+VGA fifo).
+                         _____       _____       _____
+clock              _____|     |_____|     |_____|     |__
                          ___________ ___________
-r_data_valid       _____|           |           |________ (change at negedge of clock if all bytes are written in pair)
+r_data_valid       _____|           |           |________ (change at posedge of clock)
 
-fifo write happen             o           o               (posedge of clock while r_data_valid == 1)
+fifo write happen                   o           o         (posedge of clock while r_data_valid == 1)
 */
-reg         r0_data_valid, r1_data_valid, r_data_valid;   // changed in negedge of clock  (controlled by SDRAM read submodule)
-reg [15:0]  r0_data, r1_data, r_data;         // changed in negedge of clock  (controlled by SDRAM read submodule)
-reg         r0_write_single, r1_write_single, r_write_single; // changed in negedge of clock  (controlled by SDRAM read submodule)
+reg         r0_data_valid, r1_data_valid, r_data_valid;   // changed in posedge of clock  (controlled by SDRAM read submodule)
+reg [15:0]  r0_data, r1_data, r_data;         // changed in posedge of clock  (controlled by SDRAM read submodule)
+reg         r0_write_single, r1_write_single, r_write_single; // changed in posedge of clock  (controlled by SDRAM read submodule)
 wire        sdram_fifo_empty;
 wire [16:0] sdram_fifo_data;
 wire        sdram_fifo_rdreq;
@@ -67,14 +67,16 @@ fifo_sdram_read fifo_sdram_read_0(
 	// put what the SDRAM reads
 	.data({r_write_single,r_data}),
 	.wrreq(r_data_valid),
-	.full(/*o_tests[0]*/),
+	.full(),
 	// read data for writing to VGA fifo (another fifo)
 	.rdreq(sdram_fifo_rdreq),
 	.empty(sdram_fifo_empty),  // output
 	.q(sdram_fifo_data)  // output
 );
 
-
+// =================================
+//  Converting between two FIFOs
+// =================================
 fifo16to8  sdramfifo_to_vgafifo_0(
 	.iRST(iRST),
 
@@ -95,13 +97,13 @@ fifo16to8  sdramfifo_to_vgafifo_0(
 //  VGA data control and SDRAM read submodule
 // ============================================
 // Delayed signals for synthesis with good timing
-reg [5:0]  m0_FRAME_ID,             m1_FRAME_ID,             mFRAME_ID;
-reg        m0_OFFSET_H_SIGN,        m1_OFFSET_H_SIGN,        mOFFSET_H_SIGN;
-reg [7:0]  m0_OFFSET_H,             m1_OFFSET_H,             mOFFSET_H;
-reg        m0_OFFSET_V_SIGN,        m1_OFFSET_V_SIGN,        mOFFSET_V_SIGN;
-reg [7:0]  m0_OFFSET_V,             m1_OFFSET_V,             mOFFSET_V;
-reg [12:0] m0_VGA_LINE_TO_LOAD,     m1_VGA_LINE_TO_LOAD,     mVGA_LINE_TO_LOAD;
-reg        m0_VGA_LOAD_TO_FIFO_REQ, m1_VGA_LOAD_TO_FIFO_REQ, mVGA_LOAD_TO_FIFO_REQ;
+reg [5:0]  mFRAME_ID,               m0_FRAME_ID,             m1_FRAME_ID;
+reg        mOFFSET_H_SIGN,          m0_OFFSET_H_SIGN,        m1_OFFSET_H_SIGN;
+reg [7:0]  mOFFSET_H,               m0_OFFSET_H,             m1_OFFSET_H;
+reg        mOFFSET_V_SIGN,          m0_OFFSET_V_SIGN,        m1_OFFSET_V_SIGN;
+reg [7:0]  mOFFSET_V,               m0_OFFSET_V,             m1_OFFSET_V;
+reg [12:0] mVGA_LINE_TO_LOAD,       m0_VGA_LINE_TO_LOAD,     m1_VGA_LINE_TO_LOAD;
+reg        mVGA_LOAD_TO_FIFO_REQ,   m0_VGA_LOAD_TO_FIFO_REQ, m1_VGA_LOAD_TO_FIFO_REQ;
 
 always @ (posedge clock) begin
 	m0_FRAME_ID             <= iFRAME_ID;
@@ -244,8 +246,12 @@ case(states)
 			begin  
 				states_next = ST_FILL_EMPTY_LINES;
 			end
+			else if(front_blank_count == 9'd0)
+				states_next = ST_FILL_DATA_READ;
+			else if(front_blank_count[0] == 1'b1)
+				states_next = ST_FILL_HORIZONTAL_BLANK_FRONT_ODD;
 			else
-				states_next = (front_blank_count[0]==1'b1)? ST_FILL_HORIZONTAL_BLANK_FRONT_ODD : ST_FILL_HORIZONTAL_BLANK_FRONT;
+				states_next = ST_FILL_HORIZONTAL_BLANK_FRONT;
 		end
 	end
 
@@ -272,8 +278,14 @@ case(states)
 	end
 
 	ST_FILL_DATA_READ_ENDING: begin
-		if(read_ending_counter == READ_ENDING_WAIT_CYCLES-1)
-			states_next = (back_blank_count[0]==1'b1)? ST_FILL_HORIZONTAL_BLANK_BACK_ODD : ST_FILL_HORIZONTAL_BLANK_BACK;
+		if(read_ending_counter == READ_ENDING_WAIT_CYCLES-1) begin
+			if(back_blank_count == 9'd0)
+				states_next = ST_LISTEN_VGA_REQ;
+			else if(back_blank_count[0] == 1'b1)
+				states_next = ST_FILL_HORIZONTAL_BLANK_BACK_ODD;
+			else
+				states_next = ST_FILL_HORIZONTAL_BLANK_BACK;
+		end
 		else
 			states_next = ST_FILL_DATA_READ_ENDING;
 	end
@@ -301,9 +313,9 @@ case(states)
 endcase
 
 
-// latch the data at the negedge
-// negedge required by the usage of r_data, r_data_valid and r_write_single.
-always @(negedge clock or posedge iRST) begin
+// latch the data at posedge
+// posedge required by the usage of r_data, r_data_valid and r_write_single.
+always @(posedge clock or posedge iRST) begin
 	if (iRST) begin
 		r0_data <= 16'd0;
 		r0_data_valid <= 1'b0;
@@ -331,7 +343,7 @@ always @(negedge clock or posedge iRST) begin
 		end
 	endcase
 end
-always @ (negedge clock) begin
+always @ (posedge clock) begin
 	r1_data <= r0_data;
 	r1_data_valid <= r0_data_valid;
 	r1_write_single <= r0_write_single;
@@ -362,8 +374,6 @@ always @(posedge clock or posedge iRST) begin
 		current_frame_id <= current_frame_id_next;
 	end
 end
-// assign o_tests[7:4] = states;
-// assign o_tests[3:0] = states_next;
 
 endmodule
 
