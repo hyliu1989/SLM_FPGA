@@ -17,29 +17,16 @@ module jtag_uart_decode(
     output        oDECODEDIMAGE_RDFIFO_EMPTY,
     output [6:0]  oNUM_IMAGES,
     output        oTRIGGER_WRITE_SDRAM
-    
-    ,output [18:0]  oTest
-    ,input          iTest
 );
 
 
 wire [7:0]  data_or_cmd;
 wire        data_or_cmd_valid;
-reg  [9:0]  valid_count;
 
-always @ (posedge iCLK or posedge iRST) begin
-    if(iRST)
-        valid_count <= 0;
-    else if(data_or_cmd_valid)
-        valid_count <= valid_count + 1'b1;
-end
-assign oTest[8] = data_or_cmd_valid;
-assign oTest[7:0] = data_or_cmd[7:0];
-assign oTest[18:9] = valid_count;
 
 uart_avalon_extraction uart_avalon_extraction_0(
     .iCLK(iCLK),
-    .iRST(iRST||iTest),
+    .iRST(iRST),
     .oJTAG_SLAVE_ADDR(oJTAG_SLAVE_ADDR),
     .oJTAG_SLAVE_RDREQ(oJTAG_SLAVE_RDREQ),
     .iJTAG_SLAVE_RDDATA(iJTAG_SLAVE_RDDATA),

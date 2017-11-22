@@ -20,11 +20,8 @@ module write_to_sdram(
     input  [5:0]  iID_OF_STARTING_IMAGE
 );
 /*
-Writing simple byte patterns into the SDRAM when using module fake_SD_card_FAT32_reader
-
-The 64 frames contain strips at 64 different locations.
-This sdram write module should operate faster than the SD card so that the 
-data_out-ready signal (is_data_ready) from SD card read is always captured.
+Writing byte patterns into the SDRAM from a FIFO that is populated by JTAG-
+UART communization module.
 */
 
 // states
