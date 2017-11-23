@@ -1,6 +1,6 @@
 module jtag_uart_decode(
     input         iCLK,
-	input         iRST,
+    input         iRST,
     
     // jtag uart signals
     output        oJTAG_SLAVE_ADDR,
@@ -178,9 +178,11 @@ parameter INSTRUCTION_ACK                      = 7'h01;  // not a state but just
 parameter ST_ERROR                             = 7'h0F;
 parameter ST_UPDATE_RAM_get_num_of_frames      = 7'h10;  */
 parameter ST_UPDATE_RAM_trigger                = 7'h11;
-parameter ST_UPDATE_RAM_wait_data              = 7'h12;
-parameter ST_UPDATE_RAM_idle                   = 7'h13;  // waiting for instruction
-parameter ST_UPDATE_RAM_finishing              = 7'h14;
+parameter ST_UPDATE_RAM_wait_first_data        = 7'h12;
+parameter ST_UPDATE_RAM_first_idle             = 7'h13;  // waiting for instruction
+parameter ST_UPDATE_RAM_wait_data              = 7'h14;
+parameter ST_UPDATE_RAM_idle                   = 7'h15;  // waiting for instruction
+parameter ST_UPDATE_RAM_finishing              = 7'h16;
 
 reg [6:0]   total_frames, total_frames_next;
 reg [25:0]  counter, counter_next, r_counter;
@@ -214,12 +216,28 @@ always @ (*) begin
         ST_UPDATE_RAM_trigger: begin
             new_instr_ack = 1'b0;
             new_data_ack  = 1'b0;
-            states_next = ST_UPDATE_RAM_wait_data;
+            states_next = ST_UPDATE_RAM_wait_first_data;
+        end
+        ST_UPDATE_RAM_wait_first_data: begin // for the first data because if total frames is 64, first data will be terminated
+            new_instr_ack = 1'b0;
+            new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
+            if(is_there_new_data)
+                states_next = ST_UPDATE_RAM_idle;
+            else
+                states_next = ST_UPDATE_RAM_first_idle;
+        end
+        ST_UPDATE_RAM_first_idle: begin
+            new_instr_ack = (is_there_new_instruct)? 1'b1 : 1'b0;
+            new_data_ack = 1'b0;
+            if(is_there_new_instruct)
+                states_next = (state_instuction == ST_IDLE)? ST_IDLE : ST_ERROR;
+            else
+                states_next = ST_UPDATE_RAM_wait_first_data;
         end
         ST_UPDATE_RAM_wait_data: begin
             new_instr_ack = 1'b0;
             new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
-            if(r_counter == 26'h3FF_FFFF)
+            if(r_counter == {total_frames[5:0], 20'h0_0000})  // if total_frames[6:0] equals to 64, this line still give a correct ending.
                 states_next = ST_UPDATE_RAM_finishing;
             else
                 states_next = ST_UPDATE_RAM_idle;
@@ -237,6 +255,8 @@ always @ (*) begin
             new_data_ack = 1'b0;
             if(is_there_new_instruct)
                 states_next = (state_instuction == INSTRUCTION_ACK)? ST_IDLE : ST_ERROR;
+            else if(is_there_new_data)
+                states_next = ST_ERROR;
             else
                 states_next = states;
         end
@@ -252,16 +272,17 @@ always @ (*) begin
 
 
     /// ==== Updating the RAM ====================================
-    total_frames_next = (states == ST_UPDATE_RAM_get_num_of_frames)? data[5:0] + 1'b1 : total_frames;
+    total_frames_next        = (states == ST_UPDATE_RAM_get_num_of_frames)? {1'b0,data[5:0]} + 1'b1 : total_frames;
     case(states)
         ST_UPDATE_RAM_get_num_of_frames:        counter_next = 26'd0;
         ST_UPDATE_RAM_trigger:                  counter_next = counter;
+        ST_UPDATE_RAM_wait_first_data:          counter_next = (is_there_new_data)? counter + 1'b1: counter;
         ST_UPDATE_RAM_wait_data:                counter_next = (is_there_new_data)? counter + 1'b1: counter;
         ST_UPDATE_RAM_idle:                     counter_next = counter;
         default:                                counter_next = counter;
     endcase
     fifo_wrdata = data;
-    fifo_wrreq = (states == ST_UPDATE_RAM_wait_data && is_there_new_data)? 1'b1 : 1'b0;
+    fifo_wrreq = ((states == ST_UPDATE_RAM_wait_data || states == ST_UPDATE_RAM_wait_first_data) && is_there_new_data)? 1'b1 : 1'b0;
     /// ==== End of Updating the RAM ====================================
 end
 
