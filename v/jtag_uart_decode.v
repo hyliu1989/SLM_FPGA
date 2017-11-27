@@ -47,6 +47,7 @@ parameter INSTRUCTION_ACK                      = 7'h1_0;  // not a state but jus
 parameter ST_LISTEN_TO_INTERRUPT               = 7'h2_0;
 parameter ST_WAIT_ACK                          = 7'h6_0;
 parameter ST_ERROR                             = 7'h7_0;
+
 parameter ST_UPDATE_RAM_get_num_of_frames      = 7'h0_1;
 
 
@@ -266,9 +267,11 @@ always @ (*) begin
             new_instr_ack = 1'b0;
         end
     endcase
+end
 
 
-    /// ==== Updating the RAM ====================================
+/// ==== Updating the RAM ====================================
+always @ (*) begin
     total_frames_next        = (states == ST_UPDATE_RAM_get_num_of_frames)? {1'b0,data[5:0]} + 1'b1 : total_frames;
     case(states)
         ST_UPDATE_RAM_get_num_of_frames:        counter_next = 26'd0;
@@ -279,17 +282,13 @@ always @ (*) begin
     endcase
     fifo_wrdata = data;
     fifo_wrreq = ((states == ST_UPDATE_RAM_wait_data || states == ST_UPDATE_RAM_wait_first_data) && is_there_new_data)? 1'b1 : 1'b0;
-    /// ==== End of Updating the RAM ====================================
 end
 
-
-/// ==== Updating the RAM ====================================
 // The following fifo stores the image data to be store into SDRAM.
 // The special character 0xFE is the value of a pixel and does not
 // have the meaning of the escaping character.
 assign oNUM_IMAGES = total_frames;
 assign oTRIGGER_WRITE_SDRAM = (states == ST_UPDATE_RAM_trigger);
-
 fifo_sdram_write fifo_for_pixels(
     .aclr(iRST||(states==ST_UPDATE_RAM_get_num_of_frames)),
     .wrclk(iCLK),
@@ -313,21 +312,19 @@ end
 always @ (posedge iCLK or posedge iRST) begin
     if(iRST) begin
         states <= ST_IDLE;
-		previous_states <= ST_IDLE;
+        previous_states <= ST_IDLE;
         counter <= 0;
         total_frames <= 0;
     end
     else begin
         states <= states_next;
-		previous_states <= states;
+        previous_states <= states;
         counter <= counter_next;
         total_frames <= total_frames_next;
     end
 end
 
-
 assign oERROR = (states == ST_ERROR);
-
 
 endmodule
 
