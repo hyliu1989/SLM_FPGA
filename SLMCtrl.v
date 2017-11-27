@@ -242,13 +242,11 @@ wire [7:0]  sdram_fifo_rd_data;
 wire        sdram_fifo_rd_empty;
 wire [6:0]  num_images_to_download;
 
-// testing signals
-wire        update_x_offset;
-wire        update_y_offset;
-reg [7:0]   test_x_offset;
-reg         test_x_offset_sign;
-reg [7:0]   test_y_offset;
-reg         test_y_offset_sign;
+wire [7:0]  x_offset;
+wire        x_offset_sign;
+wire [7:0]  y_offset;
+wire        y_offset_sign;
+
 
 //=======================================================
 //  Structural coding
@@ -264,23 +262,6 @@ delay_x00_ms delay_module_0(
     .oDELAY400()
 );
 
-delay_x00_ms delay_module_2(
-    .iCLOCK50(CLOCK_50),
-    .iTRIGGER(!KEY[2]),
-    .oDELAY100(update_y_offset),
-    .oDELAY200(),
-    .oDELAY300(),
-    .oDELAY400()
-);
-
-delay_x00_ms delay_module_3(
-    .iCLOCK50(CLOCK_50),
-    .iTRIGGER(!KEY[3]),
-    .oDELAY100(update_x_offset),
-    .oDELAY200(),
-    .oDELAY300(),
-    .oDELAY400()
-);
 
 assign TD_RESET_N = 1'b1;
 vga_pll vga_pll_0(
@@ -324,10 +305,10 @@ sdram_to_vgafifo sdram_to_vgafifo_0(
     // control signals for current frame
     // FIXME: the 5 values here are for testing
     .iFRAME_ID(SW[5:0]),  // input [5:0]
-    .iOFFSET_H_SIGN(test_x_offset_sign),  // input
-    .iOFFSET_H(test_x_offset),  // input [7:0], horizontal offset, + to the right
-    .iOFFSET_V_SIGN(test_y_offset_sign),  // input
-    .iOFFSET_V(test_y_offset),  // input [7:0], vertial offset, + to the bottom
+    .iOFFSET_H_SIGN(x_offset_sign),  // input
+    .iOFFSET_H(x_offset),  // input [7:0], horizontal offset, + to the right
+    .iOFFSET_V_SIGN(y_offset_sign),  // input
+    .iOFFSET_V(y_offset),  // input [7:0], vertial offset, + to the bottom
 
     // VGA signals (as a trigger to load)
     .iVGA_LINE_TO_LOAD(vga_request_loadline_id),
@@ -359,7 +340,6 @@ fifo_vga fv0(
     .wrfull(/*LEDR[8]*/)  // output
 );
 
-wire [18:0] test;
 jtag_uart_decode jtag_uart_decode_0(
     .iCLK(CLOCK_50),
 	.iRST(delayed_reset),
@@ -379,6 +359,10 @@ jtag_uart_decode jtag_uart_decode_0(
     .oDECODEDIMAGE_RDFIFO_EMPTY(sdram_fifo_rd_empty),  // output
     .oNUM_IMAGES(num_images_to_download),  // output [6:0]
     .oTRIGGER_WRITE_SDRAM(download_images_trigger),  // output
+    .oH_OFFSET_SIGN(x_offset_sign),
+    .oH_OFFSET(x_offset),  // [7:0]
+    .oV_OFFSET_SIGN(y_offset_sign),
+    .oV_OFFSET(y_offset),  // [7:0]
     .oERROR(LEDR[0])
 );
 
@@ -453,24 +437,6 @@ assign HEX2 = sdram_ctrl_write_done? 7'b1111111 : 7'b0010001;  // letter y
 assign HEX1 = 7'h7f;
 assign HEX0 = 7'h7f;
 
-always @ (posedge CLOCK_50 or posedge delayed_reset) begin
-    if(delayed_reset) begin
-        test_x_offset = 127;
-        test_x_offset_sign = 1;
-        test_y_offset = 3;
-        test_y_offset_sign = 0;
-    end
-    else begin
-        if(update_x_offset) begin
-            test_x_offset = SW[7:0];
-            test_x_offset_sign = SW[9];
-        end
-        if(update_y_offset) begin
-            test_y_offset = SW[7:0];
-            test_y_offset_sign = SW[9];
-        end
-    end
-end
 
 
 // // testing code for sdram writing

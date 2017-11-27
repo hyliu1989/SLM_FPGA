@@ -18,6 +18,11 @@ module jtag_uart_decode(
     output [6:0]  oNUM_IMAGES,
     output        oTRIGGER_WRITE_SDRAM,
     
+    output        oH_OFFSET_SIGN,
+    output [7:0]  oH_OFFSET,
+    output        oV_OFFSET_SIGN,
+    output [7:0]  oV_OFFSET,
+    
     output        oERROR
 );
 
@@ -49,6 +54,10 @@ parameter ST_WAIT_ACK                          = 7'h6_0;
 parameter ST_ERROR                             = 7'h7_0;
 
 parameter ST_UPDATE_RAM_get_num_of_frames      = 7'h0_1;
+
+parameter ST_UPDATE_OFFSET_horizontal          = 7'h0_2;
+parameter ST_UPDATE_OFFSET_vertical            = 7'h1_2;
+
 
 
 // =============================================================
@@ -114,6 +123,21 @@ always @ (*) begin
                         is_there_new_data_next = 1'b1;  // the data in this case is the number of frames to transfer minus 1.
                     end
 
+                    // Kick off updating horizontal offset
+                    8'h01: begin
+                        state_instuction_next = ST_UPDATE_OFFSET_horizontal;
+                        is_there_new_instruct_next = 1'b1;
+                        is_there_new_data_next = 1'b0;
+                    end
+                    
+                    // Kick off updating vertical offset
+                    8'h02: begin
+                        state_instuction_next = ST_UPDATE_OFFSET_vertical;
+                        is_there_new_instruct_next = 1'b1;
+                        is_there_new_data_next = 1'b0;
+                    end
+                    
+                    
                     // Kick of other processes: TODO
 
                     // Bypass the escaping
@@ -188,10 +212,20 @@ parameter ST_UPDATE_RAM_trigger                = 7'h1_1;
 parameter ST_UPDATE_RAM_wait_first_data        = 7'h2_1;
 parameter ST_UPDATE_RAM_wait_data              = 7'h3_1;
 
+/* Update offsets
+parameter ST_UPDATE_OFFSET_horizontal          = 7'h0_2;
+parameter ST_UPDATE_OFFSET_vertical            = 7'h1_2;  */
+parameter ST_UPDATE_OFFSET_get_number          = 7'h2_2;
+parameter ST_UPDATE_OFFSET_get_sign            = 7'h3_2;
+
 reg [6:0]   total_frames, total_frames_next;
 reg [25:0]  counter, counter_next, r_counter;
 reg         fifo_wrreq;
 reg [7:0]   fifo_wrdata;
+
+reg         update_horizontal, update_horizontal_next;
+reg [7:0]   offset_h, offset_h_next, offset_v, offset_v_next;
+reg         offset_sign_h, offset_sign_h_next, offset_sign_v, offset_sign_v_next;
 
 always @ (*) begin
     case(states)
@@ -260,6 +294,26 @@ always @ (*) begin
         end
         /// ==== End of Updating the RAM ====================================
 
+        /// ==== Updating offsets ====================================
+        ST_UPDATE_OFFSET_horizontal, ST_UPDATE_OFFSET_vertical: begin
+            new_instr_ack = 1'b0;
+            new_data_ack = 1'b0;
+            states_next = ST_UPDATE_OFFSET_get_number;
+            // update a register indicating which on of horizontal or vertical to update
+        end
+        ST_UPDATE_OFFSET_get_number: begin
+            new_instr_ack = 1'b0;
+            new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
+            states_next = (is_there_new_data)? ST_UPDATE_OFFSET_get_sign : ST_LISTEN_TO_INTERRUPT;
+            // update 
+        end
+        ST_UPDATE_OFFSET_get_sign: begin
+            new_instr_ack = 1'b0;
+            new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
+            states_next = (is_there_new_data)? ST_WAIT_ACK : ST_LISTEN_TO_INTERRUPT;
+        end
+        /// ==== End of Updating Offsets ====================================
+        
         default: begin
             // TODO: temprorary dummies are put here and should be replaced
             states_next = states;
@@ -304,6 +358,51 @@ fifo_sdram_write fifo_for_pixels(
 /// ==== End of Updating the RAM ====================================
 
 
+/// ==== Updating offsets ====================================
+always @ (*) begin
+    case(states)
+        ST_UPDATE_OFFSET_horizontal: update_horizontal_next = 1'b1;
+        ST_UPDATE_OFFSET_vertical:   update_horizontal_next = 1'b0;
+        default:                     update_horizontal_next = update_horizontal;
+    endcase
+    // horizontal case
+    if(update_horizontal) begin
+        if(states == ST_UPDATE_OFFSET_get_number)
+            offset_h_next = (is_there_new_data)? data: offset_h;
+        else
+            offset_h_next = offset_h;
+        if(states == ST_UPDATE_OFFSET_get_sign)
+            offset_sign_h_next = data[0];
+        else
+            offset_sign_h_next = offset_sign_h;
+    end
+    else begin
+        offset_h_next = offset_h;
+        offset_sign_h_next = offset_sign_h;
+    end
+    // vertical case
+    if(!update_horizontal) begin
+        if(states == ST_UPDATE_OFFSET_get_number)
+            offset_v_next = (is_there_new_data)? data: offset_v;
+        else
+            offset_v_next = offset_v;
+        if(states == ST_UPDATE_OFFSET_get_sign)
+            offset_sign_v_next = data[0];
+        else
+            offset_sign_v_next = offset_sign_v;
+    end
+    else begin
+        offset_v_next = offset_v;
+        offset_sign_v_next = offset_sign_v;
+    end
+end
+assign oH_OFFSET = (offset_h[7] == 1'b1)? 8'd128 : offset_h;
+assign oH_OFFSET_SIGN = offset_sign_h;
+assign oV_OFFSET = (offset_v[7] == 1'b1)? 8'd128 : offset_v;
+assign oV_OFFSET_SIGN = offset_sign_v;
+/// ==== End of Updating Offsets ====================================
+
+
 
 // main sequential part
 always @ (posedge iCLK) begin
@@ -315,12 +414,22 @@ always @ (posedge iCLK or posedge iRST) begin
         previous_states <= ST_IDLE;
         counter <= 0;
         total_frames <= 0;
+        update_horizontal <= 0;
+        offset_h <= 8'd0;
+        offset_sign_h <= 1'b0;
+        offset_v <= 8'd0;
+        offset_sign_v <= 1'b0;
     end
     else begin
         states <= states_next;
         previous_states <= states;
         counter <= counter_next;
         total_frames <= total_frames_next;
+        update_horizontal <= update_horizontal_next;
+        offset_h <= offset_h_next;
+        offset_sign_h <= offset_sign_h_next;
+        offset_v <= offset_v_next;
+        offset_sign_v <= offset_sign_v_next;
     end
 end
 
