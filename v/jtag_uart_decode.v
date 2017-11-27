@@ -42,10 +42,11 @@ uart_avalon_extraction uart_avalon_extraction_0(
 
 reg [6:0]   states, states_next;
 reg         new_instr_ack, new_data_ack;
-parameter ST_IDLE                              = 7'h00;
-parameter INSTRUCTION_ACK                      = 7'h01;  // not a state but just an acknowledge instruction
-parameter ST_ERROR                             = 7'h0F;
-parameter ST_UPDATE_RAM_get_num_of_frames      = 7'h10;
+parameter ST_IDLE                              = 7'h0_0;
+parameter INSTRUCTION_ACK                      = 7'h1_0;  // not a state but just an acknowledge instruction
+parameter ST_WAIT_ACK                          = 7'h6_0;
+parameter ST_ERROR                             = 7'h7_0;
+parameter ST_UPDATE_RAM_get_num_of_frames      = 7'h0_1;
 
 
 // =============================================================
@@ -173,16 +174,18 @@ end
 // For state transition, check the state instruction only at the states with "_idle" appended
 
 /* These state parameters are defined above
-parameter ST_IDLE                              = 7'h00;
-parameter INSTRUCTION_ACK                      = 7'h01;  // not a state but just an acknowledge instruction
-parameter ST_ERROR                             = 7'h0F;
-parameter ST_UPDATE_RAM_get_num_of_frames      = 7'h10;  */
-parameter ST_UPDATE_RAM_trigger                = 7'h11;
-parameter ST_UPDATE_RAM_wait_first_data        = 7'h12;
-parameter ST_UPDATE_RAM_first_idle             = 7'h13;  // waiting for instruction
-parameter ST_UPDATE_RAM_wait_data              = 7'h14;
-parameter ST_UPDATE_RAM_idle                   = 7'h15;  // waiting for instruction
-parameter ST_UPDATE_RAM_finishing              = 7'h16;
+parameter ST_IDLE                              = 7'h0_0;
+parameter INSTRUCTION_ACK                      = 7'h1_0;  // not a state but just an acknowledge instruction
+parameter ST_WAIT_ACK                          = 7'h6_0;
+parameter ST_ERROR                             = 7'h7_0;  */
+
+/* Update memory 
+parameter ST_UPDATE_RAM_get_num_of_frames      = 7'h0_1;  */
+parameter ST_UPDATE_RAM_trigger                = 7'h1_1;
+parameter ST_UPDATE_RAM_wait_first_data        = 7'h2_1;
+parameter ST_UPDATE_RAM_first_idle             = 7'h3_1;  // waiting for instruction
+parameter ST_UPDATE_RAM_wait_data              = 7'h4_1;
+parameter ST_UPDATE_RAM_idle                   = 7'h5_1;  // waiting for instruction
 
 reg [6:0]   total_frames, total_frames_next;
 reg [25:0]  counter, counter_next, r_counter;
@@ -202,6 +205,17 @@ always @ (*) begin
                 new_data_ack  = 1'b1;  // clear all unwanted data since these states take instruction only
                 states_next = states;
             end
+        end
+        
+        ST_WAIT_ACK: begin
+            new_instr_ack = (is_there_new_instruct)? 1'b1 : 1'b0;
+            new_data_ack = 1'b0;
+            if(is_there_new_instruct)
+                states_next = (state_instuction == INSTRUCTION_ACK)? ST_IDLE : ST_ERROR;
+            else if(is_there_new_data)
+                states_next = ST_ERROR;
+            else
+                states_next = states;
         end
 
         /// ==== Updating the RAM ====================================
@@ -238,7 +252,7 @@ always @ (*) begin
             new_instr_ack = 1'b0;
             new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
             if(r_counter == {total_frames[5:0], 20'h0_0000})  // if total_frames[6:0] equals to 64, this line still give a correct ending.
-                states_next = ST_UPDATE_RAM_finishing;
+                states_next = ST_WAIT_ACK;
             else
                 states_next = ST_UPDATE_RAM_idle;
         end
@@ -249,16 +263,6 @@ always @ (*) begin
                 states_next = (state_instuction == ST_IDLE)? ST_IDLE : ST_ERROR;
             else
                 states_next = ST_UPDATE_RAM_wait_data;
-        end
-        ST_UPDATE_RAM_finishing: begin
-            new_instr_ack = (is_there_new_instruct)? 1'b1 : 1'b0;
-            new_data_ack = 1'b0;
-            if(is_there_new_instruct)
-                states_next = (state_instuction == INSTRUCTION_ACK)? ST_IDLE : ST_ERROR;
-            else if(is_there_new_data)
-                states_next = ST_ERROR;
-            else
-                states_next = states;
         end
         /// ==== End of Updating the RAM ====================================
 
