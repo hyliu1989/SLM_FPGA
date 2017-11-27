@@ -246,6 +246,7 @@ wire [7:0]  x_offset;
 wire        x_offset_sign;
 wire [7:0]  y_offset;
 wire        y_offset_sign;
+wire [15:0] cycles_of_displaying;
 
 wire        jtag_error;
 wire [6:0]  jtag_states;
@@ -264,7 +265,6 @@ delay_x00_ms delay_module_0(
     .oDELAY300(delayed_reset_2),
     .oDELAY400()
 );
-
 
 assign TD_RESET_N = 1'b1;
 vga_pll vga_pll_0(
@@ -366,12 +366,11 @@ jtag_uart_decode jtag_uart_decode_0(
     .oH_OFFSET(x_offset),  // [7:0]
     .oV_OFFSET_SIGN(y_offset_sign),
     .oV_OFFSET(y_offset),  // [7:0]
+    .oCYCLES_OF_DISPLAYING_EACH_IMAGE(cycles_of_displaying),
     .oERROR(jtag_error),
     .oMONITORING_STATES(jtag_states)  // [6:0]
 );
-assign LEDR[9] = jtag_error;
-seven_seg   jtag_state_monitor_0(.number(       jtag_states[3:0]), .display(HEX0));
-seven_seg   jtag_state_monitor_1(.number({1'b0,jtag_states[6:4]}), .display(HEX1));
+
 
 write_to_sdram write_to_sdram_0(
 	.iCLK(sdram_ctrl_clock),
@@ -435,11 +434,14 @@ reader_system reader_system_0(
     .jtag_uart_0_avalon_jtag_slave_waitrequest (jtag_uart_avalon_wait_req)  //                              .waitrequest
 );
 
-
+assign LEDR[9] = jtag_error;
 assign HEX5 = sdram_ctrl_write_done? 7'b1111111 : 7'b0000011;  // letter b
 assign HEX4 = sdram_ctrl_write_done? 7'b1111111 : 7'b1000001;  // letter u
 assign HEX3 = sdram_ctrl_write_done? 7'b1111111 : 7'b0010010;  // letter s
 assign HEX2 = sdram_ctrl_write_done? 7'b1111111 : 7'b0010001;  // letter y
+seven_seg   jtag_state_monitor_1(.number({1'b0,jtag_states[6:4]}), .display(HEX1));
+seven_seg   jtag_state_monitor_0(.number(       jtag_states[3:0]), .display(HEX0));
+
 
 
 // // testing code for sdram writing

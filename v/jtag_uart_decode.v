@@ -23,6 +23,8 @@ module jtag_uart_decode(
     output        oV_OFFSET_SIGN,
     output [7:0]  oV_OFFSET,
     
+    output [15:0] oCYCLES_OF_DISPLAYING_EACH_IMAGE,
+    
     output        oERROR,
     output [6:0]  oMONITORING_STATES
 );
@@ -58,6 +60,8 @@ parameter ST_UPDATE_RAM_get_num_of_frames      = 7'h0_1;
 
 parameter ST_UPDATE_OFFSET_horizontal          = 7'h0_2;
 parameter ST_UPDATE_OFFSET_vertical            = 7'h1_2;
+
+parameter ST_UPDATE_DISPLAY_CYC_get_num        = 7'h0_3;
 
 
 
@@ -138,6 +142,12 @@ always @ (*) begin
                         is_there_new_data_next = 1'b0;
                     end
                     
+                    // Kick off updating displaying cycles
+                    8'h03: begin
+                        state_instuction_next = ST_UPDATE_DISPLAY_CYC_get_num;
+                        is_there_new_instruct_next = 1'b1;
+                        is_there_new_data_next = 1'b0;
+                    end
                     
                     // Kick of other processes: TODO
 
@@ -226,6 +236,11 @@ parameter ST_UPDATE_OFFSET_vertical            = 7'h1_2;  */
 parameter ST_UPDATE_OFFSET_get_number          = 7'h2_2;
 parameter ST_UPDATE_OFFSET_get_sign            = 7'h3_2;
 
+/* Update number of displaying cycles for each image
+parameter ST_UPDATE_DISPLAY_CYC_get_num        = 7'h0_3;  */
+parameter ST_UPDATE_DISPLAY_CYC_get_num_1      = 7'h1_3;
+
+
 reg [6:0]   total_frames, total_frames_next;
 reg [25:0]  counter, counter_next, r_counter;
 reg         fifo_wrreq;
@@ -234,6 +249,8 @@ reg [7:0]   fifo_wrdata;
 reg         update_horizontal, update_horizontal_next;
 reg [7:0]   offset_h, offset_h_next, offset_v, offset_v_next;
 reg         offset_sign_h, offset_sign_h_next, offset_sign_v, offset_sign_v_next;
+
+reg [15:0]  cycles_of_display, cycles_of_display_next;
 
 always @ (*) begin
     case(states)
@@ -302,6 +319,7 @@ always @ (*) begin
         end
         /// ==== End of Updating the RAM ====================================
 
+        
         /// ==== Updating offsets ====================================
         ST_UPDATE_OFFSET_horizontal, ST_UPDATE_OFFSET_vertical: begin
             new_instr_ack = 1'b0;
@@ -313,14 +331,31 @@ always @ (*) begin
             new_instr_ack = 1'b0;
             new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
             states_next = (is_there_new_data)? ST_UPDATE_OFFSET_get_sign : ST_LISTEN_TO_INTERRUPT;
-            // update 
+            // update the number
         end
         ST_UPDATE_OFFSET_get_sign: begin
             new_instr_ack = 1'b0;
             new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
             states_next = (is_there_new_data)? ST_WAIT_ACK : ST_LISTEN_TO_INTERRUPT;
+            // update the sign
         end
         /// ==== End of Updating Offsets ====================================
+        
+        
+        /// ==== Updating Number of Displaying cycles ====================================
+        ST_UPDATE_DISPLAY_CYC_get_num: begin
+            new_instr_ack = 1'b0;
+            new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
+            states_next = (is_there_new_data)? ST_UPDATE_DISPLAY_CYC_get_num_1 : ST_LISTEN_TO_INTERRUPT;
+            // update the lower byte
+        end
+        ST_UPDATE_DISPLAY_CYC_get_num_1: begin
+            new_instr_ack = 1'b0;
+            new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
+            states_next = (is_there_new_data)? ST_WAIT_ACK : ST_LISTEN_TO_INTERRUPT;
+            // update the upper byte
+        end
+        /// ==== End of Updating Number of Displaying cycles ====================================
         
         default: begin
             // TODO: temprorary dummies are put here and should be replaced
@@ -411,6 +446,20 @@ assign oV_OFFSET_SIGN = offset_sign_v;
 /// ==== End of Updating Offsets ====================================
 
 
+/// ==== Updating Number of Displaying cycles ====================================
+always @ (*) begin
+    case(states)
+        ST_UPDATE_DISPLAY_CYC_get_num:
+            cycles_of_display_next = (is_there_new_data)? {cycles_of_display[15:8], data} : cycles_of_display;
+        ST_UPDATE_DISPLAY_CYC_get_num_1:
+            cycles_of_display_next = (is_there_new_data)? {data,  cycles_of_display[7:0]} : cycles_of_display;
+        default: 
+            cycles_of_display_next = cycles_of_display;
+    endcase
+end
+assign oCYCLES_OF_DISPLAYING_EACH_IMAGE = cycles_of_display;
+/// ==== End of Updating Number of Displaying cycles ====================================
+
 
 // main sequential part
 always @ (posedge iCLK) begin
@@ -427,6 +476,7 @@ always @ (posedge iCLK or posedge iRST) begin
         offset_sign_h <= 1'b0;
         offset_v <= 8'd0;
         offset_sign_v <= 1'b0;
+        cycles_of_display <= 16'd0;
     end
     else begin
         states <= states_next;
@@ -438,6 +488,7 @@ always @ (posedge iCLK or posedge iRST) begin
         offset_sign_h <= offset_sign_h_next;
         offset_v <= offset_v_next;
         offset_sign_v <= offset_sign_v_next;
+        cycles_of_display <= cycles_of_display_next;
     end
 end
 
