@@ -40,10 +40,11 @@ uart_avalon_extraction uart_avalon_extraction_0(
 );
 
 
-reg [6:0]   states, states_next;
+reg [6:0]   states, states_next, previous_states;
 reg         new_instr_ack, new_data_ack;
 parameter ST_IDLE                              = 7'h0_0;
 parameter INSTRUCTION_ACK                      = 7'h1_0;  // not a state but just an acknowledge instruction
+parameter ST_LISTEN_TO_INTERRUPT               = 7'h2_0;
 parameter ST_WAIT_ACK                          = 7'h6_0;
 parameter ST_ERROR                             = 7'h7_0;
 parameter ST_UPDATE_RAM_get_num_of_frames      = 7'h0_1;
@@ -176,6 +177,7 @@ end
 /* These state parameters are defined above
 parameter ST_IDLE                              = 7'h0_0;
 parameter INSTRUCTION_ACK                      = 7'h1_0;  // not a state but just an acknowledge instruction
+parameter ST_LISTEN_TO_INTERRUPT               = 7'h2_0;  // waiting for instruction
 parameter ST_WAIT_ACK                          = 7'h6_0;
 parameter ST_ERROR                             = 7'h7_0;  */
 
@@ -183,9 +185,7 @@ parameter ST_ERROR                             = 7'h7_0;  */
 parameter ST_UPDATE_RAM_get_num_of_frames      = 7'h0_1;  */
 parameter ST_UPDATE_RAM_trigger                = 7'h1_1;
 parameter ST_UPDATE_RAM_wait_first_data        = 7'h2_1;
-parameter ST_UPDATE_RAM_first_idle             = 7'h3_1;  // waiting for instruction
-parameter ST_UPDATE_RAM_wait_data              = 7'h4_1;
-parameter ST_UPDATE_RAM_idle                   = 7'h5_1;  // waiting for instruction
+parameter ST_UPDATE_RAM_wait_data              = 7'h3_1;
 
 reg [6:0]   total_frames, total_frames_next;
 reg [25:0]  counter, counter_next, r_counter;
@@ -217,6 +217,15 @@ always @ (*) begin
             else
                 states_next = states;
         end
+        
+        ST_LISTEN_TO_INTERRUPT: begin
+            new_instr_ack = (is_there_new_instruct)? 1'b1 : 1'b0;
+            new_data_ack = 1'b0;
+            if(is_there_new_instruct)
+                states_next = (state_instuction == ST_IDLE)? ST_IDLE : ST_ERROR;
+            else
+                states_next = previous_states;
+        end
 
         /// ==== Updating the RAM ====================================
         ST_UPDATE_RAM_get_num_of_frames: begin
@@ -236,17 +245,9 @@ always @ (*) begin
             new_instr_ack = 1'b0;
             new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
             if(is_there_new_data)
-                states_next = ST_UPDATE_RAM_idle;
+                states_next = ST_UPDATE_RAM_wait_data;
             else
-                states_next = ST_UPDATE_RAM_first_idle;
-        end
-        ST_UPDATE_RAM_first_idle: begin
-            new_instr_ack = (is_there_new_instruct)? 1'b1 : 1'b0;
-            new_data_ack = 1'b0;
-            if(is_there_new_instruct)
-                states_next = (state_instuction == ST_IDLE)? ST_IDLE : ST_ERROR;
-            else
-                states_next = ST_UPDATE_RAM_wait_first_data;
+                states_next = ST_LISTEN_TO_INTERRUPT;
         end
         ST_UPDATE_RAM_wait_data: begin
             new_instr_ack = 1'b0;
@@ -254,15 +255,7 @@ always @ (*) begin
             if(r_counter == {total_frames[5:0], 20'h0_0000})  // if total_frames[6:0] equals to 64, this line still give a correct ending.
                 states_next = ST_WAIT_ACK;
             else
-                states_next = ST_UPDATE_RAM_idle;
-        end
-        ST_UPDATE_RAM_idle: begin
-            new_instr_ack = (is_there_new_instruct)? 1'b1 : 1'b0;
-            new_data_ack = 1'b0;
-            if(is_there_new_instruct)
-                states_next = (state_instuction == ST_IDLE)? ST_IDLE : ST_ERROR;
-            else
-                states_next = ST_UPDATE_RAM_wait_data;
+                states_next = ST_LISTEN_TO_INTERRUPT;
         end
         /// ==== End of Updating the RAM ====================================
 
@@ -280,9 +273,8 @@ always @ (*) begin
     case(states)
         ST_UPDATE_RAM_get_num_of_frames:        counter_next = 26'd0;
         ST_UPDATE_RAM_trigger:                  counter_next = counter;
-        ST_UPDATE_RAM_wait_first_data:          counter_next = (is_there_new_data)? counter + 1'b1: counter;
+        ST_UPDATE_RAM_wait_first_data:          counter_next = 26'd1;  // directly assign the number even before capturing the data
         ST_UPDATE_RAM_wait_data:                counter_next = (is_there_new_data)? counter + 1'b1: counter;
-        ST_UPDATE_RAM_idle:                     counter_next = counter;
         default:                                counter_next = counter;
     endcase
     fifo_wrdata = data;
@@ -321,11 +313,13 @@ end
 always @ (posedge iCLK or posedge iRST) begin
     if(iRST) begin
         states <= ST_IDLE;
+		previous_states <= ST_IDLE;
         counter <= 0;
         total_frames <= 0;
     end
     else begin
         states <= states_next;
+		previous_states <= states;
         counter <= counter_next;
         total_frames <= total_frames_next;
     end
