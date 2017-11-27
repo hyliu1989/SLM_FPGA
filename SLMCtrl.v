@@ -247,6 +247,9 @@ wire        x_offset_sign;
 wire [7:0]  y_offset;
 wire        y_offset_sign;
 
+wire        jtag_error;
+wire [6:0]  jtag_states;
+
 
 //=======================================================
 //  Structural coding
@@ -363,9 +366,12 @@ jtag_uart_decode jtag_uart_decode_0(
     .oH_OFFSET(x_offset),  // [7:0]
     .oV_OFFSET_SIGN(y_offset_sign),
     .oV_OFFSET(y_offset),  // [7:0]
-    .oERROR(LEDR[0])
+    .oERROR(jtag_error),
+    .oMONITORING_STATES(jtag_states)  // [6:0]
 );
-
+assign LEDR[9] = jtag_error;
+seven_seg   jtag_state_monitor_0(.number(       jtag_states[3:0]), .display(HEX0));
+seven_seg   jtag_state_monitor_1(.number({1'b0,jtag_states[6:4]}), .display(HEX1));
 
 write_to_sdram write_to_sdram_0(
 	.iCLK(sdram_ctrl_clock),
@@ -434,9 +440,6 @@ assign HEX5 = sdram_ctrl_write_done? 7'b1111111 : 7'b0000011;  // letter b
 assign HEX4 = sdram_ctrl_write_done? 7'b1111111 : 7'b1000001;  // letter u
 assign HEX3 = sdram_ctrl_write_done? 7'b1111111 : 7'b0010010;  // letter s
 assign HEX2 = sdram_ctrl_write_done? 7'b1111111 : 7'b0010001;  // letter y
-assign HEX1 = 7'h7f;
-assign HEX0 = 7'h7f;
-
 
 
 // // testing code for sdram writing

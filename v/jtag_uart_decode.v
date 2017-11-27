@@ -23,7 +23,8 @@ module jtag_uart_decode(
     output        oV_OFFSET_SIGN,
     output [7:0]  oV_OFFSET,
     
-    output        oERROR
+    output        oERROR,
+    output [6:0]  oMONITORING_STATES
 );
 
 // ====================================================
@@ -157,9 +158,16 @@ always @ (*) begin
             end
             // When machining is in some processing, no instruction but obtain the data.
             else begin
-                state_instuction_next = 7'bxxx_xxxx;
-                is_there_new_instruct_next = 1'b0;
-                is_there_new_data_next = 1'b1;
+                if(data_or_cmd == 8'hFE) begin
+                    state_instuction_next = 7'bxxx_xxxx;
+                    is_there_new_instruct_next = 1'b0;
+                    is_there_new_data_next = 1'b0;
+                end
+                else begin
+                    state_instuction_next = 7'bxxx_xxxx;
+                    is_there_new_instruct_next = 1'b0;
+                    is_there_new_data_next = 1'b1;
+                end
             end
         end
     end
@@ -434,7 +442,7 @@ always @ (posedge iCLK or posedge iRST) begin
 end
 
 assign oERROR = (states == ST_ERROR);
-
+assign oMONITORING_STATES = states;
 endmodule
 
 

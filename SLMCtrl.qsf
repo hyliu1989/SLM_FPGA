@@ -863,9 +863,10 @@ set_global_assignment -name VERILOG_FILE v/jtag_uart_decode.v
 set_global_assignment -name VERILOG_FILE v/write_to_sdram.v
 set_global_assignment -name VERILOG_FILE v/sdram_to_vgafifo.v
 set_global_assignment -name VERILOG_FILE v/vga_control.v
+set_global_assignment -name VERILOG_FILE v/seven_seg.v
+set_global_assignment -name VERILOG_FILE v/delay_x00_ms.v
 set_global_assignment -name VERILOG_FILE v/test_sdram_write.v
 set_global_assignment -name VERILOG_FILE v/test_sdram_read.v
-set_global_assignment -name VERILOG_FILE v/delay_x00_ms.v
 set_global_assignment -name QIP_FILE reader_system/synthesis/reader_system.qip
 set_global_assignment -name QIP_FILE v/vga_pll.qip
 set_global_assignment -name QIP_FILE v/fifo_vga.qip
