@@ -37,8 +37,10 @@ module jtag_uart_decode(
 // ====================================================
 //   Communicating with JTAG-UART core
 // ====================================================
-wire [7:0]  data_or_cmd;
-wire        data_or_cmd_valid;
+wire [7:0]  r0_data_or_cmd;
+wire        r0_data_or_cmd_valid;
+reg  [7:0]  data_or_cmd, r1_data_or_cmd;
+reg         data_or_cmd_valid, r1_data_or_cmd_valid;
 uart_avalon_extraction uart_avalon_extraction_0(
     .iCLK(iCLK),
     .iRST(iRST),
@@ -48,9 +50,15 @@ uart_avalon_extraction uart_avalon_extraction_0(
     .oJTAG_SLAVE_WRREQ(oJTAG_SLAVE_WRREQ),
     .oJTAG_SLAVE_WRDATA(oJTAG_SLAVE_WRDATA),
     .iJTAG_SLAVE_WAIT(iJTAG_SLAVE_WAIT),
-    .oDATA_TO_PARSE(data_or_cmd),
-    .oDATA_TO_PARSE_VALID(data_or_cmd_valid)
+    .oDATA_TO_PARSE(r0_data_or_cmd),
+    .oDATA_TO_PARSE_VALID(r0_data_or_cmd_valid)
 );
+always @ (posedge iCLK) begin
+    r1_data_or_cmd <= r0_data_or_cmd;
+    r1_data_or_cmd_valid <= r0_data_or_cmd_valid;
+    data_or_cmd <= r1_data_or_cmd;
+    data_or_cmd_valid <= r1_data_or_cmd_valid;
+end
 
 
 reg [6:0]   states, states_next, previous_states;
@@ -500,9 +508,9 @@ always @ (*) begin
         default:                     update_horizontal_next = update_horizontal;
     endcase
     // horizontal case
-    if(update_horizontal) begin
+    if(update_horizontal && is_there_new_data) begin
         if(states == ST_UPDATE_OFFSET_get_number)
-            offset_h_next = (is_there_new_data)? data: offset_h;
+            offset_h_next = data;
         else
             offset_h_next = offset_h;
         if(states == ST_UPDATE_OFFSET_get_sign)
@@ -515,9 +523,9 @@ always @ (*) begin
         offset_sign_h_next = offset_sign_h;
     end
     // vertical case
-    if(!update_horizontal) begin
+    if(!update_horizontal && is_there_new_data) begin
         if(states == ST_UPDATE_OFFSET_get_number)
-            offset_v_next = (is_there_new_data)? data: offset_v;
+            offset_v_next = data;
         else
             offset_v_next = offset_v;
         if(states == ST_UPDATE_OFFSET_get_sign)
@@ -539,14 +547,14 @@ assign oV_OFFSET_SIGN = offset_sign_v;
 
 /// ==== Updating Number of Displaying cycles ====================================
 always @ (*) begin
-    case(states)
-        ST_UPDATE_DISPLAY_CYC_get_num:
-            cycles_of_display_next = (is_there_new_data)? {cycles_of_display[15:8], data} : cycles_of_display;
-        ST_UPDATE_DISPLAY_CYC_get_num_1:
-            cycles_of_display_next = (is_there_new_data)? {data,  cycles_of_display[7:0]} : cycles_of_display;
-        default: 
-            cycles_of_display_next = cycles_of_display;
-    endcase
+    if(is_there_new_data)
+        case(states)
+            ST_UPDATE_DISPLAY_CYC_get_num:   cycles_of_display_next = {cycles_of_display[15:8], data};
+            ST_UPDATE_DISPLAY_CYC_get_num_1: cycles_of_display_next = {data,  cycles_of_display[7:0]};
+            default:                         cycles_of_display_next = cycles_of_display;
+        endcase
+    else
+        cycles_of_display_next = cycles_of_display;
 end
 assign oCYCLES_OF_DISPLAYING_EACH_IMAGE = cycles_of_display;
 /// ==== End of Updating Number of Displaying cycles ====================================
