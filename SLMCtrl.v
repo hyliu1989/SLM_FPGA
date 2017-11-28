@@ -363,7 +363,8 @@ jtag_uart_decode jtag_uart_decode_0(
     .iDECODEDIMAGE_RDFIFO_REQ(sdram_fifo_rd_req),  // input
     .oDECODEDIMAGE_RDFIFO_DATA(sdram_fifo_rd_data),  // output [7:0]
     .oDECODEDIMAGE_RDFIFO_EMPTY(sdram_fifo_rd_empty),  // output
-    .oNUM_IMAGES(num_images_to_download),  // output [6:0]
+    .oNUM_IMAGES_IN_MEM(), // [6:0]
+    .oNUM_IMAGES_TO_DOWNLOAD(num_images_to_download),  // output [6:0]
     .oTRIGGER_WRITE_SDRAM(download_images_trigger),  // output
     .oSTARTING_FRAME(starting_frame_to_download),  // [5:0]
     .oH_OFFSET_SIGN(x_offset_sign),

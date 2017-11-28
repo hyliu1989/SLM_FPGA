@@ -15,7 +15,8 @@ module jtag_uart_decode(
     input         iDECODEDIMAGE_RDFIFO_REQ,
     output [7:0]  oDECODEDIMAGE_RDFIFO_DATA,
     output        oDECODEDIMAGE_RDFIFO_EMPTY,
-    output [6:0]  oNUM_IMAGES,
+    output [6:0]  oNUM_IMAGES_TO_DOWNLOAD,
+    output [6:0]  oNUM_IMAGES_IN_MEM,
     output        oTRIGGER_WRITE_SDRAM,
     output [5:0]  oSTARTING_FRAME,
     
@@ -75,12 +76,11 @@ decode_raw_jtag_uart raw_0(
 // For state transition, check the state instruction only at the states with "_idle" appended
 reg [6:0]   states, states_next, previous_states;
 
-reg [6:0]   total_frames, total_frames_next;
+reg [5:0]   starting_frame, starting_frame_next;
+reg [6:0]   total_frames_to_download, total_frames_to_download_next;
 reg [25:0]  counter, counter_next, r_counter;
 reg         fifo_wrreq;
 reg [7:0]   fifo_wrdata;
-reg [19:0]  single_counter, single_counter_next, r_single_counter;
-reg [5:0]   starting_frame, starting_frame_next;
 
 reg         update_horizontal, update_horizontal_next;
 reg [7:0]   offset_h, offset_h_next, offset_v, offset_v_next;
@@ -134,8 +134,9 @@ always @ (*) begin
             new_instr_ack = 1'b0;
             new_data_ack  = 1'b1;
             states_next = ST_UPDATE_RAM_trigger;
-            // update total_frames_next = data[5:0] + 1
+            // update total_frames_to_download_next = data[5:0] + 1
             // update counter = 0
+            // update starting_frame = 0
             // clear fifo
         end
         ST_UPDATE_RAM_trigger: begin
@@ -154,7 +155,7 @@ always @ (*) begin
         ST_UPDATE_RAM_wait_data: begin
             new_instr_ack = 1'b0;
             new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
-            if(r_counter == {total_frames[5:0], 20'h0_0000})  // if total_frames[6:0] equals to 64, this line still give a correct ending.
+            if(r_counter == {total_frames_to_download[5:0], 20'h0_0000})  // if total_frames_to_download[6:0] equals to 64, this line still give a correct ending.
                 states_next = ST_WAIT_ACK;
             else
                 states_next = ST_LISTEN_TO_INTERRUPT;
@@ -164,30 +165,11 @@ always @ (*) begin
         ST_UPDATE_RAM_SINGLE_get_frame_id: begin
             new_instr_ack = 1'b0;
             new_data_ack  = 1'b1;
-            states_next = ST_UPDATE_RAM_SINGLE_trigger;
+            states_next = ST_UPDATE_RAM_trigger;
+            // update total_frames_to_download_next = 1
+            // starting_frame = data[5:0]
             // update single_counter = 0
             // clear fifo
-        end
-        ST_UPDATE_RAM_SINGLE_trigger: begin
-            new_instr_ack = 1'b0;
-            new_data_ack  = 1'b0;
-            states_next = ST_UPDATE_RAM_SINGLE_wait_first;
-        end
-        ST_UPDATE_RAM_SINGLE_wait_first: begin
-            new_instr_ack = 1'b0;
-            new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
-            if(is_there_new_data)
-                states_next = ST_UPDATE_RAM_SINGLE_wait_data;
-            else
-                states_next = ST_LISTEN_TO_INTERRUPT;
-        end
-        ST_UPDATE_RAM_SINGLE_wait_data: begin
-            new_instr_ack = 1'b0;
-            new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
-            if(r_single_counter == 20'h0_0000)
-                states_next = ST_WAIT_ACK;
-            else
-                states_next = ST_LISTEN_TO_INTERRUPT;
         end
         /// ==== End of Updating the RAM ====================================
 
@@ -279,44 +261,44 @@ end
 
 /// ==== Updating the RAM ====================================
 always @ (*) begin
-    total_frames_next        = (states == ST_UPDATE_RAM_get_num_of_frames)? {1'b0,data[5:0]} + 1'b1 : total_frames;
+    case(states)
+        ST_UPDATE_RAM_get_num_of_frames:    total_frames_to_download_next = {1'b0,data[5:0]} + 1'b1;
+        ST_UPDATE_RAM_SINGLE_get_frame_id:  total_frames_to_download_next = 7'd1;
+        default:                            total_frames_to_download_next = total_frames_to_download;
+    endcase
+
+    case(states)
+        ST_UPDATE_RAM_get_num_of_frames:    starting_frame_next = 6'd0;
+        ST_UPDATE_RAM_SINGLE_get_frame_id:  starting_frame_next = data[5:0];
+        default:                            starting_frame_next = starting_frame;
+    endcase
+
     case(states)
         ST_UPDATE_RAM_get_num_of_frames:        counter_next = 26'd0;
         ST_UPDATE_RAM_trigger:                  counter_next = counter;
         ST_UPDATE_RAM_wait_first_data:          counter_next = 26'd1;  // directly assign the number even before capturing the data
         ST_UPDATE_RAM_wait_data:                counter_next = (is_there_new_data)? counter + 1'b1: counter;
         default:                                counter_next = counter;
+
+        ST_UPDATE_RAM_SINGLE_get_frame_id:      counter_next = 26'd0;
     endcase
+
     fifo_wrdata = data;
     if(is_there_new_data)
         case(states)
             ST_UPDATE_RAM_wait_data, ST_UPDATE_RAM_wait_first_data:             fifo_wrreq = 1'b1; 
-            ST_UPDATE_RAM_SINGLE_wait_data, ST_UPDATE_RAM_SINGLE_wait_first:    fifo_wrreq = 1'b1;
             default:                                                            fifo_wrreq = 1'b0;
         endcase
     else
         fifo_wrreq = 1'b0;
-    
-    case(states)
-        ST_UPDATE_RAM_SINGLE_get_frame_id:  single_counter_next = 20'd0;
-        ST_UPDATE_RAM_SINGLE_trigger:       single_counter_next = single_counter;
-        ST_UPDATE_RAM_SINGLE_wait_first:    single_counter_next = 20'd1;  // directly assign the number even before capturing the data
-        ST_UPDATE_RAM_SINGLE_wait_data:     single_counter_next = (is_there_new_data)? single_counter + 1'b1: single_counter;
-        default:                            single_counter_next = single_counter;
-    endcase
-    
-    case(states)
-        ST_UPDATE_RAM_get_num_of_frames:    starting_frame_next = 6'd0;
-        ST_UPDATE_RAM_SINGLE_get_frame_id:  starting_frame_next = data[5:0];
-        default:                            starting_frame_next = starting_frame;
-    endcase
 end
 
 // The following fifo stores the image data to be store into SDRAM.
 // The special character 0xFE is the value of a pixel and does not
 // have the meaning of the escaping character.
-assign oNUM_IMAGES = total_frames;
-assign oTRIGGER_WRITE_SDRAM = (states == ST_UPDATE_RAM_trigger || states == ST_UPDATE_RAM_SINGLE_trigger);
+assign oNUM_IMAGES_TO_DOWNLOAD = total_frames_to_download;
+assign oNUM_IMAGES_IN_MEM = total_frames_to_download;  // TODO
+assign oTRIGGER_WRITE_SDRAM = (states == ST_UPDATE_RAM_trigger);
 assign oSTARTING_FRAME = starting_frame;
 fifo_sdram_write fifo_for_pixels(
     .aclr(iRST||(states==ST_UPDATE_RAM_get_num_of_frames)||(states==ST_UPDATE_RAM_SINGLE_get_frame_id)),
@@ -434,16 +416,14 @@ assign oGALVO_VALUES_Y = galvo_values_y;
 // main sequential part
 always @ (posedge iCLK) begin
     r_counter <= counter;
-    r_single_counter <= single_counter;
 end
 always @ (posedge iCLK or posedge iRST) begin
     if(iRST) begin
         states <= ST_IDLE;
         previous_states <= ST_IDLE;
-        counter <= 0;
-        total_frames <= 0;
-        single_counter <= 0;
         starting_frame <= 0;
+        total_frames_to_download <= 0;
+        counter <= 0;
         update_horizontal <= 0;
         offset_h <= 8'd0;
         offset_sign_h <= 1'b0;
@@ -457,10 +437,9 @@ always @ (posedge iCLK or posedge iRST) begin
     else begin
         states <= states_next;
         previous_states <= states;
-        counter <= counter_next;
-        total_frames <= total_frames_next;
-        single_counter <= single_counter_next;
         starting_frame <= starting_frame_next;
+        total_frames_to_download <= total_frames_to_download_next;
+        counter <= counter_next;
         update_horizontal <= update_horizontal_next;
         offset_h <= offset_h_next;
         offset_sign_h <= offset_sign_h_next;
