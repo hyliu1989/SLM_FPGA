@@ -247,6 +247,7 @@ wire        x_offset_sign;
 wire [7:0]  y_offset;
 wire        y_offset_sign;
 wire [15:0] cycles_of_displaying;
+wire        sequencing_trigger;
 
 wire        jtag_error;
 wire [6:0]  jtag_states;
@@ -367,6 +368,7 @@ jtag_uart_decode jtag_uart_decode_0(
     .oV_OFFSET_SIGN(y_offset_sign),
     .oV_OFFSET(y_offset),  // [7:0]
     .oCYCLES_OF_DISPLAYING_EACH_IMAGE(cycles_of_displaying),
+    .oSEQUENCING_TRIGGER(sequencing_trigger),
     .oERROR(jtag_error),
     .oMONITORING_STATES(jtag_states)  // [6:0]
 );

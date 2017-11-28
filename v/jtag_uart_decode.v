@@ -25,6 +25,8 @@ module jtag_uart_decode(
     
     output [15:0] oCYCLES_OF_DISPLAYING_EACH_IMAGE,
     
+    output        oSEQUENCING_TRIGGER,
+    
     output        oERROR,
     output [6:0]  oMONITORING_STATES
 );
@@ -63,6 +65,7 @@ parameter ST_UPDATE_OFFSET_vertical            = 7'h1_2;
 
 parameter ST_UPDATE_DISPLAY_CYC_get_num        = 7'h0_3;
 
+parameter ST_START_SEQUENCE_trigger            = 7'h0_4;
 
 
 // =============================================================
@@ -145,6 +148,13 @@ always @ (*) begin
                     // Kick off updating displaying cycles
                     8'h03: begin
                         state_instuction_next = ST_UPDATE_DISPLAY_CYC_get_num;
+                        is_there_new_instruct_next = 1'b1;
+                        is_there_new_data_next = 1'b0;
+                    end
+                    
+                    // Kick off the sequencing
+                    8'h04: begin
+                        state_instuction_next = ST_START_SEQUENCE_trigger;
                         is_there_new_instruct_next = 1'b1;
                         is_there_new_data_next = 1'b0;
                     end
@@ -239,6 +249,9 @@ parameter ST_UPDATE_OFFSET_get_sign            = 7'h3_2;
 /* Update number of displaying cycles for each image
 parameter ST_UPDATE_DISPLAY_CYC_get_num        = 7'h0_3;  */
 parameter ST_UPDATE_DISPLAY_CYC_get_num_1      = 7'h1_3;
+
+/* Triggering the sequencing
+parameter ST_START_SEQUENCE_trigger            = 7'h0_4;  */
 
 
 reg [6:0]   total_frames, total_frames_next;
@@ -357,6 +370,15 @@ always @ (*) begin
         end
         /// ==== End of Updating Number of Displaying cycles ====================================
         
+        
+        /// ==== Triggering the sequencing ====================================
+        ST_START_SEQUENCE_trigger: begin
+            new_instr_ack = 1'b0;
+            new_data_ack = 1'b0;
+            states_next = ST_WAIT_ACK;
+        end
+        /// ==== End of Triggering the sequencing ====================================
+        
         default: begin
             // TODO: temprorary dummies are put here and should be replaced
             states_next = states;
@@ -459,6 +481,11 @@ always @ (*) begin
 end
 assign oCYCLES_OF_DISPLAYING_EACH_IMAGE = cycles_of_display;
 /// ==== End of Updating Number of Displaying cycles ====================================
+
+
+/// ==== Triggering the sequencing ====================================
+assign oSEQUENCING_TRIGGER = (states == ST_START_SEQUENCE_trigger);
+/// ==== End of Triggering the sequencing ====================================
 
 
 // main sequential part
