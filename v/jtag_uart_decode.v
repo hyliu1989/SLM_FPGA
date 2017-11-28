@@ -52,19 +52,29 @@ uart_avalon_extraction uart_avalon_extraction_0(
 
 reg [6:0]   states, states_next, previous_states;
 reg         new_instr_ack, new_data_ack;
+parameter HOSTCMD_ESCAPE                    = 8'hFE;
+parameter ESCAPECMD_RETURN_TO_IDLE             = 8'h00;
+parameter ESCAPECMD_ACKNOWLEDGE                = 8'h01;
+parameter ESCAPECMD_ESCAPE_CHAR                = 8'hFE;
+
 parameter ST_IDLE                              = 7'h0_0;
 parameter INSTRUCTION_ACK                      = 7'h1_0;  // not a state but just an acknowledge instruction
 parameter ST_LISTEN_TO_INTERRUPT               = 7'h2_0;
 parameter ST_WAIT_ACK                          = 7'h6_0;
 parameter ST_ERROR                             = 7'h7_0;
 
+parameter HOSTCMD_SEND_IMAGES               = 8'b10??_????;
 parameter ST_UPDATE_RAM_get_num_of_frames      = 7'h0_1;
 
+parameter HOSTCMD_UPDATE_OFFSET_H           = 8'h01;
+parameter HOSTCMD_UPDATE_OFFSET_V           = 8'h02;
 parameter ST_UPDATE_OFFSET_horizontal          = 7'h0_2;
 parameter ST_UPDATE_OFFSET_vertical            = 7'h1_2;
 
+parameter HOSTCMD_UPDATE_CYC_DISPLAY        = 8'h03;
 parameter ST_UPDATE_DISPLAY_CYC_get_num        = 7'h0_3;
 
+parameter HOSTCMD_TRIGGER_SEQUENCING        = 8'h04;
 parameter ST_START_SEQUENCE_trigger            = 7'h0_4;
 
 
@@ -83,7 +93,7 @@ always @ (*) begin
         if(received_0xFE)
             received_0xFE_next = 1'b0;
         else
-            received_0xFE_next = (data_or_cmd == 8'hFE);
+            received_0xFE_next = (data_or_cmd == HOSTCMD_ESCAPE);
     end
     else
         received_0xFE_next = received_0xFE;
@@ -95,15 +105,15 @@ always @ (*) begin
         if(received_0xFE) begin
             // For instruction to the states
             case(data_or_cmd)
-                8'h00: begin
+                ESCAPECMD_RETURN_TO_IDLE: begin
                     state_instuction_next = ST_IDLE;
                     is_there_new_instruct_next = 1'b1;
                 end
-                8'h01: begin
+                ESCAPECMD_ACKNOWLEDGE: begin
                     state_instuction_next = INSTRUCTION_ACK;
                     is_there_new_instruct_next = 1'b1;
                 end
-                8'hFE: begin
+                ESCAPECMD_ESCAPE_CHAR: begin
                     state_instuction_next = 7'bxxx_xxxx;
                     is_there_new_instruct_next = 1'b0;  // no new state to move to
                 end
@@ -114,8 +124,8 @@ always @ (*) begin
             endcase
             
             // For data, the only data after a 0xFE escaping
-            data_next              = (data_or_cmd == 8'hFE)? 8'hFE : 8'bxxxx_xxxx;
-            is_there_new_data_next = (data_or_cmd == 8'hFE)? 1'b1  : 1'b0;
+            data_next              = (data_or_cmd == ESCAPECMD_ESCAPE_CHAR)? HOSTCMD_ESCAPE : 8'bxxxx_xxxx;
+            is_there_new_data_next = (data_or_cmd == ESCAPECMD_ESCAPE_CHAR)? 1'b1 : 1'b0;
         end
 
         // normal behavior
@@ -125,35 +135,35 @@ always @ (*) begin
             if(states == ST_IDLE || states == ST_ERROR) begin
                 casez(data_or_cmd)
                     // Kick off transferring data to SDRAM
-                    8'b10??_????: begin
+                    HOSTCMD_SEND_IMAGES: begin
                         state_instuction_next = ST_UPDATE_RAM_get_num_of_frames;
                         is_there_new_instruct_next = 1'b1;
                         is_there_new_data_next = 1'b1;  // the data in this case is the number of frames to transfer minus 1.
                     end
 
                     // Kick off updating horizontal offset
-                    8'h01: begin
+                    HOSTCMD_UPDATE_OFFSET_H: begin
                         state_instuction_next = ST_UPDATE_OFFSET_horizontal;
                         is_there_new_instruct_next = 1'b1;
                         is_there_new_data_next = 1'b0;
                     end
                     
                     // Kick off updating vertical offset
-                    8'h02: begin
+                    HOSTCMD_UPDATE_OFFSET_V: begin
                         state_instuction_next = ST_UPDATE_OFFSET_vertical;
                         is_there_new_instruct_next = 1'b1;
                         is_there_new_data_next = 1'b0;
                     end
                     
                     // Kick off updating displaying cycles
-                    8'h03: begin
+                    HOSTCMD_UPDATE_CYC_DISPLAY: begin
                         state_instuction_next = ST_UPDATE_DISPLAY_CYC_get_num;
                         is_there_new_instruct_next = 1'b1;
                         is_there_new_data_next = 1'b0;
                     end
                     
                     // Kick off the sequencing
-                    8'h04: begin
+                    HOSTCMD_TRIGGER_SEQUENCING: begin
                         state_instuction_next = ST_START_SEQUENCE_trigger;
                         is_there_new_instruct_next = 1'b1;
                         is_there_new_data_next = 1'b0;
@@ -162,7 +172,7 @@ always @ (*) begin
                     // Kick of other processes: TODO
 
                     // Bypass the escaping
-                    8'hFE: begin
+                    HOSTCMD_ESCAPE: begin
                         state_instuction_next = 7'bxxx_xxxx;
                         is_there_new_instruct_next = 1'b0;
                         is_there_new_data_next = 1'b0;
@@ -176,9 +186,9 @@ always @ (*) begin
                     end
                 endcase
             end
-            // When machining is in some processing, no instruction but obtain the data.
+            // When machine is in some processing, no instruction but obtain the data.
             else begin
-                if(data_or_cmd == 8'hFE) begin
+                if(data_or_cmd == HOSTCMD_ESCAPE) begin
                     state_instuction_next = 7'bxxx_xxxx;
                     is_there_new_instruct_next = 1'b0;
                     is_there_new_data_next = 1'b0;
