@@ -9,6 +9,7 @@ parameter HOSTCMD_UPDATE_CYC_DISPLAY        = 8'h03;  // Update number of displa
 parameter HOSTCMD_TRIGGER_SEQUENCING        = 8'h04;  // Triggering the sequencing
 parameter HOSTCMD_UPDATE_GALVO_X            = 8'h05;  // Update Galvo informations
 parameter HOSTCMD_UPDATE_GALVO_Y            = 8'h06;  // Update Galvo informations
+parameter HOSTCMD_UPDATE_TOT_NUM_FRAMES     = 8'h07;  // Update total number of frames in memory
 
 
 
@@ -54,3 +55,6 @@ parameter ST_UPDATE_GALVO_for_y                = 7'h1_5;
 parameter ST_UPDATE_GALVO_value_0              = 7'h2_5;
 parameter ST_UPDATE_GALVO_value_1              = 7'h3_5;
 parameter ST_UPDATE_GALVO_value_2              = 7'h4_5;
+
+// Update total number of frames in memory
+parameter ST_UPDATE_NUM_FRAMES_get_num         = 7'h0_6;

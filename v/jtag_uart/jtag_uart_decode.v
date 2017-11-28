@@ -78,6 +78,7 @@ reg [6:0]   states, states_next, previous_states;
 
 reg [5:0]   starting_frame, starting_frame_next;
 reg [6:0]   total_frames_to_download, total_frames_to_download_next;
+reg [6:0]   total_frames_in_mem, total_frames_in_mem_next;
 reg [25:0]  counter, counter_next, r_counter;
 reg         fifo_wrreq;
 reg [7:0]   fifo_wrdata;
@@ -165,6 +166,14 @@ always @ (*) begin
             // clear fifo
         end
         /// ==== End of Updating the RAM ====================================
+
+
+        /// ==== Updating total number of frames =========================
+        ST_UPDATE_NUM_FRAMES_get_num: begin
+            new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
+            states_next = (is_there_new_data)? ST_WAIT_ACK : ST_LISTEN_TO_INTERRUPT;
+        end
+        /// ==== End of Updating total number of frames =========================
 
         
         /// ==== Updating offsets ====================================
@@ -279,7 +288,6 @@ end
 // The special character 0xFE is the value of a pixel and does not
 // have the meaning of the escaping character.
 assign oNUM_IMAGES_TO_DOWNLOAD = total_frames_to_download;
-assign oNUM_IMAGES_IN_MEM = total_frames_to_download;  // TODO
 assign oTRIGGER_WRITE_SDRAM = (states == ST_UPDATE_RAM_trigger);
 assign oSTARTING_FRAME = starting_frame;
 fifo_sdram_write fifo_for_pixels(
@@ -295,6 +303,18 @@ fifo_sdram_write fifo_for_pixels(
     .rdempty(oDECODEDIMAGE_RDFIFO_EMPTY)
 );
 /// ==== End of Updating the RAM ====================================
+
+
+/// ==== Updating total number of frames =========================
+always @ (*) begin
+    case(states)
+        ST_UPDATE_RAM_get_num_of_frames:    total_frames_in_mem_next = {1'b0,data[5:0]} + 1'b1;
+        ST_UPDATE_NUM_FRAMES_get_num:       total_frames_in_mem_next = (is_there_new_data)? data[6:0]: total_frames_in_mem;
+        default:                            total_frames_in_mem_next = total_frames_in_mem;
+    endcase
+end
+assign oNUM_IMAGES_IN_MEM = total_frames_in_mem;
+/// ==== End of Updating total number of frames =========================
 
 
 /// ==== Updating offsets ====================================
@@ -405,6 +425,7 @@ always @ (posedge iCLK or posedge iRST) begin
         states <= ST_IDLE;
         starting_frame <= 0;
         total_frames_to_download <= 0;
+        total_frames_in_mem <= 0;
         counter <= 0;
         update_horizontal <= 0;
         offset_h <= 8'd0;
@@ -420,6 +441,7 @@ always @ (posedge iCLK or posedge iRST) begin
         states <= states_next;
         starting_frame <= starting_frame_next;
         total_frames_to_download <= total_frames_to_download_next;
+        total_frames_in_mem <= total_frames_in_mem_next;
         counter <= counter_next;
         update_horizontal <= update_horizontal_next;
         offset_h <= offset_h_next;

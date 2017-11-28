@@ -133,6 +133,7 @@ always @ (*) begin
                     HOSTCMD_TRIGGER_SEQUENCING:     state_instuction_next = ST_START_SEQUENCE_trigger;
                     HOSTCMD_UPDATE_GALVO_X:         state_instuction_next = ST_UPDATE_GALVO_for_x;
                     HOSTCMD_UPDATE_GALVO_Y:         state_instuction_next = ST_UPDATE_GALVO_for_y;
+                    HOSTCMD_UPDATE_TOT_NUM_FRAMES:  state_instuction_next = ST_UPDATE_NUM_FRAMES_get_num;
                     HOSTCMD_ESCAPE:                 state_instuction_next = 7'bxxx_xxxx;  // Bypass the escaping
                     default:                        state_instuction_next = ST_ERROR;  // otherwise, go to the error state
                 endcase
