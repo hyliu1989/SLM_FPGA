@@ -17,6 +17,7 @@ module jtag_uart_decode(
     output        oDECODEDIMAGE_RDFIFO_EMPTY,
     output [6:0]  oNUM_IMAGES,
     output        oTRIGGER_WRITE_SDRAM,
+    output [5:0]  oSTARTING_FRAME,
     
     output        oH_OFFSET_SIGN,
     output [7:0]  oH_OFFSET,
@@ -93,6 +94,10 @@ parameter HOSTCMD_UPDATE_GALVO_Y            = 8'h06;
 parameter ST_UPDATE_GALVO_for_x                = 7'h0_5;
 parameter ST_UPDATE_GALVO_for_y                = 7'h1_5;
 
+parameter HOSTCMD_SEND_SINGLE               = 8'b01??_????;
+parameter ST_UPDATE_RAM_SINGLE_get_frame_id    = 7'h0_6;
+
+
 // =============================================================
 //   Data parsing to extract state instruction and actual data
 // =============================================================
@@ -154,6 +159,13 @@ always @ (*) begin
                         state_instuction_next = ST_UPDATE_RAM_get_num_of_frames;
                         is_there_new_instruct_next = 1'b1;
                         is_there_new_data_next = 1'b1;  // the data in this case is the number of frames to transfer minus 1.
+                    end
+                    
+                    // Kick off transferring single image data to the SDRAM
+                    HOSTCMD_SEND_SINGLE: begin
+                        state_instuction_next = ST_UPDATE_RAM_SINGLE_get_frame_id;
+                        is_there_new_instruct_next = 1'b1;
+                        is_there_new_data_next = 1'b1;  // the data in this case is the frames id (0~63 inclusive).
                     end
 
                     // Kick off updating horizontal offset
@@ -277,6 +289,12 @@ parameter ST_UPDATE_RAM_trigger                = 7'h1_1;
 parameter ST_UPDATE_RAM_wait_first_data        = 7'h2_1;
 parameter ST_UPDATE_RAM_wait_data              = 7'h3_1;
 
+/* Update memory of one image
+parameter ST_UPDATE_RAM_SINGLE_get_frame_id    = 7'h0_6;  */
+parameter ST_UPDATE_RAM_SINGLE_trigger         = 7'h1_6;
+parameter ST_UPDATE_RAM_SINGLE_wait_first      = 7'h2_6;
+parameter ST_UPDATE_RAM_SINGLE_wait_data       = 7'h3_6;
+
 /* Update offsets
 parameter ST_UPDATE_OFFSET_horizontal          = 7'h0_2;
 parameter ST_UPDATE_OFFSET_vertical            = 7'h1_2;  */
@@ -302,6 +320,8 @@ reg [6:0]   total_frames, total_frames_next;
 reg [25:0]  counter, counter_next, r_counter;
 reg         fifo_wrreq;
 reg [7:0]   fifo_wrdata;
+reg [19:0]  single_counter, single_counter_next, r_single_counter;
+reg [5:0]   starting_frame, starting_frame_next;
 
 reg         update_horizontal, update_horizontal_next;
 reg [7:0]   offset_h, offset_h_next, offset_v, offset_v_next;
@@ -374,6 +394,36 @@ always @ (*) begin
             new_instr_ack = 1'b0;
             new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
             if(r_counter == {total_frames[5:0], 20'h0_0000})  // if total_frames[6:0] equals to 64, this line still give a correct ending.
+                states_next = ST_WAIT_ACK;
+            else
+                states_next = ST_LISTEN_TO_INTERRUPT;
+        end
+        
+        /// ==== Updating only a single frame part ====
+        ST_UPDATE_RAM_SINGLE_get_frame_id: begin
+            new_instr_ack = 1'b0;
+            new_data_ack  = 1'b1;
+            states_next = ST_UPDATE_RAM_SINGLE_trigger;
+            // update single_counter = 0
+            // clear fifo
+        end
+        ST_UPDATE_RAM_SINGLE_trigger: begin
+            new_instr_ack = 1'b0;
+            new_data_ack  = 1'b0;
+            states_next = ST_UPDATE_RAM_SINGLE_wait_first;
+        end
+        ST_UPDATE_RAM_SINGLE_wait_first: begin
+            new_instr_ack = 1'b0;
+            new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
+            if(is_there_new_data)
+                states_next = ST_UPDATE_RAM_SINGLE_wait_data;
+            else
+                states_next = ST_LISTEN_TO_INTERRUPT;
+        end
+        ST_UPDATE_RAM_SINGLE_wait_data: begin
+            new_instr_ack = 1'b0;
+            new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
+            if(r_single_counter == 20'h0_0000)
                 states_next = ST_WAIT_ACK;
             else
                 states_next = ST_LISTEN_TO_INTERRUPT;
@@ -477,16 +527,38 @@ always @ (*) begin
         default:                                counter_next = counter;
     endcase
     fifo_wrdata = data;
-    fifo_wrreq = ((states == ST_UPDATE_RAM_wait_data || states == ST_UPDATE_RAM_wait_first_data) && is_there_new_data)? 1'b1 : 1'b0;
+    if(is_there_new_data)
+        case(states)
+            ST_UPDATE_RAM_wait_data, ST_UPDATE_RAM_wait_first_data:             fifo_wrreq = 1'b1; 
+            ST_UPDATE_RAM_SINGLE_wait_data, ST_UPDATE_RAM_SINGLE_wait_first:    fifo_wrreq = 1'b1;
+            default:                                                            fifo_wrreq = 1'b0;
+        endcase
+    else
+        fifo_wrreq = 1'b0;
+    
+    case(states)
+        ST_UPDATE_RAM_SINGLE_get_frame_id:  single_counter_next = 20'd0;
+        ST_UPDATE_RAM_SINGLE_trigger:       single_counter_next = single_counter;
+        ST_UPDATE_RAM_SINGLE_wait_first:    single_counter_next = 20'd1;  // directly assign the number even before capturing the data
+        ST_UPDATE_RAM_SINGLE_wait_data:     single_counter_next = (is_there_new_data)? single_counter + 1'b1: single_counter;
+        default:                            single_counter_next = single_counter;
+    endcase
+    
+    case(states)
+        ST_UPDATE_RAM_get_num_of_frames:    starting_frame_next = 6'd0;
+        ST_UPDATE_RAM_SINGLE_get_frame_id:  starting_frame_next = data[5:0];
+        default:                            starting_frame_next = starting_frame;
+    endcase
 end
 
 // The following fifo stores the image data to be store into SDRAM.
 // The special character 0xFE is the value of a pixel and does not
 // have the meaning of the escaping character.
 assign oNUM_IMAGES = total_frames;
-assign oTRIGGER_WRITE_SDRAM = (states == ST_UPDATE_RAM_trigger);
+assign oTRIGGER_WRITE_SDRAM = (states == ST_UPDATE_RAM_trigger || states == ST_UPDATE_RAM_SINGLE_trigger);
+assign oSTARTING_FRAME = starting_frame;
 fifo_sdram_write fifo_for_pixels(
-    .aclr(iRST||(states==ST_UPDATE_RAM_get_num_of_frames)),
+    .aclr(iRST||(states==ST_UPDATE_RAM_get_num_of_frames)||(states==ST_UPDATE_RAM_SINGLE_get_frame_id)),
     .wrclk(iCLK),
     .wrreq(fifo_wrreq),
     .data(fifo_wrdata),
@@ -601,6 +673,7 @@ assign oGALVO_VALUES_Y = galvo_values_y;
 // main sequential part
 always @ (posedge iCLK) begin
     r_counter <= counter;
+    r_single_counter <= single_counter;
 end
 always @ (posedge iCLK or posedge iRST) begin
     if(iRST) begin
@@ -608,6 +681,8 @@ always @ (posedge iCLK or posedge iRST) begin
         previous_states <= ST_IDLE;
         counter <= 0;
         total_frames <= 0;
+        single_counter <= 0;
+        starting_frame <= 0;
         update_horizontal <= 0;
         offset_h <= 8'd0;
         offset_sign_h <= 1'b0;
@@ -623,6 +698,8 @@ always @ (posedge iCLK or posedge iRST) begin
         previous_states <= states;
         counter <= counter_next;
         total_frames <= total_frames_next;
+        single_counter <= single_counter_next;
+        starting_frame <= starting_frame_next;
         update_horizontal <= update_horizontal_next;
         offset_h <= offset_h_next;
         offset_sign_h <= offset_sign_h_next;

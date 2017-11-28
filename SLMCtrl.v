@@ -241,6 +241,7 @@ wire        sdram_fifo_rd_req;
 wire [7:0]  sdram_fifo_rd_data;
 wire        sdram_fifo_rd_empty;
 wire [6:0]  num_images_to_download;
+wire [5:0]  starting_frame_to_download;
 
 wire [7:0]  x_offset;
 wire        x_offset_sign;
@@ -364,11 +365,12 @@ jtag_uart_decode jtag_uart_decode_0(
     .oDECODEDIMAGE_RDFIFO_EMPTY(sdram_fifo_rd_empty),  // output
     .oNUM_IMAGES(num_images_to_download),  // output [6:0]
     .oTRIGGER_WRITE_SDRAM(download_images_trigger),  // output
+    .oSTARTING_FRAME(starting_frame_to_download),  // [5:0]
     .oH_OFFSET_SIGN(x_offset_sign),
     .oH_OFFSET(x_offset),  // [7:0]
     .oV_OFFSET_SIGN(y_offset_sign),
     .oV_OFFSET(y_offset),  // [7:0]
-    .oCYCLES_OF_DISPLAYING_EACH_IMAGE(cycles_of_displaying),
+    .oCYCLES_OF_DISPLAYING_EACH_IMAGE(cycles_of_displaying),  // [15:0]
     .oSEQUENCING_TRIGGER(sequencing_trigger),
     .oGALVO_VALUES_X(galvo_values_x),  // [23:0]
     .oGALVO_VALUES_Y(galvo_values_y),  // [23:0]
@@ -396,7 +398,7 @@ write_to_sdram write_to_sdram_0(
     .iFIFO_RD_DATA(sdram_fifo_rd_data),  // [7:0]
     .iFIFO_RD_EMPTY(sdram_fifo_rd_empty),
     .iNUM_IMAGES(num_images_to_download),  // [6:0]
-    .iID_OF_STARTING_IMAGE(6'd0)  // [5:0]
+    .iID_OF_STARTING_IMAGE(starting_frame_to_download)  // [5:0]
 );
 
 
