@@ -859,7 +859,9 @@ set_instance_assignment -name OUTPUT_TERMINATION "SERIES 50 OHM WITH CALIBRATION
 #set_global_assignment -name SDC_FILE SLMCtrl.SDC
 set_global_assignment -name VERILOG_FILE SLMCtrl.v
 set_global_assignment -name QSYS_FILE reader_system.qsys
-set_global_assignment -name VERILOG_FILE v/jtag_uart_decode.v
+set_global_assignment -name VERILOG_FILE v/jtag_uart/jtag_uart_decode.v
+set_global_assignment -name VERILOG_FILE v/jtag_uart/decode_raw_jtag_uart.v
+set_global_assignment -name VERILOG_FILE v/jtag_uart/uart_avalon_extraction.v
 set_global_assignment -name VERILOG_FILE v/write_to_sdram.v
 set_global_assignment -name VERILOG_FILE v/sdram_to_vgafifo.v
 set_global_assignment -name VERILOG_FILE v/vga_control.v
