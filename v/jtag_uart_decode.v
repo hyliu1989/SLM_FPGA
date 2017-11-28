@@ -27,6 +27,9 @@ module jtag_uart_decode(
     
     output        oSEQUENCING_TRIGGER,
     
+    output [23:0] oGALVO_VALUES_X,
+    output [23:0] oGALVO_VALUES_Y,
+    
     output        oERROR,
     output [6:0]  oMONITORING_STATES
 );
@@ -77,6 +80,10 @@ parameter ST_UPDATE_DISPLAY_CYC_get_num        = 7'h0_3;
 parameter HOSTCMD_TRIGGER_SEQUENCING        = 8'h04;
 parameter ST_START_SEQUENCE_trigger            = 7'h0_4;
 
+parameter HOSTCMD_UPDATE_GALVO_X            = 8'h05;
+parameter HOSTCMD_UPDATE_GALVO_Y            = 8'h06;
+parameter ST_UPDATE_GALVO_for_x                = 7'h0_5;
+parameter ST_UPDATE_GALVO_for_y                = 7'h1_5;
 
 // =============================================================
 //   Data parsing to extract state instruction and actual data
@@ -169,7 +176,19 @@ always @ (*) begin
                         is_there_new_data_next = 1'b0;
                     end
                     
-                    // Kick of other processes: TODO
+                    // Kick off updating galvo x
+                    HOSTCMD_UPDATE_GALVO_X: begin
+                        state_instuction_next = ST_UPDATE_GALVO_for_x;
+                        is_there_new_instruct_next = 1'b1;
+                        is_there_new_data_next = 1'b0;
+                    end
+                    
+                    // Kick off updating galvo y
+                    HOSTCMD_UPDATE_GALVO_Y: begin
+                        state_instuction_next = ST_UPDATE_GALVO_for_y;
+                        is_there_new_instruct_next = 1'b1;
+                        is_there_new_data_next = 1'b0;
+                    end
 
                     // Bypass the escaping
                     HOSTCMD_ESCAPE: begin
@@ -263,6 +282,13 @@ parameter ST_UPDATE_DISPLAY_CYC_get_num_1      = 7'h1_3;
 /* Triggering the sequencing
 parameter ST_START_SEQUENCE_trigger            = 7'h0_4;  */
 
+/* Update Galvo informations
+parameter ST_UPDATE_GALVO_for_x                = 7'h0_5;
+parameter ST_UPDATE_GALVO_for_y                = 7'h1_5;  */
+parameter ST_UPDATE_GALVO_value_0              = 7'h2_5;
+parameter ST_UPDATE_GALVO_value_1              = 7'h3_5;
+parameter ST_UPDATE_GALVO_value_2              = 7'h4_5;
+
 
 reg [6:0]   total_frames, total_frames_next;
 reg [25:0]  counter, counter_next, r_counter;
@@ -274,6 +300,9 @@ reg [7:0]   offset_h, offset_h_next, offset_v, offset_v_next;
 reg         offset_sign_h, offset_sign_h_next, offset_sign_v, offset_sign_v_next;
 
 reg [15:0]  cycles_of_display, cycles_of_display_next;
+
+reg         update_galvo_horiz, update_galvo_horiz_next;
+reg [23:0]  galvo_values_x, galvo_values_x_next, galvo_values_y, galvo_values_y_next;
 
 always @ (*) begin
     case(states)
@@ -310,6 +339,7 @@ always @ (*) begin
                 states_next = previous_states;
         end
 
+        
         /// ==== Updating the RAM ====================================
         ST_UPDATE_RAM_get_num_of_frames: begin
             new_instr_ack = 1'b0;
@@ -348,7 +378,7 @@ always @ (*) begin
             new_instr_ack = 1'b0;
             new_data_ack = 1'b0;
             states_next = ST_UPDATE_OFFSET_get_number;
-            // update a register indicating which on of horizontal or vertical to update
+            // update a register indicating which one of horizontal or vertical to update
         end
         ST_UPDATE_OFFSET_get_number: begin
             new_instr_ack = 1'b0;
@@ -388,6 +418,35 @@ always @ (*) begin
             states_next = ST_WAIT_ACK;
         end
         /// ==== End of Triggering the sequencing ====================================
+        
+        
+        /// ==== Updating Galvo information ====================================
+        ST_UPDATE_GALVO_for_x, ST_UPDATE_GALVO_for_y: begin
+            new_instr_ack = 1'b0;
+            new_data_ack = 1'b0;
+            states_next = ST_UPDATE_GALVO_value_0;
+            // update a register indicating which one of horizontal or vertical to update
+        end
+        ST_UPDATE_GALVO_value_0: begin
+            new_instr_ack = 1'b0;
+            new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
+            states_next = (is_there_new_data)? ST_UPDATE_GALVO_value_1 : ST_LISTEN_TO_INTERRUPT;
+            // update the number
+        end
+        ST_UPDATE_GALVO_value_1: begin
+            new_instr_ack = 1'b0;
+            new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
+            states_next = (is_there_new_data)? ST_UPDATE_GALVO_value_2 : ST_LISTEN_TO_INTERRUPT;
+            // update the number
+        end
+        ST_UPDATE_GALVO_value_2: begin
+            new_instr_ack = 1'b0;
+            new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
+            states_next = (is_there_new_data)? ST_WAIT_ACK : ST_LISTEN_TO_INTERRUPT;
+            // update the number
+        end
+        /// ==== End of Updating Galvo information ====================================
+        
         
         default: begin
             // TODO: temprorary dummies are put here and should be replaced
@@ -498,6 +557,39 @@ assign oSEQUENCING_TRIGGER = (states == ST_START_SEQUENCE_trigger);
 /// ==== End of Triggering the sequencing ====================================
 
 
+/// ==== Updating Galvo information ====================================
+always @ (*) begin
+    case(states)
+        ST_UPDATE_GALVO_for_x: update_galvo_horiz_next = 1'b1;
+        ST_UPDATE_GALVO_for_y: update_galvo_horiz_next = 1'b0;
+        default:               update_galvo_horiz_next = update_galvo_horiz;
+    endcase
+    // horizontal case
+    if(update_galvo_horiz && is_there_new_data)
+        case(states)
+            ST_UPDATE_GALVO_value_0: galvo_values_x_next = {galvo_values_x[23:16], galvo_values_x[15:8], data               };
+            ST_UPDATE_GALVO_value_1: galvo_values_x_next = {galvo_values_x[23:16], data,                 galvo_values_x[7:0]};
+            ST_UPDATE_GALVO_value_2: galvo_values_x_next = {data,                  galvo_values_x[15:8], galvo_values_x[7:0]};
+            default:                 galvo_values_x_next = galvo_values_x;
+        endcase
+    else
+        galvo_values_x_next = galvo_values_x;
+    // vertical case
+    if(!update_galvo_horiz && is_there_new_data)
+        case(states)
+            ST_UPDATE_GALVO_value_0: galvo_values_y_next = {galvo_values_y[23:16], galvo_values_y[15:8], data               };
+            ST_UPDATE_GALVO_value_1: galvo_values_y_next = {galvo_values_y[23:16], data,                 galvo_values_y[7:0]};
+            ST_UPDATE_GALVO_value_2: galvo_values_y_next = {data,                  galvo_values_y[15:8], galvo_values_y[7:0]};
+            default:                 galvo_values_y_next = galvo_values_y;
+        endcase
+    else
+        galvo_values_y_next = galvo_values_y;
+end
+assign oGALVO_VALUES_X = galvo_values_x;
+assign oGALVO_VALUES_Y = galvo_values_y;
+/// ==== End of Updating Galvo information ====================================
+        
+
 // main sequential part
 always @ (posedge iCLK) begin
     r_counter <= counter;
@@ -514,6 +606,9 @@ always @ (posedge iCLK or posedge iRST) begin
         offset_v <= 8'd0;
         offset_sign_v <= 1'b0;
         cycles_of_display <= 16'd0;
+        update_galvo_horiz <= 1'b0;
+        galvo_values_x <= 24'd0;
+        galvo_values_y <= 24'd0;
     end
     else begin
         states <= states_next;
@@ -526,6 +621,9 @@ always @ (posedge iCLK or posedge iRST) begin
         offset_v <= offset_v_next;
         offset_sign_v <= offset_sign_v_next;
         cycles_of_display <= cycles_of_display_next;
+        update_galvo_horiz <= update_galvo_horiz_next;
+        galvo_values_x <= galvo_values_x_next;
+        galvo_values_y <= galvo_values_y_next;
     end
 end
 

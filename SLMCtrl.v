@@ -248,6 +248,7 @@ wire [7:0]  y_offset;
 wire        y_offset_sign;
 wire [15:0] cycles_of_displaying;
 wire        sequencing_trigger;
+wire [23:0] galvo_values_x, galvo_values_y;
 
 wire        jtag_error;
 wire [6:0]  jtag_states;
@@ -369,6 +370,8 @@ jtag_uart_decode jtag_uart_decode_0(
     .oV_OFFSET(y_offset),  // [7:0]
     .oCYCLES_OF_DISPLAYING_EACH_IMAGE(cycles_of_displaying),
     .oSEQUENCING_TRIGGER(sequencing_trigger),
+    .oGALVO_VALUES_X(galvo_values_x),  // [23:0]
+    .oGALVO_VALUES_Y(galvo_values_y),  // [23:0]
     .oERROR(jtag_error),
     .oMONITORING_STATES(jtag_states)  // [6:0]
 );
