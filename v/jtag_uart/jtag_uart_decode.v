@@ -95,21 +95,23 @@ assign is_idle_to_take_command = (states==ST_IDLE)||(states==ST_ERROR);
 
 always @ (*) begin
     case(states)
+        ST_IDLE, ST_ERROR, ST_WAIT_ACK, ST_LISTEN_TO_INTERRUPT:  new_instr_ack = (is_there_new_instruct)? 1'b1 : 1'b0;
+        default:                                                 new_instr_ack = 1'b0;
+    endcase
+
+    case(states)
         ST_IDLE, ST_ERROR: begin
             if(is_there_new_instruct) begin
-                new_instr_ack = 1'b1;
                 new_data_ack  = 1'b0;
                 states_next = state_instuction;
             end
             else begin
-                new_instr_ack = 1'b0;
                 new_data_ack  = 1'b1;  // clear all unwanted data since these states take instruction only
                 states_next = states;
             end
         end
         
         ST_WAIT_ACK: begin
-            new_instr_ack = (is_there_new_instruct)? 1'b1 : 1'b0;
             new_data_ack = 1'b0;
             if(is_there_new_instruct)
                 states_next = (state_instuction == INSTRUCTION_ACK)? ST_IDLE : ST_ERROR;
@@ -120,7 +122,6 @@ always @ (*) begin
         end
         
         ST_LISTEN_TO_INTERRUPT: begin
-            new_instr_ack = (is_there_new_instruct)? 1'b1 : 1'b0;
             new_data_ack = 1'b0;
             if(is_there_new_instruct)
                 states_next = (state_instuction == ST_IDLE)? ST_IDLE : ST_ERROR;
@@ -131,7 +132,6 @@ always @ (*) begin
         
         /// ==== Updating the RAM ====================================
         ST_UPDATE_RAM_get_num_of_frames: begin
-            new_instr_ack = 1'b0;
             new_data_ack  = 1'b1;
             states_next = ST_UPDATE_RAM_trigger;
             // update total_frames_to_download_next = data[5:0] + 1
@@ -140,20 +140,14 @@ always @ (*) begin
             // clear fifo
         end
         ST_UPDATE_RAM_trigger: begin
-            new_instr_ack = 1'b0;
             new_data_ack  = 1'b0;
             states_next = ST_UPDATE_RAM_wait_first_data;
         end
         ST_UPDATE_RAM_wait_first_data: begin // for the first data because if total frames is 64, first data will be terminated
-            new_instr_ack = 1'b0;
             new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
-            if(is_there_new_data)
-                states_next = ST_UPDATE_RAM_wait_data;
-            else
-                states_next = ST_LISTEN_TO_INTERRUPT;
+            states_next = (is_there_new_data)? ST_UPDATE_RAM_wait_data : ST_LISTEN_TO_INTERRUPT;
         end
         ST_UPDATE_RAM_wait_data: begin
-            new_instr_ack = 1'b0;
             new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
             if(r_counter == {total_frames_to_download[5:0], 20'h0_0000})  // if total_frames_to_download[6:0] equals to 64, this line still give a correct ending.
                 states_next = ST_WAIT_ACK;
@@ -163,7 +157,6 @@ always @ (*) begin
         
         /// ==== Updating only a single frame part ====
         ST_UPDATE_RAM_SINGLE_get_frame_id: begin
-            new_instr_ack = 1'b0;
             new_data_ack  = 1'b1;
             states_next = ST_UPDATE_RAM_trigger;
             // update total_frames_to_download_next = 1
@@ -176,19 +169,16 @@ always @ (*) begin
         
         /// ==== Updating offsets ====================================
         ST_UPDATE_OFFSET_horizontal, ST_UPDATE_OFFSET_vertical: begin
-            new_instr_ack = 1'b0;
             new_data_ack = 1'b0;
             states_next = ST_UPDATE_OFFSET_get_number;
             // update a register indicating which one of horizontal or vertical to update
         end
         ST_UPDATE_OFFSET_get_number: begin
-            new_instr_ack = 1'b0;
             new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
             states_next = (is_there_new_data)? ST_UPDATE_OFFSET_get_sign : ST_LISTEN_TO_INTERRUPT;
             // update the number
         end
         ST_UPDATE_OFFSET_get_sign: begin
-            new_instr_ack = 1'b0;
             new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
             states_next = (is_there_new_data)? ST_WAIT_ACK : ST_LISTEN_TO_INTERRUPT;
             // update the sign
@@ -198,13 +188,11 @@ always @ (*) begin
         
         /// ==== Updating Number of Displaying cycles ====================================
         ST_UPDATE_DISPLAY_CYC_get_num: begin
-            new_instr_ack = 1'b0;
             new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
             states_next = (is_there_new_data)? ST_UPDATE_DISPLAY_CYC_get_num_1 : ST_LISTEN_TO_INTERRUPT;
             // update the lower byte
         end
         ST_UPDATE_DISPLAY_CYC_get_num_1: begin
-            new_instr_ack = 1'b0;
             new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
             states_next = (is_there_new_data)? ST_WAIT_ACK : ST_LISTEN_TO_INTERRUPT;
             // update the upper byte
@@ -214,7 +202,6 @@ always @ (*) begin
         
         /// ==== Triggering the sequencing ====================================
         ST_START_SEQUENCE_trigger: begin
-            new_instr_ack = 1'b0;
             new_data_ack = 1'b0;
             states_next = ST_WAIT_ACK;
         end
@@ -223,25 +210,21 @@ always @ (*) begin
         
         /// ==== Updating Galvo information ====================================
         ST_UPDATE_GALVO_for_x, ST_UPDATE_GALVO_for_y: begin
-            new_instr_ack = 1'b0;
             new_data_ack = 1'b0;
             states_next = ST_UPDATE_GALVO_value_0;
             // update a register indicating which one of horizontal or vertical to update
         end
         ST_UPDATE_GALVO_value_0: begin
-            new_instr_ack = 1'b0;
             new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
             states_next = (is_there_new_data)? ST_UPDATE_GALVO_value_1 : ST_LISTEN_TO_INTERRUPT;
             // update the number
         end
         ST_UPDATE_GALVO_value_1: begin
-            new_instr_ack = 1'b0;
             new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
             states_next = (is_there_new_data)? ST_UPDATE_GALVO_value_2 : ST_LISTEN_TO_INTERRUPT;
             // update the number
         end
         ST_UPDATE_GALVO_value_2: begin
-            new_instr_ack = 1'b0;
             new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
             states_next = (is_there_new_data)? ST_WAIT_ACK : ST_LISTEN_TO_INTERRUPT;
             // update the number
@@ -251,9 +234,8 @@ always @ (*) begin
         
         default: begin
             // TODO: temprorary dummies are put here and should be replaced
-            states_next = states;
             new_data_ack = 1'b0;
-            new_instr_ack = 1'b0;
+            states_next = states;
         end
     endcase
 end
@@ -416,11 +398,11 @@ assign oGALVO_VALUES_Y = galvo_values_y;
 // main sequential part
 always @ (posedge iCLK) begin
     r_counter <= counter;
+    previous_states <= states;
 end
 always @ (posedge iCLK or posedge iRST) begin
     if(iRST) begin
         states <= ST_IDLE;
-        previous_states <= ST_IDLE;
         starting_frame <= 0;
         total_frames_to_download <= 0;
         counter <= 0;
@@ -436,7 +418,6 @@ always @ (posedge iCLK or posedge iRST) begin
     end
     else begin
         states <= states_next;
-        previous_states <= states;
         starting_frame <= starting_frame_next;
         total_frames_to_download <= total_frames_to_download_next;
         counter <= counter_next;

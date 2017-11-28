@@ -13,12 +13,13 @@ parameter HOSTCMD_UPDATE_GALVO_Y            = 8'h06;  // Update Galvo informatio
 
 
 // ===== Commands and states on FPGA side ===========================
-
+/// Commands
 // Commands after the Escape character
 parameter ESCAPECMD_RETURN_TO_IDLE             = 8'h00;
 parameter ESCAPECMD_ACKNOWLEDGE                = 8'h01;
 parameter ESCAPECMD_ESCAPE_CHAR                = 8'hFE;
 
+/// States
 // System states
 parameter ST_IDLE                              = 7'h0_0;
 parameter INSTRUCTION_ACK                      = 7'h1_0;  // not a state but just an acknowledge instruction
@@ -31,8 +32,8 @@ parameter ST_UPDATE_RAM_get_num_of_frames      = 7'h0_1;
 parameter ST_UPDATE_RAM_trigger                = 7'h1_1;
 parameter ST_UPDATE_RAM_wait_first_data        = 7'h2_1;
 parameter ST_UPDATE_RAM_wait_data              = 7'h3_1;
-parameter ST_UPDATE_RAM_SINGLE_get_frame_id    = 7'h7_1;  // Update memory of one image
-
+// Update memory of one image
+parameter ST_UPDATE_RAM_SINGLE_get_frame_id    = 7'h7_1;
 
 // Update offsets
 parameter ST_UPDATE_OFFSET_horizontal          = 7'h0_2;

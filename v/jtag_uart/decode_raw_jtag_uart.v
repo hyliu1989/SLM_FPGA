@@ -64,8 +64,8 @@ reg         is_there_new_data, is_there_new_data_next;
 
 assign local_states = {received_0xFE, iDECODER_IDLE_TO_TAKE_COMMAND};
 parameter ESCAPING         = 2'b1?;
-parameter OUTER_STATE_IDLE = 2'b01;
-parameter OUTER_STATE_PROC = 2'b00;
+parameter WHEN_OUTER_STATE_IS_IDLE = 2'b01;
+parameter WHEN_OUTER_STATE_IS_PROC = 2'b00;
 
 always @ (*) begin
     // received_0xFE_next
@@ -110,94 +110,41 @@ always @ (*) begin
             end
 
             /// When outer state is Idle or Idle with Error, it takes instructions
-            OUTER_STATE_IDLE: begin
+            WHEN_OUTER_STATE_IS_IDLE: begin
                 data_next = data_or_cmd;
+
                 casez(data_or_cmd)
-                    // Kick off transferring data to SDRAM
-                    HOSTCMD_SEND_IMAGES: begin
-                        state_instuction_next = ST_UPDATE_RAM_get_num_of_frames;
-                        is_there_new_instruct_next = 1'b1;
-                        is_there_new_data_next = 1'b1;  // the data in this case is the number of frames to transfer minus 1.
-                    end
-                    
-                    // Kick off transferring single image data to the SDRAM
-                    HOSTCMD_SEND_SINGLE: begin
-                        state_instuction_next = ST_UPDATE_RAM_SINGLE_get_frame_id;
-                        is_there_new_instruct_next = 1'b1;
-                        is_there_new_data_next = 1'b1;  // the data in this case is the frames id (0~63 inclusive).
-                    end
+                    HOSTCMD_SEND_IMAGES:  is_there_new_data_next = 1'b1;  // the data in this case is the number of frames to transfer minus 1.
+                    HOSTCMD_SEND_SINGLE:  is_there_new_data_next = 1'b1;  // the data in this case is the frames id (0~63 inclusive).
+                    default:              is_there_new_data_next = 1'b0;  // usually there is no data in data_or_cmd when taking commands
+                endcase
 
-                    // Kick off updating horizontal offset
-                    HOSTCMD_UPDATE_OFFSET_H: begin
-                        state_instuction_next = ST_UPDATE_OFFSET_horizontal;
-                        is_there_new_instruct_next = 1'b1;
-                        is_there_new_data_next = 1'b0;
-                    end
-                    
-                    // Kick off updating vertical offset
-                    HOSTCMD_UPDATE_OFFSET_V: begin
-                        state_instuction_next = ST_UPDATE_OFFSET_vertical;
-                        is_there_new_instruct_next = 1'b1;
-                        is_there_new_data_next = 1'b0;
-                    end
-                    
-                    // Kick off updating displaying cycles
-                    HOSTCMD_UPDATE_CYC_DISPLAY: begin
-                        state_instuction_next = ST_UPDATE_DISPLAY_CYC_get_num;
-                        is_there_new_instruct_next = 1'b1;
-                        is_there_new_data_next = 1'b0;
-                    end
-                    
-                    // Kick off the sequencing
-                    HOSTCMD_TRIGGER_SEQUENCING: begin
-                        state_instuction_next = ST_START_SEQUENCE_trigger;
-                        is_there_new_instruct_next = 1'b1;
-                        is_there_new_data_next = 1'b0;
-                    end
-                    
-                    // Kick off updating galvo x
-                    HOSTCMD_UPDATE_GALVO_X: begin
-                        state_instuction_next = ST_UPDATE_GALVO_for_x;
-                        is_there_new_instruct_next = 1'b1;
-                        is_there_new_data_next = 1'b0;
-                    end
-                    
-                    // Kick off updating galvo y
-                    HOSTCMD_UPDATE_GALVO_Y: begin
-                        state_instuction_next = ST_UPDATE_GALVO_for_y;
-                        is_there_new_instruct_next = 1'b1;
-                        is_there_new_data_next = 1'b0;
-                    end
+                case(data_or_cmd)
+                    HOSTCMD_ESCAPE:       is_there_new_instruct_next = 1'b0;
+                    default:              is_there_new_instruct_next = 1'b1;
+                endcase
 
-                    // Bypass the escaping
-                    HOSTCMD_ESCAPE: begin
-                        state_instuction_next = 7'bxxx_xxxx;
-                        is_there_new_instruct_next = 1'b0;
-                        is_there_new_data_next = 1'b0;
-                    end
-
-                    // otherwise, go to the error state
-                    default: begin
-                        state_instuction_next = ST_ERROR;
-                        is_there_new_instruct_next = 1'b1;
-                        is_there_new_data_next = 1'b0;
-                    end
+                casez(data_or_cmd)
+                    HOSTCMD_SEND_IMAGES:            state_instuction_next = ST_UPDATE_RAM_get_num_of_frames;  // Kick off transferring data to SDRAM
+                    HOSTCMD_SEND_SINGLE:            state_instuction_next = ST_UPDATE_RAM_SINGLE_get_frame_id;  // Kick off transferring single image data to the SDRAM
+                    HOSTCMD_UPDATE_OFFSET_H:        state_instuction_next = ST_UPDATE_OFFSET_horizontal;
+                    HOSTCMD_UPDATE_OFFSET_V:        state_instuction_next = ST_UPDATE_OFFSET_vertical;
+                    HOSTCMD_UPDATE_CYC_DISPLAY:     state_instuction_next = ST_UPDATE_DISPLAY_CYC_get_num;
+                    HOSTCMD_TRIGGER_SEQUENCING:     state_instuction_next = ST_START_SEQUENCE_trigger;
+                    HOSTCMD_UPDATE_GALVO_X:         state_instuction_next = ST_UPDATE_GALVO_for_x;
+                    HOSTCMD_UPDATE_GALVO_Y:         state_instuction_next = ST_UPDATE_GALVO_for_y;
+                    HOSTCMD_ESCAPE:                 state_instuction_next = 7'bxxx_xxxx;  // Bypass the escaping
+                    default:                        state_instuction_next = ST_ERROR;  // otherwise, go to the error state
                 endcase
             end
 
             /// When machine is in some processing, no instruction but obtain the data.
-            OUTER_STATE_PROC: begin
+            WHEN_OUTER_STATE_IS_PROC: begin
                 data_next = data_or_cmd;
-                if(data_or_cmd == HOSTCMD_ESCAPE) begin
-                    state_instuction_next = 7'bxxx_xxxx;
-                    is_there_new_instruct_next = 1'b0;
-                    is_there_new_data_next = 1'b0;
-                end
-                else begin
-                    state_instuction_next = 7'bxxx_xxxx;
-                    is_there_new_instruct_next = 1'b0;
-                    is_there_new_data_next = 1'b1;
-                end
+                is_there_new_data_next = (data_or_cmd == HOSTCMD_ESCAPE)? 1'b0 : 1'b1;
+
+                state_instuction_next = 7'bxxx_xxxx;
+                is_there_new_instruct_next = 1'b0;
             end
         endcase
     end
