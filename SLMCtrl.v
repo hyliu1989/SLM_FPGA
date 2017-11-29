@@ -349,6 +349,7 @@ fifo_vga fv0(
 
 jtag_uart_decode jtag_uart_decode_0(
     .iCLK(CLOCK_50),
+    .iSDRAM_CTRL_CLK(sdram_ctrl_clock),
 	.iRST(delayed_reset),
     
     // jtag uart signals
@@ -359,15 +360,17 @@ jtag_uart_decode jtag_uart_decode_0(
     .oJTAG_SLAVE_WRDATA(jtag_uart_avalon_wr_data),
     .iJTAG_SLAVE_WAIT(jtag_uart_avalon_wait_req),
     
-    // decoded signals
+    // decoded signals (sync with iSDRAM_CTRL_CLK)
     .iDECODEDIMAGE_RDFIFO_CLK(sdram_fifo_rd_clk),  // input
     .iDECODEDIMAGE_RDFIFO_REQ(sdram_fifo_rd_req),  // input
     .oDECODEDIMAGE_RDFIFO_DATA(sdram_fifo_rd_data),  // output [7:0]
     .oDECODEDIMAGE_RDFIFO_EMPTY(sdram_fifo_rd_empty),  // output
-    .oNUM_IMAGES_IN_MEM(num_images_in_mem), // [6:0]
-    .oNUM_IMAGES_TO_DOWNLOAD(num_images_to_download),  // output [6:0]
     .oTRIGGER_WRITE_SDRAM(download_images_trigger),  // output
     .oSTARTING_FRAME(starting_frame_to_download),  // [5:0]
+    .oNUM_IMAGES_TO_DOWNLOAD(num_images_to_download),  // output [6:0]
+    
+    // decoded signals
+    .oNUM_IMAGES_IN_MEM(num_images_in_mem), // [6:0]
     .oH_OFFSET_SIGN(x_offset_sign),
     .oH_OFFSET(x_offset),  // [7:0]
     .oV_OFFSET_SIGN(y_offset_sign),

@@ -1,5 +1,6 @@
 module jtag_uart_decode(
     input         iCLK,
+    input         iSDRAM_CTRL_CLK,
     input         iRST,
     
     // jtag uart signals
@@ -10,16 +11,17 @@ module jtag_uart_decode(
     output [31:0] oJTAG_SLAVE_WRDATA,
     input         iJTAG_SLAVE_WAIT,
     
-    // decoded signals
+    // decoded signals (sync with iSDRAM_CTRL_CLK)
     input         iDECODEDIMAGE_RDFIFO_CLK,
     input         iDECODEDIMAGE_RDFIFO_REQ,
     output [7:0]  oDECODEDIMAGE_RDFIFO_DATA,
     output        oDECODEDIMAGE_RDFIFO_EMPTY,
-    output [6:0]  oNUM_IMAGES_TO_DOWNLOAD,
-    output [6:0]  oNUM_IMAGES_IN_MEM,
     output        oTRIGGER_WRITE_SDRAM,
     output [5:0]  oSTARTING_FRAME,
-    
+    output [6:0]  oNUM_IMAGES_TO_DOWNLOAD,
+
+    // decoded signals
+    output [6:0]  oNUM_IMAGES_IN_MEM,
     output        oH_OFFSET_SIGN,
     output [7:0]  oH_OFFSET,
     output        oV_OFFSET_SIGN,
@@ -285,13 +287,10 @@ always @ (*) begin
 end
 
 // The following fifo stores the image data to be store into SDRAM.
-// The special character 0xFE is the value of a pixel and does not
-// have the meaning of the escaping character.
-assign oNUM_IMAGES_TO_DOWNLOAD = total_frames_to_download;
-assign oTRIGGER_WRITE_SDRAM = (states == ST_UPDATE_RAM_trigger);
-assign oSTARTING_FRAME = starting_frame;
+// The special character 0xFE in the fifo is the value of a pixel and
+// does not have the meaning of the escaping character.
 fifo_sdram_write fifo_for_pixels(
-    .aclr(iRST||(states==ST_UPDATE_RAM_get_num_of_frames)||(states==ST_UPDATE_RAM_SINGLE_get_frame_id)),
+    .aclr(iRST),
     .wrclk(iCLK),
     .wrreq(fifo_wrreq),
     .data(fifo_wrdata),
@@ -302,6 +301,39 @@ fifo_sdram_write fifo_for_pixels(
     .q(oDECODEDIMAGE_RDFIFO_DATA),
     .rdempty(oDECODEDIMAGE_RDFIFO_EMPTY)
 );
+
+// Synchronizing signals
+reg [1:0] m_trigger;
+always @ (posedge iSDRAM_CTRL_CLK or posedge iRST) begin
+    if(iRST) begin
+        m_trigger <= 2'b00;
+    end
+    else begin
+        if(m_trigger == 2'b00)
+            m_trigger <= (states == ST_UPDATE_RAM_trigger)? 2'b01 : 2'b00;
+        else
+            m_trigger <= m_trigger + 1'b1;
+    end
+end
+
+reg       o_trigger;
+reg [5:0] o_starting_frame;
+reg [6:0] o_num_to_download;
+always @ (posedge iSDRAM_CTRL_CLK) begin
+    if(m_trigger != 2'b00) begin
+        o_starting_frame <= starting_frame;
+        o_num_to_download <= total_frames_to_download;
+    end
+    if(m_trigger == 2'b10)
+        o_trigger <= 1'b1;
+    else
+        o_trigger <= 1'b0;
+end
+assign oTRIGGER_WRITE_SDRAM = o_trigger;
+assign oSTARTING_FRAME = o_starting_frame;
+assign oNUM_IMAGES_TO_DOWNLOAD = o_num_to_download;
+
+
 /// ==== End of Updating the RAM ====================================
 
 
