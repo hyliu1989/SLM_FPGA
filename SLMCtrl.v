@@ -455,6 +455,14 @@ seven_seg   jtag_state_monitor_1(.number({1'b0,jtag_states[6:4]}), .display(HEX1
 seven_seg   jtag_state_monitor_0(.number(       jtag_states[3:0]), .display(HEX0));
 
 
+/// TESTING (to make the synthesizer not simply the necessary logics out)
+assign GPIO_0[35:32] = cycles_of_displaying[7:4];
+assign GPIO_1[35:32] = cycles_of_displaying[3:0];
+assign LEDR[8] = sequencing_trigger;
+assign GPIO_0[31:24] = cycles_of_displaying[15:8];
+assign GPIO_0[23:0] = galvo_values_x;
+assign GPIO_1[30:24] = num_images_in_mem;
+assign GPIO_1[23:0] = galvo_values_y;
 
 // // testing code for sdram writing
 // test_sdram_write test_sdram_write_0(
