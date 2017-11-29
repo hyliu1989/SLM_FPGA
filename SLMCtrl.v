@@ -241,14 +241,20 @@ wire        sdram_fifo_rd_req;
 wire [7:0]  sdram_fifo_rd_data;
 wire        sdram_fifo_rd_empty;
 wire [6:0]  num_images_to_download;
+wire [6:0]  num_images_in_mem;
+wire [5:0]  starting_frame_to_download;
 
-// testing signals
-wire        update_x_offset;
-wire        update_y_offset;
-reg [7:0]   test_x_offset;
-reg         test_x_offset_sign;
-reg [7:0]   test_y_offset;
-reg         test_y_offset_sign;
+wire [7:0]  x_offset;
+wire        x_offset_sign;
+wire [7:0]  y_offset;
+wire        y_offset_sign;
+wire [15:0] cycles_of_displaying;
+wire        sequencing_trigger;
+wire [23:0] galvo_values_x, galvo_values_y;
+
+wire        jtag_error;
+wire [6:0]  jtag_states;
+
 
 //=======================================================
 //  Structural coding
@@ -261,24 +267,6 @@ delay_x00_ms delay_module_0(
     .oDELAY100(delayed_reset),
     .oDELAY200(delayed_reset_1),
     .oDELAY300(delayed_reset_2),
-    .oDELAY400()
-);
-
-delay_x00_ms delay_module_2(
-    .iCLOCK50(CLOCK_50),
-    .iTRIGGER(!KEY[2]),
-    .oDELAY100(update_y_offset),
-    .oDELAY200(),
-    .oDELAY300(),
-    .oDELAY400()
-);
-
-delay_x00_ms delay_module_3(
-    .iCLOCK50(CLOCK_50),
-    .iTRIGGER(!KEY[3]),
-    .oDELAY100(update_x_offset),
-    .oDELAY200(),
-    .oDELAY300(),
     .oDELAY400()
 );
 
@@ -324,10 +312,10 @@ sdram_to_vgafifo sdram_to_vgafifo_0(
     // control signals for current frame
     // FIXME: the 5 values here are for testing
     .iFRAME_ID(SW[5:0]),  // input [5:0]
-    .iOFFSET_H_SIGN(test_x_offset_sign),  // input
-    .iOFFSET_H(test_x_offset),  // input [7:0], horizontal offset, + to the right
-    .iOFFSET_V_SIGN(test_y_offset_sign),  // input
-    .iOFFSET_V(test_y_offset),  // input [7:0], vertial offset, + to the bottom
+    .iOFFSET_H_SIGN(x_offset_sign),  // input
+    .iOFFSET_H(x_offset),  // input [7:0], horizontal offset, + to the right
+    .iOFFSET_V_SIGN(y_offset_sign),  // input
+    .iOFFSET_V(y_offset),  // input [7:0], vertial offset, + to the bottom
 
     // VGA signals (as a trigger to load)
     .iVGA_LINE_TO_LOAD(vga_request_loadline_id),
@@ -359,9 +347,9 @@ fifo_vga fv0(
     .wrfull(/*LEDR[8]*/)  // output
 );
 
-wire [18:0] test;
 jtag_uart_decode jtag_uart_decode_0(
     .iCLK(CLOCK_50),
+    .iSDRAM_CTRL_CLK(sdram_ctrl_clock),
 	.iRST(delayed_reset),
     
     // jtag uart signals
@@ -372,13 +360,27 @@ jtag_uart_decode jtag_uart_decode_0(
     .oJTAG_SLAVE_WRDATA(jtag_uart_avalon_wr_data),
     .iJTAG_SLAVE_WAIT(jtag_uart_avalon_wait_req),
     
-    // decoded signals
+    // decoded signals (sync with iSDRAM_CTRL_CLK)
     .iDECODEDIMAGE_RDFIFO_CLK(sdram_fifo_rd_clk),  // input
     .iDECODEDIMAGE_RDFIFO_REQ(sdram_fifo_rd_req),  // input
     .oDECODEDIMAGE_RDFIFO_DATA(sdram_fifo_rd_data),  // output [7:0]
     .oDECODEDIMAGE_RDFIFO_EMPTY(sdram_fifo_rd_empty),  // output
-    .oNUM_IMAGES(num_images_to_download),  // output [6:0]
-    .oTRIGGER_WRITE_SDRAM(download_images_trigger)  // output
+    .oTRIGGER_WRITE_SDRAM(download_images_trigger),  // output
+    .oSTARTING_FRAME(starting_frame_to_download),  // [5:0]
+    .oNUM_IMAGES_TO_DOWNLOAD(num_images_to_download),  // output [6:0]
+    
+    // decoded signals
+    .oNUM_IMAGES_IN_MEM(num_images_in_mem), // [6:0]
+    .oH_OFFSET_SIGN(x_offset_sign),
+    .oH_OFFSET(x_offset),  // [7:0]
+    .oV_OFFSET_SIGN(y_offset_sign),
+    .oV_OFFSET(y_offset),  // [7:0]
+    .oCYCLES_OF_DISPLAYING_EACH_IMAGE(cycles_of_displaying),  // [15:0]
+    .oSEQUENCING_TRIGGER(sequencing_trigger),
+    .oGALVO_VALUES_X(galvo_values_x),  // [23:0]
+    .oGALVO_VALUES_Y(galvo_values_y),  // [23:0]
+    .oERROR(jtag_error),
+    .oMONITORING_STATES(jtag_states)  // [6:0]
 );
 
 
@@ -401,7 +403,7 @@ write_to_sdram write_to_sdram_0(
     .iFIFO_RD_DATA(sdram_fifo_rd_data),  // [7:0]
     .iFIFO_RD_EMPTY(sdram_fifo_rd_empty),
     .iNUM_IMAGES(num_images_to_download),  // [6:0]
-    .iID_OF_STARTING_IMAGE(6'd0)  // [5:0]
+    .iID_OF_STARTING_IMAGE(starting_frame_to_download)  // [5:0]
 );
 
 
@@ -444,33 +446,23 @@ reader_system reader_system_0(
     .jtag_uart_0_avalon_jtag_slave_waitrequest (jtag_uart_avalon_wait_req)  //                              .waitrequest
 );
 
-
+assign LEDR[9] = jtag_error;
 assign HEX5 = sdram_ctrl_write_done? 7'b1111111 : 7'b0000011;  // letter b
 assign HEX4 = sdram_ctrl_write_done? 7'b1111111 : 7'b1000001;  // letter u
 assign HEX3 = sdram_ctrl_write_done? 7'b1111111 : 7'b0010010;  // letter s
 assign HEX2 = sdram_ctrl_write_done? 7'b1111111 : 7'b0010001;  // letter y
-assign HEX1 = 7'h7f;
-assign HEX0 = 7'h7f;
+seven_seg   jtag_state_monitor_1(.number({1'b0,jtag_states[6:4]}), .display(HEX1));
+seven_seg   jtag_state_monitor_0(.number(       jtag_states[3:0]), .display(HEX0));
 
-always @ (posedge CLOCK_50 or posedge delayed_reset) begin
-    if(delayed_reset) begin
-        test_x_offset = 127;
-        test_x_offset_sign = 1;
-        test_y_offset = 3;
-        test_y_offset_sign = 0;
-    end
-    else begin
-        if(update_x_offset) begin
-            test_x_offset = SW[7:0];
-            test_x_offset_sign = SW[9];
-        end
-        if(update_y_offset) begin
-            test_y_offset = SW[7:0];
-            test_y_offset_sign = SW[9];
-        end
-    end
-end
 
+/// TESTING (to make the synthesizer not simply the necessary logics out)
+assign GPIO_0[35:32] = cycles_of_displaying[7:4];
+assign GPIO_1[35:32] = cycles_of_displaying[3:0];
+assign LEDR[8] = sequencing_trigger;
+assign GPIO_0[31:24] = cycles_of_displaying[15:8];
+assign GPIO_0[23:0] = galvo_values_x;
+assign GPIO_1[30:24] = num_images_in_mem;
+assign GPIO_1[23:0] = galvo_values_y;
 
 // // testing code for sdram writing
 // test_sdram_write test_sdram_write_0(
