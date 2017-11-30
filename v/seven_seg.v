@@ -5,7 +5,7 @@ reg [6:0] m_output;
 always @ (*) begin
 case(number)
     4'd0:  m_output = 7'b0111111;
-    4'd1:  m_output = 7'b0110000;
+    4'd1:  m_output = 7'b0000110;
     4'd2:  m_output = 7'b1011011;
     4'd3:  m_output = 7'b1001111;
     4'd4:  m_output = 7'b1100110;
