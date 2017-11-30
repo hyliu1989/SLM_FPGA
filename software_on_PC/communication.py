@@ -12,6 +12,7 @@ dll_path = 'jtag_atlantic.dll'
 
 atlantic_dll = ctypes.cdll.LoadLibrary(dll_path)
 
+_opened_connections = []
 
 """
 Major DLL functions extraction
@@ -56,6 +57,10 @@ JARead.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_uint64]
 JARead.restype = ctypes.c_int64
 
 
+def _checkLink(link):
+    if not link in _opened_connections:
+        raise RuntimeError('The link is not active')
+
 def getLink(cable_name=b"DE-SoC [USB-1]", device_index=2, link_instance=0):
     """
     Get the pointer to the JTAG instance
@@ -77,6 +82,7 @@ def getLink(cable_name=b"DE-SoC [USB-1]", device_index=2, link_instance=0):
         ctypes.c_int64(link_instance),
         ctypes.c_char_p(b'')
     )
+    _opened_connections.append(link)
     return link
 
 
@@ -146,6 +152,7 @@ def _imagesToMyBytes(images):
 Main Utility functions
 """
 def sendImages(link, images, verbose=True):
+    _checkLink(link)
     assert len(images.shape) == 3
     num_images = images.shape[0]
     assert images.shape[1] == 1024
@@ -160,6 +167,7 @@ def sendImages(link, images, verbose=True):
 
 
 def sendOneImage(link, image, frame_id, verbose=True):
+    _checkLink(link)
     assert len(image.shape) == 2
     assert image.shape[0] == 1024
     assert image.shape[1] == 1024
@@ -173,6 +181,7 @@ def sendOneImage(link, image, frame_id, verbose=True):
 
 
 def sendInterrupt(link):
+    _checkLink(link)
     to_send = b'\xFE\x00'
     n_bytes_written = JAWrite(link, ctypes.c_char_p(to_send), len(to_send))
     JAFlush(link)
@@ -180,6 +189,7 @@ def sendInterrupt(link):
 
 
 def sendNumFrames(link, num_frames, verbose=True):
+    _checkLink(link)
     if num_frames <= 0 or num_frames > 64:
         raise ValueError('The value of number of frames can only be within 1 to 64.')
     num_frames = np.uint8(num_frames)
@@ -188,6 +198,7 @@ def sendNumFrames(link, num_frames, verbose=True):
 
 
 def sendOffsetX(link, offset_x_value=0, verbose=True):
+    _checkLink(link)
     if abs(offset_x_value) > 128:
         raise ValueError('The absolute value of offset should not exceed 128')
     data_bytes = bytes([abs(offset_x_value), (offset_x_value<0)])
@@ -195,6 +206,7 @@ def sendOffsetX(link, offset_x_value=0, verbose=True):
  
 
 def sendOffsetY(link, offset_y_value=0, verbose=True):
+    _checkLink(link)
     if abs(offset_y_value) > 128:
         raise ValueError('The absolute value of offset should not exceed 128')
     data_bytes = bytes([abs(offset_y_value), (offset_y_value<0)])
@@ -202,6 +214,7 @@ def sendOffsetY(link, offset_y_value=0, verbose=True):
 
 
 def sendCyclesOfDisplay(link, n_cycles=1, verbose=True):
+    _checkLink(link)
     if abs(n_cycles) >= (1<<16):
         raise ValueError('The value should not exceed 65535')
     n_cycles = np.uint16(n_cycles)
@@ -212,14 +225,17 @@ def sendCyclesOfDisplay(link, n_cycles=1, verbose=True):
 
 
 def triggerSequencing(link, verbose=True):
+    _checkLink(link)
     return _writeBody(link, cmd=b'\x04', data_bytes=b'', ack=True, verbose=verbose)
 
 
 def triggerSequencingWithGalvo(link, verbose=True):
+    _checkLink(link)
     return _writeBody(link, cmd=b'\x05', data_bytes=b'', ack=True, verbose=verbose)
 
 
 def sendGalvoNumPositions(link, value, verbose=True):
+    _checkLink(link)
     if value >= (1 << 32):
         raise ValueError('The value should not exceed %d' % ((1<<32)-1))
     value = np.uint32(value)
@@ -231,6 +247,7 @@ def sendGalvoNumPositions(link, value, verbose=True):
     return _writeBody(link, cmd=b'\x06', data_bytes=data_bytes, ack=True, verbose=verbose)
 
 def sendStaticDisplayFrameId(link, frame_id, verbose=True):
+    _checkLink(link)
     if not (0 <= frame_id and frame_id <= 63):
         raise ValueError('The value should be 0~63 (inclusive)')
     
@@ -239,6 +256,13 @@ def sendStaticDisplayFrameId(link, frame_id, verbose=True):
     return _writeBody(link, cmd=b'\x08', data_bytes=data_bytes, ack=True, verbose=verbose)
 
 
-def closeConnection(link):
-    return JAClose(link)
+def closeConnection(link, force=False):
+    if force:
+        if link in _opened_connections:
+            _opened_connections.remove(link)
+        return JAClose(link)
+    else:
+        _checkLink(link)
+        _opened_connections.remove(link)
+        return JAClose(link)
 
