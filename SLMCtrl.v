@@ -500,20 +500,33 @@ reg [7:0] test_signals;
 reg [7:0] seq_trig_counter, seq_with_galvo_trig_counter;
 seven_seg   jtag_state_monitor_1(.number(test_signals[7:4]), .display(HEX1));
 seven_seg   jtag_state_monitor_0(.number(test_signals[3:0]), .display(HEX0));
+
+assign LEDR[4] = (SW[7:0] == 8'd1) ? x_offset_sign : 
+                 (SW[7:0] == 8'd2) ? y_offset_sign : 1'b0;
 always @ (*) begin
     if(SW[8] == 1'b1) begin
         case(SW[7:0])
-            8'd0:    test_signals = {1'b0, jtag_states};
-            8'd1:    test_signals = {1'b0, num_images_in_mem};
-            8'd2:    test_signals = cycles_of_displaying[7:0];
-            8'd3:    test_signals = cycles_of_displaying[15:8];
-            8'd4:    test_signals = galvo_num_of_positions[7:0];
-            8'd5:    test_signals = galvo_num_of_positions[15:8];
-            8'd6:    test_signals = galvo_num_of_positions[23:16];
-            8'd7:    test_signals = galvo_num_of_positions[31:24];
-            8'd8:    test_signals = seq_trig_counter;
-            8'd9:    test_signals = seq_with_galvo_trig_counter;
-            default: test_signals = 8'd0;
+            8'h00:    test_signals = {1'b0, jtag_states};
+            8'h01:    test_signals = x_offset;
+            8'h02:    test_signals = y_offset;
+            8'h03:    test_signals = {1'b0, num_images_in_mem};
+            8'h04:    test_signals = cycles_of_displaying[7:0];
+            8'h05:    test_signals = cycles_of_displaying[15:8];
+            8'h06:    test_signals = num_of_galvo_positions[7:0];
+            8'h07:    test_signals = num_of_galvo_positions[15:8];
+            8'h08:    test_signals = num_of_galvo_positions[23:16];
+            8'h09:    test_signals = num_of_galvo_positions[31:24];
+            8'h0A:    test_signals = seq_trig_counter;
+            8'h0B:    test_signals = seq_with_galvo_trig_counter;
+            8'h0C:    test_signals = {2'b00, static_display_id_from_host};
+            8'h13:    test_signals = {1'b0, justified_num_images_in_mem};
+            8'h14:    test_signals = justified_cycles_of_displaying[7:0];
+            8'h15:    test_signals = justified_cycles_of_displaying[15:8];
+            8'h16:    test_signals = justified_num_of_galvo_positions[7:0];
+            8'h17:    test_signals = justified_num_of_galvo_positions[15:8];
+            8'h18:    test_signals = justified_num_of_galvo_positions[23:16];
+            8'h19:    test_signals = justified_num_of_galvo_positions[31:24];
+            default:  test_signals = 8'd0;
         endcase
     end
     else begin

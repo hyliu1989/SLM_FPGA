@@ -61,10 +61,12 @@ reg  [7:0]  cam_trigger_counter;
 reg  [7:0]  galvo_trigger_counter;
 
 reg         galvo_ack_catch, second_sync_negedge_catch;
+
+// counters to run until the inputted maximum: galvo_cnt, cycle_cnt, img_cnt
+integer i;
 reg  [31:0] galvo_cnt;
 reg  [31:0] galvo_cnt_plus_one_at_state[5:1];
 reg         is_galvo_cnt_ended_at_state[5:1];
-integer i;
 reg  [15:0] cycle_cnt;
 reg  [15:0] cycle_cnt_plus_one_at_state[2:1];
 reg         is_last_cycle_at_state[2:1];
@@ -202,6 +204,7 @@ always @ (posedge iCLK or posedge iRST) begin
         case(states)
             ST_IDLE:               cycle_cnt <= 0;
             ST_COUNT_VGA_CYCLES_2: cycle_cnt <= cycle_cnt_plus_one_at_state[2];
+            ST_CHECK_LAST_FRAME:   cycle_cnt <= 0;
             default:               cycle_cnt <= cycle_cnt;
         endcase
         // cycle_cnt_plus_one_at_state[1], is_last_cycle_at_state[1]
@@ -227,12 +230,12 @@ always @ (posedge iCLK or posedge iRST) begin
         img_cnt <= 0;
     end
     else begin
-        if(states == ST_IDLE)
-            img_cnt <= 0;
-        if(states == ST_CHECK_LAST_FRAME)
-            img_cnt <= img_cnt + 1'b1;
-        else
-            img_cnt <= img_cnt;
+        case(states)
+            ST_IDLE:                        img_cnt <= 0;
+            ST_CHECK_LAST_FRAME:            img_cnt <= img_cnt + 1'b1;
+            ST_CHECK_LAST_GALVO_POSITION_0: img_cnt <= 0;
+            default:                        img_cnt <= img_cnt;
+        endcase
     end
 end
 assign is_last_image = ((img_cnt + 1'b1) == num_total_slm_images);
