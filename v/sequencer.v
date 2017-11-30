@@ -89,7 +89,7 @@ always @ (posedge iCLK or posedge iRST) begin
             ST_WAIT_FOR_VGA_REFRESH_1:           states <= (vga_frame_sync_neg_edge)? ST_WAIT_FOR_VGA_REFRESH_2 : states;
             ST_WAIT_FOR_VGA_REFRESH_2:           states <= (vga_frame_sync_neg_edge)? ST_SIGNAL_CAMERA : states;
             ST_SIGNAL_CAMERA:                    states <= ST_WAIT_A_VGA_CYCLE;
-            ST_WAIT_A_VGA_CYCLE:                 states <= (vga_frame_sync)? ST_COUNT_VGA_CYCLES_0 : states;
+            ST_WAIT_A_VGA_CYCLE:                 states <= (vga_frame_sync_neg_edge)? ST_COUNT_VGA_CYCLES_0 : states;
             ST_COUNT_VGA_CYCLES_0:               states <= ST_COUNT_VGA_CYCLES_1;
             ST_COUNT_VGA_CYCLES_1:               states <= ST_COUNT_VGA_CYCLES_2;
             ST_COUNT_VGA_CYCLES_2:               states <= (is_last_cycle_at_state[2])? ST_CHECK_LAST_FRAME : ST_WAIT_A_VGA_CYCLE;
