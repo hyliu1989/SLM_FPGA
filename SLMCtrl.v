@@ -250,7 +250,7 @@ wire [7:0]  y_offset;
 wire        y_offset_sign;
 wire [15:0] cycles_of_displaying;
 wire        sequencing_trigger, sequencing_with_galvo_tigger;
-wire [23:0] galvo_values_x, galvo_values_y;
+wire [31:0] galvo_num_of_positions;
 
 wire        jtag_error;
 wire [6:0]  jtag_states;
@@ -377,8 +377,7 @@ jtag_uart_decode jtag_uart_decode_0(
     .oCYCLES_OF_DISPLAYING_EACH_IMAGE(cycles_of_displaying),  // [15:0]
     .oSEQUENCING_TRIGGER(sequencing_trigger),
     .oGALVE_SEQUENCING_TRIGGER(sequencing_with_galvo_tigger),
-    .oGALVO_VALUES_X(galvo_values_x),  // [23:0]
-    .oGALVO_VALUES_Y(galvo_values_y),  // [23:0]
+    .oNUM_GALVO_POSITIONS(galvo_num_of_positions),  // [31:0]
     .oERROR(jtag_error),
     .oMONITORING_STATES(jtag_states)  // [6:0]
 );
@@ -460,9 +459,8 @@ assign GPIO_0[35:32] = cycles_of_displaying[7:4];
 assign GPIO_1[35:32] = cycles_of_displaying[3:0];
 assign LEDR[8] = sequencing_trigger||sequencing_with_galvo_tigger;
 assign GPIO_0[31:24] = cycles_of_displaying[15:8];
-assign GPIO_0[23:0] = galvo_values_x;
-assign GPIO_1[30:24] = num_images_in_mem;
-assign GPIO_1[23:0] = galvo_values_y;
+assign GPIO_0[23:17] = num_images_in_mem;
+assign GPIO_1[31:0] = galvo_num_of_positions;
 
 // // testing code for sdram writing
 // test_sdram_write test_sdram_write_0(
