@@ -7,8 +7,8 @@ parameter HOSTCMD_UPDATE_OFFSET_H           = 8'h01;  // Update offsets
 parameter HOSTCMD_UPDATE_OFFSET_V           = 8'h02;  // Update offsets
 parameter HOSTCMD_UPDATE_CYC_DISPLAY        = 8'h03;  // Update number of displaying cycles for each image
 parameter HOSTCMD_TRIGGER_SEQUENCING        = 8'h04;  // Triggering the sequencing
-parameter HOSTCMD_UPDATE_GALVO_X            = 8'h05;  // Update Galvo informations
-parameter HOSTCMD_UPDATE_GALVO_Y            = 8'h06;  // Update Galvo informations
+parameter HOSTCMD_TRIGGER_GALVO_SEQUENCE    = 8'h05;  // Triggering the sequencing
+parameter HOSTCMD_UPDATE_GALVO_NUM_POS      = 8'h06;  // Update number of positions of Galvo
 parameter HOSTCMD_UPDATE_TOT_NUM_FRAMES     = 8'h07;  // Update total number of frames in memory
 
 
@@ -48,13 +48,13 @@ parameter ST_UPDATE_DISPLAY_CYC_get_num_1      = 7'h1_3;
 
 // Triggering the sequencing
 parameter ST_START_SEQUENCE_trigger            = 7'h0_4;
+parameter ST_START_GALVO_SEQUENCE_trigger      = 7'h1_4;
 
-// Update Galvo informations
-parameter ST_UPDATE_GALVO_for_x                = 7'h0_5;
-parameter ST_UPDATE_GALVO_for_y                = 7'h1_5;
-parameter ST_UPDATE_GALVO_value_0              = 7'h2_5;
-parameter ST_UPDATE_GALVO_value_1              = 7'h3_5;
-parameter ST_UPDATE_GALVO_value_2              = 7'h4_5;
+// Update number of positions of Galvo
+parameter ST_UPDATE_GALVO_NUM_POS_get_num_0    = 7'h0_5;
+parameter ST_UPDATE_GALVO_NUM_POS_get_num_1    = 7'h1_5;
+parameter ST_UPDATE_GALVO_NUM_POS_get_num_2    = 7'h2_5;
+parameter ST_UPDATE_GALVO_NUM_POS_get_num_3    = 7'h3_5;
 
 // Update total number of frames in memory
 parameter ST_UPDATE_NUM_FRAMES_get_num         = 7'h0_6;
