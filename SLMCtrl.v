@@ -249,8 +249,9 @@ wire        x_offset_sign;
 wire [7:0]  y_offset;
 wire        y_offset_sign;
 wire [15:0] cycles_of_displaying;
-wire        sequencing_trigger;
-wire [23:0] galvo_values_x, galvo_values_y;
+wire        sequencing_trigger, sequencing_with_galvo_tigger;
+wire [31:0] galvo_num_of_positions;
+wire [5:0]  static_display_id_from_host, static_display_id;
 
 wire        jtag_error;
 wire [6:0]  jtag_states;
@@ -311,7 +312,7 @@ sdram_to_vgafifo sdram_to_vgafifo_0(
 
     // control signals for current frame
     // FIXME: the 5 values here are for testing
-    .iFRAME_ID(SW[5:0]),  // input [5:0]
+    .iFRAME_ID(static_display_id),  // input [5:0]
     .iOFFSET_H_SIGN(x_offset_sign),  // input
     .iOFFSET_H(x_offset),  // input [7:0], horizontal offset, + to the right
     .iOFFSET_V_SIGN(y_offset_sign),  // input
@@ -332,7 +333,6 @@ sdram_to_vgafifo sdram_to_vgafifo_0(
     .oFIFO_WCLK(vga_fifo_wclk),
     .oFIFO_WDATA(vga_fifo_wdata),
     .oFIFO_WEN(vga_fifo_wen)
-    //,.o_tests(LEDR[7:0])
 );
 
 fifo_vga fv0(
@@ -377,8 +377,9 @@ jtag_uart_decode jtag_uart_decode_0(
     .oV_OFFSET(y_offset),  // [7:0]
     .oCYCLES_OF_DISPLAYING_EACH_IMAGE(cycles_of_displaying),  // [15:0]
     .oSEQUENCING_TRIGGER(sequencing_trigger),
-    .oGALVO_VALUES_X(galvo_values_x),  // [23:0]
-    .oGALVO_VALUES_Y(galvo_values_y),  // [23:0]
+    .oGALVE_SEQUENCING_TRIGGER(sequencing_with_galvo_tigger),
+    .oNUM_GALVO_POSITIONS(galvo_num_of_positions),  // [31:0]
+    .oSTATIC_DISPLAY_FRAME_ID(static_display_id_from_host), // [5:0]
     .oERROR(jtag_error),
     .oMONITORING_STATES(jtag_states)  // [6:0]
 );
@@ -448,21 +449,55 @@ reader_system reader_system_0(
 
 assign LEDR[9] = jtag_error;
 assign HEX5 = sdram_ctrl_write_done? 7'b1111111 : 7'b0000011;  // letter b
-assign HEX4 = sdram_ctrl_write_done? 7'b1111111 : 7'b1000001;  // letter u
-assign HEX3 = sdram_ctrl_write_done? 7'b1111111 : 7'b0010010;  // letter s
+assign HEX4 = sdram_ctrl_write_done? 7'b1111111 : 7'b1000001;  // letter U
+assign HEX3 = sdram_ctrl_write_done? 7'b1111111 : 7'b0010010;  // letter S
 assign HEX2 = sdram_ctrl_write_done? 7'b1111111 : 7'b0010001;  // letter y
-seven_seg   jtag_state_monitor_1(.number({1'b0,jtag_states[6:4]}), .display(HEX1));
-seven_seg   jtag_state_monitor_0(.number(       jtag_states[3:0]), .display(HEX0));
+// seven_seg   jtag_state_monitor_1(.number({1'b0,jtag_states[6:4]}), .display(HEX1));
+// seven_seg   jtag_state_monitor_0(.number(       jtag_states[3:0]), .display(HEX0));
+assign static_display_id = (SW[9]==1'b1)? SW[5:0] : static_display_id_from_host;
 
 
 /// TESTING (to make the synthesizer not simply the necessary logics out)
-assign GPIO_0[35:32] = cycles_of_displaying[7:4];
-assign GPIO_1[35:32] = cycles_of_displaying[3:0];
-assign LEDR[8] = sequencing_trigger;
-assign GPIO_0[31:24] = cycles_of_displaying[15:8];
-assign GPIO_0[23:0] = galvo_values_x;
-assign GPIO_1[30:24] = num_images_in_mem;
-assign GPIO_1[23:0] = galvo_values_y;
+assign LEDR[8] = sequencing_trigger||sequencing_with_galvo_tigger;
+
+reg [7:0] test_signals;
+reg [7:0] seq_trig_counter, seq_with_galvo_trig_counter;
+seven_seg   jtag_state_monitor_1(.number(test_signals[7:4]), .display(HEX1));
+seven_seg   jtag_state_monitor_0(.number(test_signals[3:0]), .display(HEX0));
+always @ (*) begin
+    if(SW[8] == 1'b1) begin
+        case(SW[7:0])
+            8'd0:    test_signals = {1'b0, jtag_states};
+            8'd1:    test_signals = {1'b0, num_images_in_mem};
+            8'd2:    test_signals = cycles_of_displaying[7:0];
+            8'd3:    test_signals = cycles_of_displaying[15:8];
+            8'd4:    test_signals = galvo_num_of_positions[7:0];
+            8'd5:    test_signals = galvo_num_of_positions[15:8];
+            8'd6:    test_signals = galvo_num_of_positions[23:16];
+            8'd7:    test_signals = galvo_num_of_positions[31:24];
+            8'd8:    test_signals = seq_trig_counter;
+            8'd9:    test_signals = seq_with_galvo_trig_counter;
+            default: test_signals = 8'd0;
+        endcase
+    end
+    else begin
+        test_signals = 8'd0;
+    end
+end
+
+always @ (posedge CLOCK_50 or posedge delayed_reset) begin
+    if(delayed_reset) begin
+        seq_trig_counter <= 0;
+        seq_with_galvo_trig_counter <= 0;
+    end
+    else begin
+        if(sequencing_trigger)
+            seq_trig_counter <= seq_trig_counter + 1'b1;
+        if(sequencing_with_galvo_tigger)
+            seq_with_galvo_trig_counter <= seq_with_galvo_trig_counter + 1'b1;
+    end
+end
+
 
 // // testing code for sdram writing
 // test_sdram_write test_sdram_write_0(

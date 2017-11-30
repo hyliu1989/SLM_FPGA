@@ -30,9 +30,10 @@ module jtag_uart_decode(
     output [15:0] oCYCLES_OF_DISPLAYING_EACH_IMAGE,
     
     output        oSEQUENCING_TRIGGER,
+    output        oGALVE_SEQUENCING_TRIGGER,
     
-    output [23:0] oGALVO_VALUES_X,
-    output [23:0] oGALVO_VALUES_Y,
+    output [31:0] oNUM_GALVO_POSITIONS,
+    output [5:0]  oSTATIC_DISPLAY_FRAME_ID,
     
     output        oERROR,
     output [6:0]  oMONITORING_STATES
@@ -88,11 +89,9 @@ reg [7:0]   fifo_wrdata;
 reg         update_horizontal, update_horizontal_next;
 reg [7:0]   offset_h, offset_h_next, offset_v, offset_v_next;
 reg         offset_sign_h, offset_sign_h_next, offset_sign_v, offset_sign_v_next;
-
 reg [15:0]  cycles_of_display, cycles_of_display_next;
-
-reg         update_galvo_horiz, update_galvo_horiz_next;
-reg [23:0]  galvo_values_x, galvo_values_x_next, galvo_values_y, galvo_values_y_next;
+reg [31:0]  galvo_num_of_positions, galvo_num_of_positions_next;
+reg [5:0]   static_display_id, static_display_id_next;
 
 assign is_idle_to_take_command = (states==ST_IDLE)||(states==ST_ERROR);
 
@@ -152,7 +151,7 @@ always @ (*) begin
         end
         ST_UPDATE_RAM_wait_data: begin
             new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
-            if(r_counter == {total_frames_to_download[5:0], 20'h0_0000})  // if total_frames_to_download[6:0] equals to 64, this line still give a correct ending.
+            if(r_counter == {total_frames_to_download[5:0], 20'h0_0000})  // if total_frames_to_download[6:0] equals to 64, this line is still correct.
                 states_next = ST_WAIT_ACK;
             else
                 states_next = ST_LISTEN_TO_INTERRUPT;
@@ -216,32 +215,44 @@ always @ (*) begin
             new_data_ack = 1'b0;
             states_next = ST_WAIT_ACK;
         end
+        ST_START_GALVO_SEQUENCE_trigger: begin
+            new_data_ack = 1'b0;
+            states_next = ST_WAIT_ACK;
+        end
         /// ==== End of Triggering the sequencing ====================================
         
         
-        /// ==== Updating Galvo information ====================================
-        ST_UPDATE_GALVO_for_x, ST_UPDATE_GALVO_for_y: begin
-            new_data_ack = 1'b0;
-            states_next = ST_UPDATE_GALVO_value_0;
-            // update a register indicating which one of horizontal or vertical to update
-        end
-        ST_UPDATE_GALVO_value_0: begin
+        /// ==== Update Number of Positions of Galvo ====================================
+        ST_UPDATE_GALVO_NUM_POS_get_num_0: begin
             new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
-            states_next = (is_there_new_data)? ST_UPDATE_GALVO_value_1 : ST_LISTEN_TO_INTERRUPT;
+            states_next = (is_there_new_data)? ST_UPDATE_GALVO_NUM_POS_get_num_1 : ST_LISTEN_TO_INTERRUPT;
             // update the number
         end
-        ST_UPDATE_GALVO_value_1: begin
+        ST_UPDATE_GALVO_NUM_POS_get_num_1: begin
             new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
-            states_next = (is_there_new_data)? ST_UPDATE_GALVO_value_2 : ST_LISTEN_TO_INTERRUPT;
+            states_next = (is_there_new_data)? ST_UPDATE_GALVO_NUM_POS_get_num_2 : ST_LISTEN_TO_INTERRUPT;
             // update the number
         end
-        ST_UPDATE_GALVO_value_2: begin
+        ST_UPDATE_GALVO_NUM_POS_get_num_2: begin
+            new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
+            states_next = (is_there_new_data)? ST_UPDATE_GALVO_NUM_POS_get_num_3 : ST_LISTEN_TO_INTERRUPT;
+            // update the number
+        end
+        ST_UPDATE_GALVO_NUM_POS_get_num_3: begin
             new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
             states_next = (is_there_new_data)? ST_WAIT_ACK : ST_LISTEN_TO_INTERRUPT;
             // update the number
         end
-        /// ==== End of Updating Galvo information ====================================
+        /// ==== End of Update Number of Positions of Galvo ====================================
         
+
+        /// ==== Updating static display =========================
+        ST_UPDATE_STATIC_DISPLAY_get_id: begin
+            new_data_ack = (is_there_new_data)? 1'b1 : 1'b0;
+            states_next = (is_there_new_data)? ST_WAIT_ACK : ST_LISTEN_TO_INTERRUPT;
+        end
+        /// ==== End of Updating static display =========================
+
         
         default: begin
             // TODO: temprorary dummies are put here and should be replaced
@@ -332,8 +343,6 @@ end
 assign oTRIGGER_WRITE_SDRAM = o_trigger;
 assign oSTARTING_FRAME = o_starting_frame;
 assign oNUM_IMAGES_TO_DOWNLOAD = o_num_to_download;
-
-
 /// ==== End of Updating the RAM ====================================
 
 
@@ -411,41 +420,46 @@ assign oCYCLES_OF_DISPLAYING_EACH_IMAGE = cycles_of_display;
 
 /// ==== Triggering the sequencing ====================================
 assign oSEQUENCING_TRIGGER = (states == ST_START_SEQUENCE_trigger);
+assign oGALVE_SEQUENCING_TRIGGER = (states == ST_START_GALVO_SEQUENCE_trigger);
 /// ==== End of Triggering the sequencing ====================================
 
 
-/// ==== Updating Galvo information ====================================
+/// ==== Update Number of Positions of Galvo ====================================
 always @ (*) begin
-    case(states)
-        ST_UPDATE_GALVO_for_x: update_galvo_horiz_next = 1'b1;
-        ST_UPDATE_GALVO_for_y: update_galvo_horiz_next = 1'b0;
-        default:               update_galvo_horiz_next = update_galvo_horiz;
-    endcase
     // horizontal case
-    if(update_galvo_horiz && is_there_new_data)
+    if(is_there_new_data)
         case(states)
-            ST_UPDATE_GALVO_value_0: galvo_values_x_next = {galvo_values_x[23:16], galvo_values_x[15:8], data               };
-            ST_UPDATE_GALVO_value_1: galvo_values_x_next = {galvo_values_x[23:16], data,                 galvo_values_x[7:0]};
-            ST_UPDATE_GALVO_value_2: galvo_values_x_next = {data,                  galvo_values_x[15:8], galvo_values_x[7:0]};
-            default:                 galvo_values_x_next = galvo_values_x;
+            ST_UPDATE_GALVO_NUM_POS_get_num_0: 
+                galvo_num_of_positions_next = {galvo_num_of_positions[31:8],  data                              };
+            ST_UPDATE_GALVO_NUM_POS_get_num_1: 
+                galvo_num_of_positions_next = {galvo_num_of_positions[31:16], data, galvo_num_of_positions[7:0] };
+            ST_UPDATE_GALVO_NUM_POS_get_num_2: 
+                galvo_num_of_positions_next = {galvo_num_of_positions[31:24], data, galvo_num_of_positions[15:0]};
+            ST_UPDATE_GALVO_NUM_POS_get_num_3: 
+                galvo_num_of_positions_next = {                               data, galvo_num_of_positions[23:0]};
+            default:
+                galvo_num_of_positions_next = galvo_num_of_positions;
         endcase
     else
-        galvo_values_x_next = galvo_values_x;
-    // vertical case
-    if(!update_galvo_horiz && is_there_new_data)
-        case(states)
-            ST_UPDATE_GALVO_value_0: galvo_values_y_next = {galvo_values_y[23:16], galvo_values_y[15:8], data               };
-            ST_UPDATE_GALVO_value_1: galvo_values_y_next = {galvo_values_y[23:16], data,                 galvo_values_y[7:0]};
-            ST_UPDATE_GALVO_value_2: galvo_values_y_next = {data,                  galvo_values_y[15:8], galvo_values_y[7:0]};
-            default:                 galvo_values_y_next = galvo_values_y;
-        endcase
-    else
-        galvo_values_y_next = galvo_values_y;
+        galvo_num_of_positions_next = galvo_num_of_positions;
 end
-assign oGALVO_VALUES_X = galvo_values_x;
-assign oGALVO_VALUES_Y = galvo_values_y;
-/// ==== End of Updating Galvo information ====================================
-        
+assign oNUM_GALVO_POSITIONS = galvo_num_of_positions;
+/// ==== End of Update Number of Positions of Galvo ====================================
+
+
+/// ==== Updating static display =========================
+always @ (*) begin
+    if(is_there_new_data)
+        case(states)
+            ST_UPDATE_STATIC_DISPLAY_get_id: static_display_id_next = data[5:0];
+            default:                         static_display_id_next = static_display_id;
+        endcase
+    else
+        static_display_id_next = static_display_id;
+end
+assign oSTATIC_DISPLAY_FRAME_ID = static_display_id;
+/// ==== End of Updating static display =========================
+
 
 // main sequential part
 always @ (posedge iCLK) begin
@@ -465,9 +479,8 @@ always @ (posedge iCLK or posedge iRST) begin
         offset_v <= 8'd0;
         offset_sign_v <= 1'b0;
         cycles_of_display <= 16'd0;
-        update_galvo_horiz <= 1'b0;
-        galvo_values_x <= 24'd0;
-        galvo_values_y <= 24'd0;
+        galvo_num_of_positions <= 31'd0;
+        static_display_id <= 6'd0;
     end
     else begin
         states <= states_next;
@@ -481,9 +494,8 @@ always @ (posedge iCLK or posedge iRST) begin
         offset_v <= offset_v_next;
         offset_sign_v <= offset_sign_v_next;
         cycles_of_display <= cycles_of_display_next;
-        update_galvo_horiz <= update_galvo_horiz_next;
-        galvo_values_x <= galvo_values_x_next;
-        galvo_values_y <= galvo_values_y_next;
+        galvo_num_of_positions <= galvo_num_of_positions_next;
+        static_display_id <= static_display_id_next;
     end
 end
 

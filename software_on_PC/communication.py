@@ -215,28 +215,28 @@ def triggerSequencing(link, verbose=True):
     return _writeBody(link, cmd=b'\x04', data_bytes=b'', ack=True, verbose=verbose)
 
 
-# tentative function, should be changed if we know the correct way of controlling galvo
-def sendGalvoValuesX(link, value, verbose=True):
-    if value >= (1 << 24):
-        raise ValueError('The value should not exceed %d' % (1<<24-1))
-    value = np.uint32(value)
-    value_0 = np.uint8((value & 0x0000FF)     )
-    value_1 = np.uint8((value & 0x00FF00) >> 8)
-    value_2 = np.uint8((value & 0xFF0000) >> 16)
-    data_bytes = bytes([value_0,value_1,value_2])
-    return _writeBody(link, cmd=b'\x05', data_bytes=data_bytes, ack=True, verbose=verbose)
+def triggerSequencingWithGalvo(link, verbose=True):
+    return _writeBody(link, cmd=b'\x05', data_bytes=b'', ack=True, verbose=verbose)
 
 
-# tentative function, should be changed if we know the correct way of controlling galvo
-def sendGalvoValuesY(link, value, verbose=True):
-    if value >= (1 << 24):
-        raise ValueError('The value should not exceed %d' % (1<<24-1))
+def sendGalvoNumPositions(link, value, verbose=True):
+    if value >= (1 << 32):
+        raise ValueError('The value should not exceed %d' % ((1<<32)-1))
     value = np.uint32(value)
-    value_0 = np.uint8((value & 0x0000FF)     )
-    value_1 = np.uint8((value & 0x00FF00) >> 8)
-    value_2 = np.uint8((value & 0xFF0000) >> 16)
-    data_bytes = bytes([value_0,value_1,value_2])
+    value_0 = np.uint8((value & 0x000000FF)     )
+    value_1 = np.uint8((value & 0x0000FF00) >> 8)
+    value_2 = np.uint8((value & 0x00FF0000) >> 16)
+    value_3 = np.uint8((value & 0xFF000000) >> 24)
+    data_bytes = bytes([value_0,value_1,value_2, value_3])
     return _writeBody(link, cmd=b'\x06', data_bytes=data_bytes, ack=True, verbose=verbose)
+
+def sendStaticDisplayFrameId(link, frame_id, verbose=True):
+    if not (0 <= frame_id and frame_id <= 63):
+        raise ValueError('The value should be 0~63 (inclusive)')
+    
+    frame_id = np.uint8(frame_id)
+    data_bytes = bytes([frame_id])
+    return _writeBody(link, cmd=b'\x08', data_bytes=data_bytes, ack=True, verbose=verbose)
 
 
 def closeConnection(link):
