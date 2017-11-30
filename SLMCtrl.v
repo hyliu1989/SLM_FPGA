@@ -241,21 +241,25 @@ wire        sdram_fifo_rd_req;
 wire [7:0]  sdram_fifo_rd_data;
 wire        sdram_fifo_rd_empty;
 wire [6:0]  num_images_to_download;
-wire [6:0]  num_images_in_mem;
+wire [6:0]  num_images_in_mem, justified_num_images_in_mem;
 wire [5:0]  starting_frame_to_download;
 
 wire [7:0]  x_offset;
 wire        x_offset_sign;
 wire [7:0]  y_offset;
 wire        y_offset_sign;
-wire [15:0] cycles_of_displaying;
-wire        sequencing_trigger, sequencing_with_galvo_tigger;
-wire [31:0] galvo_num_of_positions;
-wire [5:0]  static_display_id_from_host, static_display_id;
+wire [15:0] cycles_of_displaying, justified_cycles_of_displaying;
+wire        jtag_trigger_sequencing, jtag_trigger_sequencing_with_galvo;
+wire [31:0] num_of_galvo_positions, justified_num_of_galvo_positions;
+wire [5:0]  display_frame_id, seq_display_id, static_display_id_from_host, static_display_id;
 
 wire        jtag_error;
 wire [6:0]  jtag_states;
 
+wire        sequencer_busy;
+wire        sequencer_trigger_cam;
+wire        sequencer_trigger_galvo;
+wire        test_simulated_ack;  // TODO: to remove this line
 
 //=======================================================
 //  Structural coding
@@ -312,7 +316,7 @@ sdram_to_vgafifo sdram_to_vgafifo_0(
 
     // control signals for current frame
     // FIXME: the 5 values here are for testing
-    .iFRAME_ID(static_display_id),  // input [5:0]
+    .iFRAME_ID(display_frame_id),  // input [5:0]
     .iOFFSET_H_SIGN(x_offset_sign),  // input
     .iOFFSET_H(x_offset),  // input [7:0], horizontal offset, + to the right
     .iOFFSET_V_SIGN(y_offset_sign),  // input
@@ -350,7 +354,7 @@ fifo_vga fv0(
 jtag_uart_decode jtag_uart_decode_0(
     .iCLK(CLOCK_50),
     .iSDRAM_CTRL_CLK(sdram_ctrl_clock),
-	.iRST(delayed_reset),
+    .iRST(delayed_reset),
     
     // jtag uart signals
     .oJTAG_SLAVE_ADDR(jtag_uart_avalon_addr),
@@ -376,9 +380,9 @@ jtag_uart_decode jtag_uart_decode_0(
     .oV_OFFSET_SIGN(y_offset_sign),
     .oV_OFFSET(y_offset),  // [7:0]
     .oCYCLES_OF_DISPLAYING_EACH_IMAGE(cycles_of_displaying),  // [15:0]
-    .oSEQUENCING_TRIGGER(sequencing_trigger),
-    .oGALVE_SEQUENCING_TRIGGER(sequencing_with_galvo_tigger),
-    .oNUM_GALVO_POSITIONS(galvo_num_of_positions),  // [31:0]
+    .oSEQUENCING_TRIGGER(jtag_trigger_sequencing),
+    .oGALVE_SEQUENCING_TRIGGER(jtag_trigger_sequencing_with_galvo),
+    .oNUM_GALVO_POSITIONS(num_of_galvo_positions),  // [31:0]
     .oSTATIC_DISPLAY_FRAME_ID(static_display_id_from_host), // [5:0]
     .oERROR(jtag_error),
     .oMONITORING_STATES(jtag_states)  // [6:0]
@@ -386,17 +390,17 @@ jtag_uart_decode jtag_uart_decode_0(
 
 
 write_to_sdram write_to_sdram_0(
-	.iCLK(sdram_ctrl_clock),
-	.iRST(delayed_reset_1),
+    .iCLK(sdram_ctrl_clock),
+    .iRST(delayed_reset_1),
 
-	.iTRIGGER(download_images_trigger),
+    .iTRIGGER(download_images_trigger),
     
     // SDRAM Avalon signals
-	.iWAIT_REQUEST(sdram_ctrl_wait_req),
-	.oWR_REQ(sdram_ctrl_write_en),
-	.oWR_DATA(sdram_ctrl_write_data),  // [15:0]
-	.oWR_ADDR(sdram_ctrl_write_addr),  // [24:0]
-	.oDONE(sdram_ctrl_write_done),
+    .iWAIT_REQUEST(sdram_ctrl_wait_req),
+    .oWR_REQ(sdram_ctrl_write_en),
+    .oWR_DATA(sdram_ctrl_write_data),  // [15:0]
+    .oWR_ADDR(sdram_ctrl_write_addr),  // [24:0]
+    .oDONE(sdram_ctrl_write_done),
     
     // signals from the FIFO that contains data_out
     .oFIFO_RD_CLK(sdram_fifo_rd_clk),
@@ -447,37 +451,82 @@ reader_system reader_system_0(
     .jtag_uart_0_avalon_jtag_slave_waitrequest (jtag_uart_avalon_wait_req)  //                              .waitrequest
 );
 
+
+assign justified_num_of_galvo_positions = (num_of_galvo_positions == 0)? 32'd1 : num_of_galvo_positions;
+assign justified_cycles_of_displaying = (cycles_of_displaying == 0)? 16'd1 : cycles_of_displaying;
+assign justified_num_images_in_mem = (num_images_in_mem == 0)? 7'd1 : num_images_in_mem;
+
+sequencer seq_0(
+    .iCLK(CLOCK_50),
+    .iRST(delayed_reset),
+
+    .iCAMERA_TRIGGER_MILLISEC(8'd2),  // [7:0]
+    .iGALVO_TRIGGER_MILLISEC(8'd2),  // [7:0]
+    .iNUM_SLM_IMAGES(justified_num_images_in_mem),  // [6:0]
+    .iCYCLES_OF_DISPLAY_FOR_EACH_IMAGE(justified_cycles_of_displaying),  // [15:0]
+    .iNUM_OF_GALVO_POSITIONS(justified_num_of_galvo_positions),  // [31:0]
+
+    .iTRIG_WITHOUT_GALVO(jtag_trigger_sequencing),
+    .iTRIG_WITH_GALVO(jtag_trigger_sequencing_with_galvo),
+    .oCAMERA_TRIGGER(sequencer_trigger_cam),
+    .oGALVO_CHANGE_TRIGGER(sequencer_trigger_galvo),
+    .iGALVO_ACK(test_simulated_ack),
+    .iVGA_FRAME_SYNC(VGA_VS),
+    .oCURRENT_DISPLAY_FRAME_ID(seq_display_id),  // [5:0]
+    .oBUSY(sequencer_busy)
+);
+
+
+
+
+
 assign LEDR[9] = jtag_error;
-assign HEX5 = sdram_ctrl_write_done? 7'b1111111 : 7'b0000011;  // letter b
-assign HEX4 = sdram_ctrl_write_done? 7'b1111111 : 7'b1000001;  // letter U
-assign HEX3 = sdram_ctrl_write_done? 7'b1111111 : 7'b0010010;  // letter S
-assign HEX2 = sdram_ctrl_write_done? 7'b1111111 : 7'b0010001;  // letter y
-// seven_seg   jtag_state_monitor_1(.number({1'b0,jtag_states[6:4]}), .display(HEX1));
-// seven_seg   jtag_state_monitor_0(.number(       jtag_states[3:0]), .display(HEX0));
+assign LEDR[8] = sequencer_busy;
+assign LEDR[7] = sequencer_trigger_cam;
+assign LEDR[6] = sequencer_trigger_galvo;
+assign HEX5 = (sdram_ctrl_write_done||sequencer_busy)? 7'b1111111 : 7'b0000011;  // letter b
+assign HEX4 = (sdram_ctrl_write_done||sequencer_busy)? 7'b1111111 : 7'b1000001;  // letter U
+assign HEX3 = (sdram_ctrl_write_done||sequencer_busy)? 7'b1111111 : 7'b0010010;  // letter S
+assign HEX2 = (sdram_ctrl_write_done||sequencer_busy)? 7'b1111111 : 7'b0010001;  // letter y
 assign static_display_id = (SW[9]==1'b1)? SW[5:0] : static_display_id_from_host;
+assign display_frame_id = (sequencer_busy)? seq_display_id : static_display_id;
+
+
+
 
 
 /// TESTING (to make the synthesizer not simply the necessary logics out)
-assign LEDR[8] = sequencing_trigger||sequencing_with_galvo_tigger;
-
 reg [7:0] test_signals;
 reg [7:0] seq_trig_counter, seq_with_galvo_trig_counter;
 seven_seg   jtag_state_monitor_1(.number(test_signals[7:4]), .display(HEX1));
 seven_seg   jtag_state_monitor_0(.number(test_signals[3:0]), .display(HEX0));
+
+assign LEDR[4] = (SW[7:0] == 8'd1) ? x_offset_sign : 
+                 (SW[7:0] == 8'd2) ? y_offset_sign : 1'b0;
 always @ (*) begin
     if(SW[8] == 1'b1) begin
         case(SW[7:0])
-            8'd0:    test_signals = {1'b0, jtag_states};
-            8'd1:    test_signals = {1'b0, num_images_in_mem};
-            8'd2:    test_signals = cycles_of_displaying[7:0];
-            8'd3:    test_signals = cycles_of_displaying[15:8];
-            8'd4:    test_signals = galvo_num_of_positions[7:0];
-            8'd5:    test_signals = galvo_num_of_positions[15:8];
-            8'd6:    test_signals = galvo_num_of_positions[23:16];
-            8'd7:    test_signals = galvo_num_of_positions[31:24];
-            8'd8:    test_signals = seq_trig_counter;
-            8'd9:    test_signals = seq_with_galvo_trig_counter;
-            default: test_signals = 8'd0;
+            8'h00:    test_signals = {1'b0, jtag_states};
+            8'h01:    test_signals = x_offset;
+            8'h02:    test_signals = y_offset;
+            8'h03:    test_signals = {1'b0, num_images_in_mem};
+            8'h04:    test_signals = cycles_of_displaying[7:0];
+            8'h05:    test_signals = cycles_of_displaying[15:8];
+            8'h06:    test_signals = num_of_galvo_positions[7:0];
+            8'h07:    test_signals = num_of_galvo_positions[15:8];
+            8'h08:    test_signals = num_of_galvo_positions[23:16];
+            8'h09:    test_signals = num_of_galvo_positions[31:24];
+            8'h0A:    test_signals = seq_trig_counter;
+            8'h0B:    test_signals = seq_with_galvo_trig_counter;
+            8'h0C:    test_signals = {2'b00, static_display_id_from_host};
+            8'h13:    test_signals = {1'b0, justified_num_images_in_mem};
+            8'h14:    test_signals = justified_cycles_of_displaying[7:0];
+            8'h15:    test_signals = justified_cycles_of_displaying[15:8];
+            8'h16:    test_signals = justified_num_of_galvo_positions[7:0];
+            8'h17:    test_signals = justified_num_of_galvo_positions[15:8];
+            8'h18:    test_signals = justified_num_of_galvo_positions[23:16];
+            8'h19:    test_signals = justified_num_of_galvo_positions[31:24];
+            default:  test_signals = 8'd0;
         endcase
     end
     else begin
@@ -491,12 +540,22 @@ always @ (posedge CLOCK_50 or posedge delayed_reset) begin
         seq_with_galvo_trig_counter <= 0;
     end
     else begin
-        if(sequencing_trigger)
+        if(jtag_trigger_sequencing)
             seq_trig_counter <= seq_trig_counter + 1'b1;
-        if(sequencing_with_galvo_tigger)
+        if(jtag_trigger_sequencing_with_galvo)
             seq_with_galvo_trig_counter <= seq_with_galvo_trig_counter + 1'b1;
     end
 end
+
+
+delay_x00_ms delay_module_1(
+    .iCLOCK50(CLOCK_50),
+    .iTRIGGER(!KEY[1]),
+    .oDELAY100(test_simulated_ack),
+    .oDELAY200(),
+    .oDELAY300(),
+    .oDELAY400()
+);
 
 
 // // testing code for sdram writing
