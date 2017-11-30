@@ -225,6 +225,8 @@ always @ (posedge iCLK or posedge iRST) begin
         img_cnt <= 0;
     end
     else begin
+        if(states == ST_IDLE)
+            img_cnt <= 0;
         if(states == ST_CHECK_LAST_FRAME)
             img_cnt <= img_cnt + 1'b1;
         else
