@@ -2,20 +2,22 @@ module sequencer(
     input         iCLK,
     input         iRST,
 
+    // settings
     input [7:0]   iCAMERA_TRIGGER_MILLISEC,
     input [7:0]   iGALVO_TRIGGER_MILLISEC,
     input [6:0]   iNUM_SLM_IMAGES,
     input [15:0]  iCYCLES_OF_DISPLAY_FOR_EACH_IMAGE,
     input [31:0]  iNUM_OF_GALVO_POSITIONS,
-    output        oBUSY,
 
+    // signals
     input         iTRIG_WITHOUT_GALVO,
     input         iTRIG_WITH_GALVO,
     output        oCAMERA_TRIGGER,
     output        oGALVO_CHANGE_TRIGGER,
     input         iGALVO_ACK,
     input         iVGA_FRAME_SYNC,
-    output [5:0]  oCURRENT_DISPLAY_FRAME_ID
+    output [5:0]  oCURRENT_DISPLAY_FRAME_ID,
+    output        oBUSY
 );
 
 reg [7:0]  dejitter;
@@ -23,7 +25,7 @@ wire       vga_frame_sync;
 reg [1:0]  vga_frame_sync_edge_detect;
 wire       vga_frame_sync_neg_edge;
 assign vga_frame_sync = |dejitter;
-assign vga_frame_sync_neg_edge = (vga_frame_sync_edge_detect == 1'b10);
+assign vga_frame_sync_neg_edge = (vga_frame_sync_edge_detect == 2'b10);
 always @ (posedge iCLK) begin
     dejitter <= {dejitter[6:0], iVGA_FRAME_SYNC};
     vga_frame_sync_edge_detect <= {vga_frame_sync_edge_detect[0], vga_frame_sync};
