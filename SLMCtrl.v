@@ -259,7 +259,8 @@ wire [6:0]  jtag_states;
 wire        sequencer_busy;
 wire        sequencer_trigger_cam;
 wire        sequencer_trigger_galvo;
-wire        test_simulated_ack;  // TODO: to remove this line
+wire        sequencer_galvo_ack;
+wire        test_simulated_ack;  // TODO FIXME: to remove this line
 
 //=======================================================
 //  Structural coding
@@ -310,17 +311,19 @@ vga_control vga_ctrl_0(
     .iRST_N(~delayed_reset)
 );
 
+
+assign display_frame_id = (sequencer_busy)? seq_display_id : static_display_id;
+
 sdram_to_vgafifo sdram_to_vgafifo_0(
     .iRST(delayed_reset_2 || !sdram_ctrl_write_done),
     .iCLK(sdram_ctrl_clock),
 
     // control signals for current frame
-    // FIXME: the 5 values here are for testing
-    .iFRAME_ID(display_frame_id),  // input [5:0]
+    .iFRAME_ID(display_frame_id),    // input [5:0]
     .iOFFSET_H_SIGN(x_offset_sign),  // input
-    .iOFFSET_H(x_offset),  // input [7:0], horizontal offset, + to the right
+    .iOFFSET_H(x_offset),            // input [7:0], horizontal offset, + to the right
     .iOFFSET_V_SIGN(y_offset_sign),  // input
-    .iOFFSET_V(y_offset),  // input [7:0], vertial offset, + to the bottom
+    .iOFFSET_V(y_offset),            // input [7:0], vertial offset, + to the bottom
 
     // VGA signals (as a trigger to load)
     .iVGA_LINE_TO_LOAD(vga_request_loadline_id),
@@ -470,39 +473,43 @@ sequencer seq_0(
     .iTRIG_WITH_GALVO(jtag_trigger_sequencing_with_galvo),
     .oCAMERA_TRIGGER(sequencer_trigger_cam),
     .oGALVO_CHANGE_TRIGGER(sequencer_trigger_galvo),
-    .iGALVO_ACK(test_simulated_ack),
+    .iGALVO_ACK(sequencer_galvo_ack),
     .iVGA_FRAME_SYNC(VGA_VS),
     .oCURRENT_DISPLAY_FRAME_ID(seq_display_id),  // [5:0]
     .oBUSY(sequencer_busy)
 );
 
 
+assign HEX5 = (sdram_ctrl_write_done||sequencer_busy)? 7'b1111111 : 7'b0000011;  // letter b
+assign HEX4 = (sdram_ctrl_write_done||sequencer_busy)? 7'b1111111 : 7'b1000001;  // letter U
+assign HEX3 = (sdram_ctrl_write_done||sequencer_busy)? 7'b1111111 : 7'b0010010;  // letter S
+assign HEX2 = (sdram_ctrl_write_done||sequencer_busy)? 7'b1111111 : 7'b0010001;  // letter y
 
 
+assign GPIO_0[0] = sequencer_trigger_cam;
+assign GPIO_0[1] = sequencer_trigger_galvo;
+assign sequencer_galvo_ack = (!GPIO_0[2]) || test_simulated_ack;  // TODO FIXME: test_simulated_ack is a testing signal
+
+
+
+/// TESTING (to show signals)
+reg [7:0] test_signals, test_signals_to_display[3:0];  // to avoid timing racing so display the test signal at a delay.
+reg [7:0] seq_trig_counter, seq_with_galvo_trig_counter;
+seven_seg   jtag_state_monitor_1(.number(test_signals_to_display[3][7:4]), .display(HEX1));
+seven_seg   jtag_state_monitor_0(.number(test_signals_to_display[3][3:0]), .display(HEX0));
+
+assign static_display_id = (SW[9]==1'b1)? SW[5:0] : static_display_id_from_host;
 
 assign LEDR[9] = jtag_error;
 assign LEDR[8] = sequencer_busy;
 assign LEDR[7] = sequencer_trigger_cam;
 assign LEDR[6] = sequencer_trigger_galvo;
-assign HEX5 = (sdram_ctrl_write_done||sequencer_busy)? 7'b1111111 : 7'b0000011;  // letter b
-assign HEX4 = (sdram_ctrl_write_done||sequencer_busy)? 7'b1111111 : 7'b1000001;  // letter U
-assign HEX3 = (sdram_ctrl_write_done||sequencer_busy)? 7'b1111111 : 7'b0010010;  // letter S
-assign HEX2 = (sdram_ctrl_write_done||sequencer_busy)? 7'b1111111 : 7'b0010001;  // letter y
-assign static_display_id = (SW[9]==1'b1)? SW[5:0] : static_display_id_from_host;
-assign display_frame_id = (sequencer_busy)? seq_display_id : static_display_id;
-
-
-
-
-
-/// TESTING (to make the synthesizer not simply the necessary logics out)
-reg [7:0] test_signals;
-reg [7:0] seq_trig_counter, seq_with_galvo_trig_counter;
-seven_seg   jtag_state_monitor_1(.number(test_signals[7:4]), .display(HEX1));
-seven_seg   jtag_state_monitor_0(.number(test_signals[3:0]), .display(HEX0));
-
 assign LEDR[4] = (SW[7:0] == 8'd1) ? x_offset_sign : 
                  (SW[7:0] == 8'd2) ? y_offset_sign : 1'b0;
+assign LEDR[5] = 1'b0;
+assign LEDR[3:0] = 4'd0;
+
+
 always @ (*) begin
     if(SW[8] == 1'b1) begin
         case(SW[7:0])
@@ -538,12 +545,21 @@ always @ (posedge CLOCK_50 or posedge delayed_reset) begin
     if(delayed_reset) begin
         seq_trig_counter <= 0;
         seq_with_galvo_trig_counter <= 0;
+        test_signals_to_display[0] <= 0;
+        test_signals_to_display[1] <= 0;
+        test_signals_to_display[2] <= 0;
+        test_signals_to_display[3] <= 0;
     end
     else begin
         if(jtag_trigger_sequencing)
             seq_trig_counter <= seq_trig_counter + 1'b1;
         if(jtag_trigger_sequencing_with_galvo)
             seq_with_galvo_trig_counter <= seq_with_galvo_trig_counter + 1'b1;
+
+        test_signals_to_display[0] <= test_signals;
+        test_signals_to_display[1] <= test_signals_to_display[0];
+        test_signals_to_display[2] <= test_signals_to_display[1];
+        test_signals_to_display[3] <= test_signals_to_display[2];
     end
 end
 
@@ -557,39 +573,6 @@ delay_x00_ms delay_module_1(
     .oDELAY400()
 );
 
-
-// // testing code for sdram writing
-// test_sdram_write test_sdram_write_0(
-//     .iCLK(sdram_ctrl_clock),
-//     .iRST(delayed_reset_1),
-// 
-//     .iTRIGGER(trigger),
-//     .iWAIT_REQUEST(sdram_ctrl_wait_req),
-//     .oWR_EN(sdram_ctrl_write_en),
-//     .oWR_DATA(sdram_ctrl_write_data),
-//     .oWR_ADDR(sdram_ctrl_write_addr),
-//     .oDONE(sdram_ctrl_write_done)
-// );
-
-
-// // testing code for sdram reading
-// test_sdram_read test_sdram_read_0(
-//  .iCLK(sdram_ctrl_clock),
-//  .iRST(delayed_reset_1),
-//  
-//  .iTEST_WRITE_DONE(sdram_ctrl_write_done),
-//  
-//  .iWAIT_REQUEST(sdram_ctrl_wait_req),
-//  .oRD_EN(sdram_ctrl_read_en),
-//  .oRD_ADDR(sdram_ctrl_read_addr),
-//  .iRD_DATA(sdram_ctrl_read_data),
-//  .iRD_DATAVALID(sdram_ctrl_read_datavalid),
-//  .oDATA(LEDR[7:0]),
-//  
-//  .iSW(SW),
-//  .iUPDATE_FRAME(update_frame_to_read),  // KEY 3
-//  .iUPDATE_Y(update_y_to_read)  // KEY 2
-// );
 
 endmodule
 
