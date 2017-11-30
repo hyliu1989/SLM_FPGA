@@ -30,6 +30,7 @@ module jtag_uart_decode(
     output [15:0] oCYCLES_OF_DISPLAYING_EACH_IMAGE,
     
     output        oSEQUENCING_TRIGGER,
+    output        oGALVE_SEQUENCING_TRIGGER,
     
     output [23:0] oGALVO_VALUES_X,
     output [23:0] oGALVO_VALUES_Y,
@@ -213,6 +214,10 @@ always @ (*) begin
         
         /// ==== Triggering the sequencing ====================================
         ST_START_SEQUENCE_trigger: begin
+            new_data_ack = 1'b0;
+            states_next = ST_WAIT_ACK;
+        end
+        ST_START_GALVO_SEQUENCE_trigger: begin
             new_data_ack = 1'b0;
             states_next = ST_WAIT_ACK;
         end
@@ -411,6 +416,7 @@ assign oCYCLES_OF_DISPLAYING_EACH_IMAGE = cycles_of_display;
 
 /// ==== Triggering the sequencing ====================================
 assign oSEQUENCING_TRIGGER = (states == ST_START_SEQUENCE_trigger);
+assign oGALVE_SEQUENCING_TRIGGER = (states == ST_START_GALVO_SEQUENCE_trigger);
 /// ==== End of Triggering the sequencing ====================================
 
 

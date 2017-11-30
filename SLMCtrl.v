@@ -249,7 +249,7 @@ wire        x_offset_sign;
 wire [7:0]  y_offset;
 wire        y_offset_sign;
 wire [15:0] cycles_of_displaying;
-wire        sequencing_trigger;
+wire        sequencing_trigger, sequencing_with_galvo_tigger;
 wire [23:0] galvo_values_x, galvo_values_y;
 
 wire        jtag_error;
@@ -332,7 +332,6 @@ sdram_to_vgafifo sdram_to_vgafifo_0(
     .oFIFO_WCLK(vga_fifo_wclk),
     .oFIFO_WDATA(vga_fifo_wdata),
     .oFIFO_WEN(vga_fifo_wen)
-    //,.o_tests(LEDR[7:0])
 );
 
 fifo_vga fv0(
@@ -377,6 +376,7 @@ jtag_uart_decode jtag_uart_decode_0(
     .oV_OFFSET(y_offset),  // [7:0]
     .oCYCLES_OF_DISPLAYING_EACH_IMAGE(cycles_of_displaying),  // [15:0]
     .oSEQUENCING_TRIGGER(sequencing_trigger),
+    .oGALVE_SEQUENCING_TRIGGER(sequencing_with_galvo_tigger),
     .oGALVO_VALUES_X(galvo_values_x),  // [23:0]
     .oGALVO_VALUES_Y(galvo_values_y),  // [23:0]
     .oERROR(jtag_error),
@@ -458,7 +458,7 @@ seven_seg   jtag_state_monitor_0(.number(       jtag_states[3:0]), .display(HEX0
 /// TESTING (to make the synthesizer not simply the necessary logics out)
 assign GPIO_0[35:32] = cycles_of_displaying[7:4];
 assign GPIO_1[35:32] = cycles_of_displaying[3:0];
-assign LEDR[8] = sequencing_trigger;
+assign LEDR[8] = sequencing_trigger||sequencing_with_galvo_tigger;
 assign GPIO_0[31:24] = cycles_of_displaying[15:8];
 assign GPIO_0[23:0] = galvo_values_x;
 assign GPIO_1[30:24] = num_images_in_mem;
