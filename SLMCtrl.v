@@ -251,6 +251,7 @@ wire        y_offset_sign;
 wire [15:0] cycles_of_displaying;
 wire        sequencing_trigger, sequencing_with_galvo_tigger;
 wire [31:0] galvo_num_of_positions;
+wire [5:0]  static_display_id_from_host, static_display_id;
 
 wire        jtag_error;
 wire [6:0]  jtag_states;
@@ -311,7 +312,7 @@ sdram_to_vgafifo sdram_to_vgafifo_0(
 
     // control signals for current frame
     // FIXME: the 5 values here are for testing
-    .iFRAME_ID(SW[5:0]),  // input [5:0]
+    .iFRAME_ID(static_display_id),  // input [5:0]
     .iOFFSET_H_SIGN(x_offset_sign),  // input
     .iOFFSET_H(x_offset),  // input [7:0], horizontal offset, + to the right
     .iOFFSET_V_SIGN(y_offset_sign),  // input
@@ -378,6 +379,7 @@ jtag_uart_decode jtag_uart_decode_0(
     .oSEQUENCING_TRIGGER(sequencing_trigger),
     .oGALVE_SEQUENCING_TRIGGER(sequencing_with_galvo_tigger),
     .oNUM_GALVO_POSITIONS(galvo_num_of_positions),  // [31:0]
+    .oSTATIC_DISPLAY_FRAME_ID(static_display_id_from_host), // [5:0]
     .oERROR(jtag_error),
     .oMONITORING_STATES(jtag_states)  // [6:0]
 );
@@ -452,6 +454,7 @@ assign HEX3 = sdram_ctrl_write_done? 7'b1111111 : 7'b0010010;  // letter s
 assign HEX2 = sdram_ctrl_write_done? 7'b1111111 : 7'b0010001;  // letter y
 seven_seg   jtag_state_monitor_1(.number({1'b0,jtag_states[6:4]}), .display(HEX1));
 seven_seg   jtag_state_monitor_0(.number(       jtag_states[3:0]), .display(HEX0));
+assign static_display_id = (SW[9])? SW[5:0] : static_display_id_from_host;
 
 
 /// TESTING (to make the synthesizer not simply the necessary logics out)

@@ -10,6 +10,7 @@ parameter HOSTCMD_TRIGGER_SEQUENCING        = 8'h04;  // Triggering the sequenci
 parameter HOSTCMD_TRIGGER_GALVO_SEQUENCE    = 8'h05;  // Triggering the sequencing
 parameter HOSTCMD_UPDATE_GALVO_NUM_POS      = 8'h06;  // Update number of positions of Galvo
 parameter HOSTCMD_UPDATE_TOT_NUM_FRAMES     = 8'h07;  // Update total number of frames in memory
+parameter HOSTCMD_UPDATE_STATIC_DISPLAY     = 8'h08;  // Update static display image id
 
 
 
@@ -58,3 +59,7 @@ parameter ST_UPDATE_GALVO_NUM_POS_get_num_3    = 7'h3_5;
 
 // Update total number of frames in memory
 parameter ST_UPDATE_NUM_FRAMES_get_num         = 7'h0_6;
+
+// Update static display image id
+parameter ST_UPDATE_STATIC_DISPLAY_get_id      = 7'h0_7;
+

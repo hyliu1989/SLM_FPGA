@@ -230,6 +230,14 @@ def sendGalvoNumPositions(link, value, verbose=True):
     data_bytes = bytes([value_0,value_1,value_2, value_3])
     return _writeBody(link, cmd=b'\x06', data_bytes=data_bytes, ack=True, verbose=verbose)
 
+def sendStaticDisplayFrameId(link, frame_id, verbose=True):
+    if not (0 <= frame_id and frame_id <= 63):
+        raise ValueError('The value should be 0~63 (inclusive)')
+    
+    frame_id = np.uint8(frame_id)
+    data_bytes = bytes([frame_id])
+    return _writeBody(link, cmd=b'\x08', data_bytes=data_bytes, ack=True, verbose=verbose)
+
 
 def closeConnection(link):
     return JAClose(link)
