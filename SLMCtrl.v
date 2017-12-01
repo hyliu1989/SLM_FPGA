@@ -202,9 +202,12 @@ module SLMCtrl(
 //  REG/WIRE declarations
 //=======================================================
 wire        switch_testing;
+wire        switch_vga_sync;
 
 wire        vga_clock;
 wire [7:0]  vga_data;
+wire        vga_h_sync;
+wire        vga_v_sync;
 wire        vga_fifo_rclk;
 wire        vga_fifo_rreq;
 wire        vga_fifo_aclear;
@@ -308,8 +311,8 @@ vga_control vga_ctrl_0(
     .oVGA_R(VGA_R),
     .oVGA_G(VGA_G),
     .oVGA_B(VGA_B),
-    .oVGA_H_SYNC(VGA_HS),
-    .oVGA_V_SYNC(VGA_VS),
+    .oVGA_H_SYNC(vga_h_sync),
+    .oVGA_V_SYNC(vga_v_sync),
     .oVGA_SYNC_N(VGA_SYNC_N),
     .oVGA_BLANK_N(VGA_BLANK_N),
     .oVGA_CLK(VGA_CLK),
@@ -318,6 +321,8 @@ vga_control vga_ctrl_0(
     .iCLK(vga_clock),
     .iRST_N(~delayed_reset)
 );
+assign VGA_HS = (switch_vga_sync==1'b1) ? ~vga_h_sync : vga_h_sync;
+assign VGA_VS = (switch_vga_sync==1'b1) ? ~vga_v_sync : vga_v_sync;
 
 
 assign display_frame_id = (sequencer_busy)? seq_display_id : static_display_id;
@@ -482,12 +487,13 @@ sequencer seq_0(
     .oCAMERA_TRIGGER(sequencer_trigger_cam),
     .oGALVO_CHANGE_TRIGGER(sequencer_trigger_galvo),
     .iGALVO_ACK(sequencer_galvo_ack),
-    .iVGA_FRAME_SYNC(VGA_VS),
+    .iVGA_FRAME_SYNC(vga_v_sync),
     .oCURRENT_DISPLAY_FRAME_ID(seq_display_id),  // [5:0]
     .oBUSY(sequencer_busy)
 );
 
 assign switch_testing = SW[9];
+assign switch_vga_sync = SW[8];
 assign GPIO_1[1] = sequencer_trigger_cam;
 assign GPIO_1[3] = sequencer_trigger_galvo;
 assign sequencer_galvo_ack = (!GPIO_1[5]) || test_simulated_ack;  // TODO FIXME: test_simulated_ack is a testing signal
