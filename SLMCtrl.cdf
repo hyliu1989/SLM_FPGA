@@ -6,7 +6,7 @@ JedecChain;
 	P ActionCode(Ign)
 		Device PartName(SOCVHPS) MfrSpec(OpMask(0));
 	P ActionCode(Cfg)
-		Device PartName(5CSEMA5F31) Path("C:/Users/WallerLab/Desktop/FPGA/projects/SLMCtrl.v0/output_files/") File("SLMCtrl.sof") MfrSpec(OpMask(1));
+		Device PartName(5CSEMA5F31) Path("T:/Herbert/Dropbox/MyLabStuffs/Research/phaseSLM2017/FPGA/SLM_FPGA/output_files/") File("SLMCtrl.sof") MfrSpec(OpMask(1));
 
 ChainEnd;
 
