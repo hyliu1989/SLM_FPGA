@@ -201,6 +201,8 @@ module SLMCtrl(
 //=======================================================
 //  REG/WIRE declarations
 //=======================================================
+wire        switch_testing;
+
 wire        vga_clock;
 wire [7:0]  vga_data;
 wire        vga_fifo_rclk;
@@ -260,6 +262,12 @@ wire        sequencer_busy;
 wire        sequencer_trigger_cam;
 wire        sequencer_trigger_galvo;
 wire        sequencer_galvo_ack;
+
+// Test and signals for displaying test
+wire [6:0]  mHEX[5:0];
+wire [9:0]  mLEDR;
+reg [7:0]   test_signals, test_signals_to_display[3:0];  // to avoid timing racing so display the test signal at a delay.
+reg [7:0]   seq_trig_counter, seq_with_galvo_trig_counter;
 wire        test_simulated_ack;  // TODO FIXME: to remove this line
 
 //=======================================================
@@ -479,66 +487,69 @@ sequencer seq_0(
     .oBUSY(sequencer_busy)
 );
 
-
-assign HEX5 = (sdram_ctrl_write_done||sequencer_busy)? 7'b1111111 : 7'b0000011;  // letter b
-assign HEX4 = (sdram_ctrl_write_done||sequencer_busy)? 7'b1111111 : 7'b1000001;  // letter U
-assign HEX3 = (sdram_ctrl_write_done||sequencer_busy)? 7'b1111111 : 7'b0010010;  // letter S
-assign HEX2 = (sdram_ctrl_write_done||sequencer_busy)? 7'b1111111 : 7'b0010001;  // letter y
-
-
+assign switch_testing = SW[9];
 assign GPIO_1[1] = sequencer_trigger_cam;
 assign GPIO_1[3] = sequencer_trigger_galvo;
 assign sequencer_galvo_ack = (!GPIO_1[5]) || test_simulated_ack;  // TODO FIXME: test_simulated_ack is a testing signal
 
 
 
-/// TESTING (to show signals)
-reg [7:0] test_signals, test_signals_to_display[3:0];  // to avoid timing racing so display the test signal at a delay.
-reg [7:0] seq_trig_counter, seq_with_galvo_trig_counter;
-seven_seg   jtag_state_monitor_1(.number(test_signals_to_display[3][7:4]), .display(HEX1));
-seven_seg   jtag_state_monitor_0(.number(test_signals_to_display[3][3:0]), .display(HEX0));
 
-assign static_display_id = (SW[9]==1'b1)? SW[5:0] : static_display_id_from_host;
 
-assign LEDR[9] = jtag_error;
-assign LEDR[8] = sequencer_busy;
-assign LEDR[7] = sequencer_trigger_cam;
-assign LEDR[6] = sequencer_trigger_galvo;
-assign LEDR[4] = (SW[7:0] == 8'd1) ? x_offset_sign : 
-                 (SW[7:0] == 8'd2) ? y_offset_sign : 1'b0;
-assign LEDR[5] = 1'b0;
-assign LEDR[3:0] = 4'd0;
 
+
+
+
+/// Testing part (turn on/off display)
+assign static_display_id = (switch_testing==1'b1)? SW[5:0] : static_display_id_from_host;
+assign HEX0 = (switch_testing==1'b1)? mHEX[0] : 7'b1111111;
+assign HEX1 = (switch_testing==1'b1)? mHEX[1] : 7'b1111111;
+assign HEX2 = (switch_testing==1'b1)? mHEX[2] : 7'b1111111;
+assign HEX3 = (switch_testing==1'b1)? mHEX[3] : 7'b1111111;
+assign HEX4 = (switch_testing==1'b1)? mHEX[4] : 7'b1111111;
+assign HEX5 = (switch_testing==1'b1)? mHEX[5] : 7'b1111111;
+assign LEDR = (switch_testing==1'b1)? mLEDR   : 9'd0;
+
+/// Testing part (compose signals)
+seven_seg   jtag_state_monitor_1(.number(test_signals_to_display[3][7:4]), .display(mHEX[1]));
+seven_seg   jtag_state_monitor_0(.number(test_signals_to_display[3][3:0]), .display(mHEX[0]));
+assign mHEX[5] = (!sdram_ctrl_write_done||sequencer_busy)? 7'b0000011 : 7'b1111111;  // letter b
+assign mHEX[4] = (!sdram_ctrl_write_done||sequencer_busy)? 7'b1000001 : 7'b1111111;  // letter U
+assign mHEX[3] = (!sdram_ctrl_write_done||sequencer_busy)? 7'b0010010 : 7'b1111111;  // letter S
+assign mHEX[2] = (!sdram_ctrl_write_done||sequencer_busy)? 7'b0010001 : 7'b1111111;  // letter y
+assign mLEDR[9] = jtag_error;
+assign mLEDR[8] = sequencer_busy;
+assign mLEDR[7] = sequencer_trigger_cam;
+assign mLEDR[6] = sequencer_trigger_galvo;
+assign mLEDR[4] = (SW[7:0] == 8'd1) ? x_offset_sign : 
+                  (SW[7:0] == 8'd2) ? y_offset_sign : 1'b0;
+assign mLEDR[5] = 1'b0;
+assign mLEDR[3:0] = 4'd0;
 
 always @ (*) begin
-    if(SW[8] == 1'b1) begin
-        case(SW[7:0])
-            8'h00:    test_signals = {1'b0, jtag_states};
-            8'h01:    test_signals = x_offset;
-            8'h02:    test_signals = y_offset;
-            8'h03:    test_signals = {1'b0, num_images_in_mem};
-            8'h04:    test_signals = cycles_of_displaying[7:0];
-            8'h05:    test_signals = cycles_of_displaying[15:8];
-            8'h06:    test_signals = num_of_galvo_positions[7:0];
-            8'h07:    test_signals = num_of_galvo_positions[15:8];
-            8'h08:    test_signals = num_of_galvo_positions[23:16];
-            8'h09:    test_signals = num_of_galvo_positions[31:24];
-            8'h0A:    test_signals = seq_trig_counter;
-            8'h0B:    test_signals = seq_with_galvo_trig_counter;
-            8'h0C:    test_signals = {2'b00, static_display_id_from_host};
-            8'h13:    test_signals = {1'b0, justified_num_images_in_mem};
-            8'h14:    test_signals = justified_cycles_of_displaying[7:0];
-            8'h15:    test_signals = justified_cycles_of_displaying[15:8];
-            8'h16:    test_signals = justified_num_of_galvo_positions[7:0];
-            8'h17:    test_signals = justified_num_of_galvo_positions[15:8];
-            8'h18:    test_signals = justified_num_of_galvo_positions[23:16];
-            8'h19:    test_signals = justified_num_of_galvo_positions[31:24];
-            default:  test_signals = 8'd0;
-        endcase
-    end
-    else begin
-        test_signals = 8'd0;
-    end
+    case(SW[7:0])
+        8'h00:    test_signals = {1'b0, jtag_states};
+        8'h01:    test_signals = x_offset;
+        8'h02:    test_signals = y_offset;
+        8'h03:    test_signals = {1'b0, num_images_in_mem};
+        8'h04:    test_signals = cycles_of_displaying[7:0];
+        8'h05:    test_signals = cycles_of_displaying[15:8];
+        8'h06:    test_signals = num_of_galvo_positions[7:0];
+        8'h07:    test_signals = num_of_galvo_positions[15:8];
+        8'h08:    test_signals = num_of_galvo_positions[23:16];
+        8'h09:    test_signals = num_of_galvo_positions[31:24];
+        8'h0A:    test_signals = seq_trig_counter;
+        8'h0B:    test_signals = seq_with_galvo_trig_counter;
+        8'h0C:    test_signals = {2'b00, static_display_id_from_host};
+        8'h13:    test_signals = {1'b0, justified_num_images_in_mem};
+        8'h14:    test_signals = justified_cycles_of_displaying[7:0];
+        8'h15:    test_signals = justified_cycles_of_displaying[15:8];
+        8'h16:    test_signals = justified_num_of_galvo_positions[7:0];
+        8'h17:    test_signals = justified_num_of_galvo_positions[15:8];
+        8'h18:    test_signals = justified_num_of_galvo_positions[23:16];
+        8'h19:    test_signals = justified_num_of_galvo_positions[31:24];
+        default:  test_signals = 8'hFF;
+    endcase
 end
 
 always @ (posedge CLOCK_50 or posedge delayed_reset) begin
@@ -562,7 +573,6 @@ always @ (posedge CLOCK_50 or posedge delayed_reset) begin
         test_signals_to_display[3] <= test_signals_to_display[2];
     end
 end
-
 
 delay_x00_ms delay_module_1(
     .iCLOCK50(CLOCK_50),
