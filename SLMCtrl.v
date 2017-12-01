@@ -486,9 +486,9 @@ assign HEX3 = (sdram_ctrl_write_done||sequencer_busy)? 7'b1111111 : 7'b0010010; 
 assign HEX2 = (sdram_ctrl_write_done||sequencer_busy)? 7'b1111111 : 7'b0010001;  // letter y
 
 
-assign GPIO_0[0] = sequencer_trigger_cam;
-assign GPIO_0[1] = sequencer_trigger_galvo;
-assign sequencer_galvo_ack = (!GPIO_0[2]) || test_simulated_ack;  // TODO FIXME: test_simulated_ack is a testing signal
+assign GPIO_1[1] = sequencer_trigger_cam;
+assign GPIO_1[3] = sequencer_trigger_galvo;
+assign sequencer_galvo_ack = (!GPIO_1[5]) || test_simulated_ack;  // TODO FIXME: test_simulated_ack is a testing signal
 
 
 
