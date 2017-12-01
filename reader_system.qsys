@@ -172,13 +172,14 @@
  <module
    name="sys_sdram_pll_0"
    kind="altera_up_avalon_sys_sdram_pll"
-   version="15.1"
+   version="16.1"
    enabled="1">
   <parameter name="AUTO_DEVICE" value="5CSEMA5F31C6" />
   <parameter name="AUTO_DEVICE_SPEEDGRADE" value="6" />
   <parameter name="CIII_boards" value="DE0" />
   <parameter name="CIV_boards" value="DE2-115" />
   <parameter name="CV_boards" value="DE1-SoC" />
+  <parameter name="MAX10_boards" value="DE10-Lite" />
   <parameter name="device_family" value="Cyclone V" />
   <parameter name="gui_outclk" value="133.33" />
   <parameter name="gui_refclk" value="50.0" />
