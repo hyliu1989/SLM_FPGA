@@ -2,23 +2,22 @@
 # 
 preplace inst reader_system.sys_sdram_pll_0.sys_pll -pg 1
 preplace inst reader_system.sys_sdram_pll_0.reset_from_locked -pg 1
-preplace inst reader_system.sdram_controller_0 -pg 1 -lvl 2 -y 350
+preplace inst reader_system.sdram_controller_0 -pg 1 -lvl 3 -y 210
+preplace inst reader_system.jtag_uart_0 -pg 1 -lvl 2 -y 150
 preplace inst reader_system -pg 1 -lvl 1 -y 40 -regy -20
-preplace inst reader_system.clk_sdcard -pg 1 -lvl 1 -y 30
-preplace inst reader_system.sys_sdram_pll_0 -pg 1 -lvl 2 -y 220
-preplace inst reader_system.clock_bridge_0 -pg 1 -lvl 3 -y 350
-preplace inst reader_system.Altera_UP_SD_Card_Avalon_Interface_0 -pg 1 -lvl 2 -y 90
-preplace netloc EXPORT<net_container>reader_system</net_container>(MASTER)clock_bridge_0.out_clk_1,(MASTER)reader_system.sdram_controller_clock_0) 1 3 1 NJ
-preplace netloc EXPORT<net_container>reader_system</net_container>(SLAVE)reader_system.altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave,(SLAVE)Altera_UP_SD_Card_Avalon_Interface_0.avalon_sdcard_slave) 1 0 2 NJ 100 NJ
-preplace netloc FAN_OUT<net_container>reader_system</net_container>(SLAVE)Altera_UP_SD_Card_Avalon_Interface_0.reset,(SLAVE)sys_sdram_pll_0.ref_reset,(MASTER)clk_sdcard.clk_reset) 1 1 1 410
-preplace netloc FAN_OUT<net_container>reader_system</net_container>(SLAVE)sys_sdram_pll_0.ref_clk,(MASTER)clk_sdcard.clk,(SLAVE)Altera_UP_SD_Card_Avalon_Interface_0.clk) 1 1 1 430
-preplace netloc EXPORT<net_container>reader_system</net_container>(MASTER)reader_system.sys_sdram_pll_0_sdram_clk,(MASTER)sys_sdram_pll_0.sdram_clk) 1 2 2 NJ 250 NJ
-preplace netloc EXPORT<net_container>reader_system</net_container>(SLAVE)reader_system.reset,(SLAVE)clk_sdcard.clk_in_reset) 1 0 1 NJ
-preplace netloc EXPORT<net_container>reader_system</net_container>(SLAVE)Altera_UP_SD_Card_Avalon_Interface_0.conduit_end,(SLAVE)reader_system.altera_up_sd_card_avalon_interface_0_conduit_end) 1 0 2 NJ 140 NJ
-preplace netloc EXPORT<net_container>reader_system</net_container>(SLAVE)reader_system.sdram_controller_0_s1,(SLAVE)sdram_controller_0.s1) 1 0 2 NJ 400 NJ
-preplace netloc EXPORT<net_container>reader_system</net_container>(SLAVE)reader_system.clk,(SLAVE)clk_sdcard.clk_in) 1 0 1 NJ
-preplace netloc POINT_TO_POINT<net_container>reader_system</net_container>(SLAVE)sdram_controller_0.reset,(MASTER)sys_sdram_pll_0.reset_source) 1 1 2 410 320 670
-preplace netloc EXPORT<net_container>reader_system</net_container>(SLAVE)sdram_controller_0.wire,(SLAVE)reader_system.sdram_controller_0_wire) 1 0 2 NJ 420 NJ
-preplace netloc FAN_OUT<net_container>reader_system</net_container>(MASTER)sys_sdram_pll_0.sys_clk,(SLAVE)sdram_controller_0.clk,(SLAVE)clock_bridge_0.in_clk) 1 1 2 430 340 690
-levelinfo -pg 1 0 200 1040
-levelinfo -hier reader_system 210 240 510 720 850
+preplace inst reader_system.sys_sdram_pll_0 -pg 1 -lvl 2 -y 50
+preplace inst reader_system.clk_source -pg 1 -lvl 1 -y 170
+preplace inst reader_system.clock_bridge_0 -pg 1 -lvl 3 -y 310
+preplace netloc EXPORT<net_container>reader_system</net_container>(SLAVE)clk_source.clk_in_reset,(SLAVE)reader_system.reset) 1 0 1 NJ
+preplace netloc FAN_OUT<net_container>reader_system</net_container>(SLAVE)jtag_uart_0.clk,(SLAVE)sys_sdram_pll_0.ref_clk,(MASTER)clk_source.clk) 1 1 1 400
+preplace netloc EXPORT<net_container>reader_system</net_container>(SLAVE)jtag_uart_0.avalon_jtag_slave,(SLAVE)reader_system.jtag_uart_0_avalon_jtag_slave) 1 0 2 NJ 160 NJ
+preplace netloc EXPORT<net_container>reader_system</net_container>(MASTER)sys_sdram_pll_0.sdram_clk,(MASTER)reader_system.sdram_controller_0_wire_clk) 1 2 2 NJ 80 NJ
+preplace netloc FAN_OUT<net_container>reader_system</net_container>(MASTER)clk_source.clk_reset,(SLAVE)sys_sdram_pll_0.ref_reset,(SLAVE)jtag_uart_0.reset) 1 1 1 420
+preplace netloc EXPORT<net_container>reader_system</net_container>(SLAVE)reader_system.sdram_controller_0_s1,(SLAVE)sdram_controller_0.s1) 1 0 3 NJ 260 NJ 260 NJ
+preplace netloc EXPORT<net_container>reader_system</net_container>(SLAVE)reader_system.clk,(SLAVE)clk_source.clk_in) 1 0 1 NJ
+preplace netloc POINT_TO_POINT<net_container>reader_system</net_container>(SLAVE)sdram_controller_0.reset,(MASTER)sys_sdram_pll_0.reset_source) 1 2 1 680
+preplace netloc EXPORT<net_container>reader_system</net_container>(SLAVE)sdram_controller_0.wire,(SLAVE)reader_system.sdram_controller_0_wire) 1 0 3 NJ 280 NJ 280 NJ
+preplace netloc FAN_OUT<net_container>reader_system</net_container>(MASTER)sys_sdram_pll_0.sys_clk,(SLAVE)sdram_controller_0.clk,(SLAVE)clock_bridge_0.in_clk) 1 2 1 660
+preplace netloc EXPORT<net_container>reader_system</net_container>(MASTER)reader_system.sdram_controller_0_s1_clock,(MASTER)clock_bridge_0.out_clk_1) 1 3 1 NJ
+levelinfo -pg 1 0 190 1070
+levelinfo -hier reader_system 200 230 500 740 870

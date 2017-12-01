@@ -1,18 +1,13 @@
 
 module reader_system (
-	altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_chipselect,
-	altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_address,
-	altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_read,
-	altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_write,
-	altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_byteenable,
-	altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_writedata,
-	altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_readdata,
-	altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_waitrequest,
-	altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_cmd,
-	altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat,
-	altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat3,
-	altera_up_sd_card_avalon_interface_0_conduit_end_o_SD_clock,
 	clk_clk,
+	jtag_uart_0_avalon_jtag_slave_chipselect,
+	jtag_uart_0_avalon_jtag_slave_address,
+	jtag_uart_0_avalon_jtag_slave_read_n,
+	jtag_uart_0_avalon_jtag_slave_readdata,
+	jtag_uart_0_avalon_jtag_slave_write_n,
+	jtag_uart_0_avalon_jtag_slave_writedata,
+	jtag_uart_0_avalon_jtag_slave_waitrequest,
 	reset_reset_n,
 	sdram_controller_0_s1_address,
 	sdram_controller_0_s1_byteenable_n,
@@ -23,6 +18,7 @@ module reader_system (
 	sdram_controller_0_s1_readdata,
 	sdram_controller_0_s1_readdatavalid,
 	sdram_controller_0_s1_waitrequest,
+	sdram_controller_0_s1_clock_clk,
 	sdram_controller_0_wire_addr,
 	sdram_controller_0_wire_ba,
 	sdram_controller_0_wire_cas_n,
@@ -32,22 +28,16 @@ module reader_system (
 	sdram_controller_0_wire_dqm,
 	sdram_controller_0_wire_ras_n,
 	sdram_controller_0_wire_we_n,
-	sdram_controller_clock_0_clk,
-	sys_sdram_pll_0_sdram_clk_clk);	
+	sdram_controller_0_wire_clk_clk);	
 
-	input		altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_chipselect;
-	input	[7:0]	altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_address;
-	input		altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_read;
-	input		altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_write;
-	input	[3:0]	altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_byteenable;
-	input	[31:0]	altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_writedata;
-	output	[31:0]	altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_readdata;
-	output		altera_up_sd_card_avalon_interface_0_avalon_sdcard_slave_waitrequest;
-	inout		altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_cmd;
-	inout		altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat;
-	inout		altera_up_sd_card_avalon_interface_0_conduit_end_b_SD_dat3;
-	output		altera_up_sd_card_avalon_interface_0_conduit_end_o_SD_clock;
 	input		clk_clk;
+	input		jtag_uart_0_avalon_jtag_slave_chipselect;
+	input		jtag_uart_0_avalon_jtag_slave_address;
+	input		jtag_uart_0_avalon_jtag_slave_read_n;
+	output	[31:0]	jtag_uart_0_avalon_jtag_slave_readdata;
+	input		jtag_uart_0_avalon_jtag_slave_write_n;
+	input	[31:0]	jtag_uart_0_avalon_jtag_slave_writedata;
+	output		jtag_uart_0_avalon_jtag_slave_waitrequest;
 	input		reset_reset_n;
 	input	[24:0]	sdram_controller_0_s1_address;
 	input	[1:0]	sdram_controller_0_s1_byteenable_n;
@@ -58,6 +48,7 @@ module reader_system (
 	output	[15:0]	sdram_controller_0_s1_readdata;
 	output		sdram_controller_0_s1_readdatavalid;
 	output		sdram_controller_0_s1_waitrequest;
+	output		sdram_controller_0_s1_clock_clk;
 	output	[12:0]	sdram_controller_0_wire_addr;
 	output	[1:0]	sdram_controller_0_wire_ba;
 	output		sdram_controller_0_wire_cas_n;
@@ -67,6 +58,5 @@ module reader_system (
 	output	[1:0]	sdram_controller_0_wire_dqm;
 	output		sdram_controller_0_wire_ras_n;
 	output		sdram_controller_0_wire_we_n;
-	output		sdram_controller_clock_0_clk;
-	output		sys_sdram_pll_0_sdram_clk_clk;
+	output		sdram_controller_0_wire_clk_clk;
 endmodule
