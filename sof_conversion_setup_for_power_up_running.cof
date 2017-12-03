@@ -2,7 +2,7 @@
 <cof>
 	<eprom_name>EPCS128</eprom_name>
 	<flash_loader_device>5CSEMA5</flash_loader_device>
-	<output_filename>output_file.jic</output_filename>
+	<output_filename>output_files/output_file.jic</output_filename>
 	<n_pages>1</n_pages>
 	<width>1</width>
 	<mode>7</mode>
@@ -10,7 +10,7 @@
 		<user_name>Page_0</user_name>
 		<page_flags>1</page_flags>
 		<bit0>
-			<sof_filename>D:/Herbert/Dropbox/MyLabStuffs/Research/phaseSLM2017/FPGA/SLM_FPGA/output_files/SLMCtrl.sof</sof_filename> 
+			<sof_filename>C:/Users/WallerLab/Desktop/FPGA/projects/SLM_Control/output_files/SLMCtrl.sof</sof_filename> 
 		</bit0>
 	</sof_data>
 	<version>10</version>

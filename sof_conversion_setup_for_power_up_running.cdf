@@ -6,7 +6,7 @@ JedecChain;
 	P ActionCode(Ign)
 		Device PartName(SOCVHPS) MfrSpec(OpMask(0));
 	P ActionCode(Cfg)
-		Device PartName(5CSEMA5) Path("T:/Herbert/Dropbox/MyLabStuffs/Research/phaseSLM2017/FPGA/SLM_FPGA/output_files/") File("output_file.jic") MfrSpec(OpMask(1) SEC_Device(EPCS128) Child_OpMask(1 1));
+		Device PartName(5CSEMA5) Path("C:/Users/WallerLab/Desktop/FPGA/projects/SLM_Control/output_files/") File("output_file.jic") MfrSpec(OpMask(1) SEC_Device(EPCS128) Child_OpMask(1 1));
 
 ChainEnd;
 
